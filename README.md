@@ -1,8 +1,8 @@
-Invipy is written in **Python3** and uses **PyQt5**,  **python-qt5-gl** and **VTK**.
+BrainVisPy is written in **Python3** and uses **PyQt5**,  **python-qt5-gl** and **VTK**.
 
 # Install and Run
 
-In the following, we describe how to install and run invipy on Windows and Linux.
+In the following, we describe how to install and run BrainVisPy on Windows and Linux.
 
 ## Windows
 
@@ -16,8 +16,8 @@ We use 64bit Windows 8.
   * Add **C:\Program Files\VTK\7.0.0\bin** to the **Path** environment variable.
   * Add **C:\Program Files\VTK\7.0.0\lib\python3.5\site-packages\vtk;C:\Program Files\VTK\7.0.0\lib\python3.5\site-packages** to the **PYTHONPATH** environment variable (create one if it does not exist).
 
-* **Run invipy.**
-  * Check out this repository or download the code. Open a command prompt and go to the directory containing **invipy.py**. Run `python invipy.py`
+* **Run BrainVisPy.**
+  * Check out this repository or download the code. Open a command prompt and go to the directory containing **main.py**. Run `python main.py`
   * Alternatively, read [here](doc/single_executable_file.md) how to create a single executable file.
 
 
@@ -33,6 +33,6 @@ We use 64bit Ubuntu 14.
   * Add **/local/usr/vtk-7.0.0/lib** to the **LD_LIBRARY_PATH** environment variable.
   * Add **/local/usr/vtk-7.0.0/lib/python3.5/site-packages:/local/usr/vtk-7.0.0/lib/python3.5/site-packages/vtk** to the **PYTHONPATH** environment variable.
 
-* **Run invipy.**
-  * Check out this repository or download the code. Open a command prompt and go to the directory containing **invipy.py**. Run `python invipy.py`
+* **Run BrainVisPy.**
+  * Check out this repository or download the code. Open a command prompt and go to the directory containing **main.py**. Run `python main.py`
   * Alternatively, read [here](doc/single_executable_file.md) how to create a single executable file.
