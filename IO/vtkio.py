@@ -9,8 +9,8 @@ class VtkIO:
   def get_reader(self, file_extension):
     '''Returns a reader that can read the file type having the provided extension. Returns None if no such reader.'''
     lower_file_ext = file_extension.lower()
-    #if (lower_file_ext == ".tiff" or lower_file_ext == ".tif"):
-    #  return vtk.vtkTIFFReader()
+    if (lower_file_ext == ".tiff" or lower_file_ext == ".tif"):
+      return vtk.vtkTIFFReader()
     if (lower_file_ext == ".vtk"):
       return vtk.vtkPolyDataReader()
     if (lower_file_ext == ".ply"):

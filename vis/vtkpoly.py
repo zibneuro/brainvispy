@@ -15,6 +15,32 @@ class VtkPolyModel(VtkModel):
     self.__actor.GetProperty().SetAmbient(0.05)
 
 
+  def add_yourself(self, renderer, interactor):
+    renderer.AddActor(self.actor)
+
+
+  def visibility_on(self):
+    self.prop_3d.VisibilityOn()
+
+
+  def visibility_off(self):
+    self.prop_3d.VisibilityOff()
+
+
+  def toggle_visibility(self):
+    self.prop_3d.SetVisibility(1 - self.prop_3d.GetVisibility())
+
+
+  def highlight_on(self):
+    d = self.get_diffuse_color()
+    self.__actor.GetProperty().SetAmbientColor(d[0], d[1], d[2])
+    self.__actor.GetProperty().SetAmbient(0.5)
+
+
+  def highlight_off(self):
+    self.__actor.GetProperty().SetAmbient(0.05)
+
+
   def set_transparency(self, value):
     """Sets the transparency of the model (0: non-transparent, i.e, not see-through,
     1: full transparent, i.e., invisible)."""
@@ -33,16 +59,6 @@ class VtkPolyModel(VtkModel):
 
   def set_diffuse_color(self, r, g, b):
     return self.__actor.GetProperty().SetDiffuseColor(r, g, b)
-
-
-  def highlight_on(self):
-    d = self.get_diffuse_color()
-    self.__actor.GetProperty().SetAmbientColor(d[0], d[1], d[2])
-    self.__actor.GetProperty().SetAmbient(0.5)
-
-
-  def highlight_off(self):
-    self.__actor.GetProperty().SetAmbient(0.05)
 
 
   @property

@@ -1,47 +1,46 @@
 import vtk
 from .vtkmodel import VtkModel
 
-class VtkVolumeModel:
+class VtkVolumeModel(VtkModel):
   def __init__(self, file_name, name, image_data):
     if not isinstance(image_data, vtk.vtkImageData):
       raise TypeError("input has to be vtkImageData")
 
-    VtkModel.__init__(file_name, name)
+    super().__init__(file_name, name)
 
-    # Create transfer mapping scalar value to opacity.
-    opacity_function = vtk.vtkPiecewiseFunction()
-    opacity_function.AddPoint(0,   0.0)
-    opacity_function.AddPoint(127, 0.0)
-    opacity_function.AddPoint(128, 0.2)
-    opacity_function.AddPoint(255, 0.2)
-
-    # Create transfer mapping scalar value to color.
-    color_function = vtk.vtkColorTransferFunction()
-    color_function.SetColorSpaceToHSV()
-    color_function.AddHSVPoint(0,   0.0, 0.0, 0.0)
-    color_function.AddHSVPoint(127, 0.0, 0.0, 0.0)
-    color_function.AddHSVPoint(128, 0.0, 0.0, 1.0)
-    color_function.AddHSVPoint(255, 0.0, 0.0, 1.0)
-
-    volume_property = vtk.vtkVolumeProperty()
-    volume_property.SetColor(color_function)
-    volume_property.SetScalarOpacity(opacity_function)
-    volume_property.ShadeOn()
-    volume_property.SetInterpolationTypeToLinear()
-
-    volume_mapper = vtk.vtkSmartVolumeMapper()
-    volume_mapper.SetInputData(image_data)
-
-    self.__volume = vtk.vtkVolume()
-    self.__volume.SetMapper(volume_mapper)
-    self.__volume.SetProperty(volume_property)
+    # The slicer for the volume data
+    self.__image_slicer = vtk.vtkImagePlaneWidget()
+    self.__image_slicer.SetResliceInterpolateToCubic()
+    self.__image_slicer.SetInputData(image_data)
+    self.__image_slicer.SetPlaneOrientationToZAxes()
 
 
-  @property
-  def volume(self):
-    return self.__volume
+  def add_yourself(self, renderer, interactor):
+    self.__image_slicer.SetInteractor(interactor)
+    self.__image_slicer.On()
+    self.__image_slicer.InteractionOff()
+
+
+  def visibility_on(self):
+    self.__image_slicer.On()
+
+
+  def visibility_off(self):
+    self.__image_slicer.Off()
+
+
+  def toggle_visibility(self):
+    self.__image_slicer.SetEnabled(1 - self.__image_slicer.GetEnabled())
+
+
+  def highlight_on(self):
+    pass
+
+
+  def highlight_off(self):
+    pass
 
 
   @property
   def prop_3d(self):
-    return self.__volume
+    return self.__image_slicer.GetProp3D()

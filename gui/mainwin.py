@@ -69,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __on_load_files(self):
     #default_folder = r"C:\Users\papazov\Google Drive\research\data\models" # Windows
-    default_folder = r"/local/data/zbrain/masks/remeshed/15_Percent_Size"
+    default_folder = r"/local/data/zbrain/masks"
 
     # Let the user select the files (file_names[0] will be the list with the file names)
     file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", default_folder, r"All Files (*.*)")

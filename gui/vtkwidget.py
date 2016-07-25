@@ -98,7 +98,8 @@ class VtkWidget(Observer):
     # Add all the data to the renderer
     for data_item in data_items:
       counter += 1
-      self.renderer.AddViewProp(data_item.prop_3d)
+      #self.renderer.AddViewProp(data_item.prop_3d)
+      data_item.add_yourself(self.renderer, self.render_window_interactor)
       if self.__progress_bar:
         self.__progress_bar.set_progress(counter)
 

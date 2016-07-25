@@ -5,15 +5,6 @@ class VtkModel(metaclass = abc.ABCMeta):
     self._file_name = file_name
     self._name = name
 
-  def visibility_on(self):
-    self.prop_3d.VisibilityOn()
-
-  def visibility_off(self):
-    self.prop_3d.VisibilityOff()
-
-  def toggle_visibility(self):
-    self.prop_3d.SetVisibility(1 - self.prop_3d.GetVisibility())
-
   @property
   def file_name(self):
     return self._file_name
@@ -22,10 +13,22 @@ class VtkModel(metaclass = abc.ABCMeta):
   def name(self):
     return self._name
 
-  @property
   @abc.abstractmethod
-  def prop_3d(self):
+  def add_yourself(self, renderer, interactor):
     pass
+
+  @abc.abstractmethod
+  def visibility_on(self):
+    pass
+
+  @abc.abstractmethod
+  def visibility_off(self):
+    pass
+
+  @abc.abstractmethod
+  def toggle_visibility(self):
+    pass
+
 
   @abc.abstractmethod
   def highlight_on(self):
@@ -33,4 +36,9 @@ class VtkModel(metaclass = abc.ABCMeta):
 
   @abc.abstractmethod
   def highlight_off(self):
+    pass
+
+  @property
+  @abc.abstractmethod
+  def prop_3d(self):
     pass
