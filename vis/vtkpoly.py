@@ -32,8 +32,6 @@ class VtkPolyModel(VtkModel):
 
 
   def highlight_on(self):
-    d = self.get_diffuse_color()
-    self.__actor.GetProperty().SetAmbientColor(d[0], d[1], d[2])
     self.__actor.GetProperty().SetAmbient(0.5)
 
 
@@ -53,12 +51,13 @@ class VtkPolyModel(VtkModel):
     return 1.0 - self.__actor.GetProperty().GetOpacity()
 
 
-  def get_diffuse_color(self):
+  def get_color(self):
     return self.__actor.GetProperty().GetDiffuseColor()
 
 
-  def set_diffuse_color(self, r, g, b):
-    return self.__actor.GetProperty().SetDiffuseColor(r, g, b)
+  def set_color(self, r, g, b):
+    self.__actor.GetProperty().SetDiffuseColor(r, g, b)
+    self.__actor.GetProperty().SetAmbientColor(r, g, b)
 
 
   @property

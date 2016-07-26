@@ -8,6 +8,8 @@ class VtkVolumeModel(VtkModel):
 
     super().__init__(file_name, name)
 
+    self.__image_data = image_data
+
     # The slicer for the volume data
     self.__image_slicer = vtk.vtkImagePlaneWidget()
     self.__image_slicer.SetResliceInterpolateToCubic()
@@ -19,6 +21,18 @@ class VtkVolumeModel(VtkModel):
     self.__image_slicer.SetInteractor(interactor)
     self.__image_slicer.On()
     self.__image_slicer.InteractionOff()
+
+
+  def get_number_of_slices(self):
+    return 1 + self.__image_data.GetExtent()[5]
+
+
+  def get_slice_index(self):
+    return self.__image_slicer.GetSliceIndex()
+
+
+  def set_slice_index(self, index):
+    return self.__image_slicer.SetSliceIndex(index)
 
 
   def visibility_on(self):

@@ -13,6 +13,7 @@ class DataContainer(Observable):
   change_is_data_visibility = 3
   change_is_color = 4
   change_is_transparency = 5
+  change_is_slice_index = 6
 
   def __init__(self):
     Observable.__init__(self)
@@ -30,11 +31,7 @@ class DataContainer(Observable):
     random.seed()
 
   def compute_random_rgb_color(self):
-    hsv = list()
-    hsv.append(random.uniform(0.0, 0.6))
-    hsv.append(0.8)
-    hsv.append(1.0)
-    return vtk.vtkMath.HSVToRGB(hsv)
+    return vtk.vtkMath.HSVToRGB((random.uniform(0.0, 0.6), 0.8, 1.0))
 
 
   def load_files(self, file_names, progress_bar = None):
@@ -65,6 +62,10 @@ class DataContainer(Observable):
 
   def update_transparency(self):
     self.notify_observers_abount_change(DataContainer.change_is_transparency, None)
+
+
+  def update_slice_index(self):
+    self.notify_observers_abount_change(DataContainer.change_is_slice_index, None)
 
 
   def set_model_selection_by_props(self, props):
@@ -108,7 +109,7 @@ class DataContainer(Observable):
     return self.file_name_to_volume_models.get(file_name) != None or self.file_name_to_poly_models.get(file_name) != None
 
 
-  def create_unique_name(self, file_name):
+  def __create_unique_name(self, file_name):
     # Take the file name without the path as a base for the new name
     name = os.path.split(file_name)[1]
     # How many times has this name been used
@@ -150,15 +151,15 @@ class DataContainer(Observable):
     # Decide what to do with the data according to its type
     if isinstance(data, vtk.vtkImageData):
       # Create a new volume model and save it
-      volume_model = VtkVolumeModel(file_name, self.create_unique_name(file_name), data)
+      volume_model = VtkVolumeModel(file_name, self.__create_unique_name(file_name), data)
       self.file_name_to_volume_models[file_name] = volume_model
       self.prop_3d_to_volume_models[volume_model.prop_3d] = volume_model
       return volume_model
     elif isinstance(data, vtk.vtkPolyData):
       # Create a new poly-data model and save it
-      poly_model = VtkPolyModel(file_name, self.create_unique_name(file_name), data)
+      poly_model = VtkPolyModel(file_name, self.__create_unique_name(file_name), data)
       rgb = self.compute_random_rgb_color()
-      poly_model.set_diffuse_color(rgb[0], rgb[1], rgb[2])
+      poly_model.set_color(rgb[0], rgb[1], rgb[2])
       self.file_name_to_poly_models[file_name] = poly_model
       self.prop_3d_to_poly_models[poly_model.prop_3d] = poly_model
       return poly_model

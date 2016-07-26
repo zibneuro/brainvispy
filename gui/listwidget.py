@@ -1,3 +1,4 @@
+from vis.vtkvol import VtkVolumeModel
 from core.modelview import Observer
 from core.datacontainer import DataContainer
 from PyQt5 import QtCore, QtWidgets
@@ -83,7 +84,7 @@ class ListWidget(Observer):
     for item in self.__ordered_items:
       if text in item.model.name.lower():
         item.is_hidden = False
-        self.__qt_list_widget.insertItem(0, item.qt_list_item)
+        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), item.qt_list_item)
       else:
         item.is_hidden = True
 
@@ -178,14 +179,18 @@ class ListWidget(Observer):
       qt_list_item = QtWidgets.QListWidgetItem(model.name) # Better not to pass the Qt List as second argument. When passing it, itemChanged gets triggered.
       qt_list_item.setFlags(qt_list_item.flags() | QtCore.Qt.ItemIsUserCheckable)
       qt_list_item.setCheckState(QtCore.Qt.Checked)
-      self.__qt_list_widget.insertItem(0, qt_list_item)
       # Create our own data item
       item = ListWidgetItem(model, qt_list_item)
       # Save the item in the dictionaries
       self.__name_to_item[model.name] = item
       self.__model_to_item[model] = item
       # Save the item in the ordered list
-      self.__ordered_items.append(item)
+      if isinstance(model, VtkVolumeModel):
+        self.__ordered_items.insert(0, item)
+        self.__qt_list_widget.insertItem(0, qt_list_item)
+      else:
+        self.__ordered_items.append(item)
+        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), qt_list_item)
 
 
   def __update_selection(self, data):

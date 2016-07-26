@@ -10,7 +10,7 @@ class VtkPolyModelGUI(Observer):
       raise TypeError("the data container has the wrong type")
 
     # Register yourself as an observer
-    self.__data_container = data_container;
+    self.__data_container = data_container
     self.__data_container.add_observer(self)
 
     # This list keeps the models (objects) we have
@@ -41,76 +41,22 @@ class VtkPolyModelGUI(Observer):
     layout.addWidget(self.__transparency_slider, 1, 1)
     layout.setHorizontalSpacing(10)
     # Group the GUI elements together
-    self.gui_widget = QtWidgets.QGroupBox("properties")
+    self.gui_widget = QtWidgets.QGroupBox("surface properties")
     self.gui_widget.setLayout(layout)
-
-
-  def hide(self):
-    self.gui_widget.hide()
-
-
-  def show(self):
-    self.gui_widget.show()
+    self.__hide()
 
 
   def observable_changed(self, change, data):
-    # Decide what to the depending on the change
-    if change == DataContainer.change_is_color:
+    # Decide what to do depending on the change
+    if change == DataContainer.change_is_new_selection:
+      self.__update(data)
+    elif change == DataContainer.change_is_color:
       self.__update_color_selection_button()
+    elif change == DataContainer.change_is_transparency:
+      self.__update_transparency_slider()
 
 
-  def __rgb_tuple_to_hex_string(self, rgb):
-    """Assumes that the first three values in the 'rgb' tuple (or list) are in the range [0, 1]. Returns a hex color in the form #xyzuvw."""
-    hex_color = "#"
-    for k in range(3):
-      hex_color += hex(int(255.0*rgb[k]))[2:].zfill(2) # scale to range [0, 255], convert to hex, remove the "0x" and fill with zeroes
-    return hex_color
-
-
-  def __on_color_button_clicked(self):
-    if len(self.__poly_models) <= 0:
-      return
-
-    # Get the current color of the button
-    current_color = self.__select_color_btn.palette().color(QtGui.QPalette.Window)
-    # Open a color chooser with the current color as default
-    selected_color = QtWidgets.QColorDialog.getColor(current_color)
-    # Make sure that the user clicked on OK (i.e., that she selected a color)
-    if not selected_color.isValid():
-      return
-
-    # Scale the color to the range [0, 1] (that's what VTK expects)
-    r = selected_color.red() / 255.0
-    g = selected_color.green() / 255.0
-    b = selected_color.blue() / 255.0
-
-    # Loop over the models and assign them the selected color
-    for model in self.__poly_models:
-      model.set_diffuse_color(r, g, b)
-      model.highlight_on()
-
-    # Notify the data container that some of its data changed (this will call this objects)
-    self.__data_container.update_color()
-
-
-  def __on_transparency_slider_value_changed(self):
-    if self.__ignore_transparency_slider_value_changed_callback:
-      return
-
-    if len(self.__poly_models) <= 0:
-      return
-
-    transparency = self.__transparency_slider.value() / 100.0
-
-    # Loop over the models and assign them the selected color
-    for model in self.__poly_models:
-      model.set_transparency(transparency)
-
-    # Notify the data container that some of its data changed (this will call this objects)
-    self.__data_container.update_transparency()
-
-
-  def set_models(self, models):
+  def __update(self, models):
     self.__poly_models = list()
 
     # Get the poly models only
@@ -118,9 +64,12 @@ class VtkPolyModelGUI(Observer):
       if isinstance(model, VtkPolyModel):
         self.__poly_models.append(model)
 
-    if len(self.__poly_models) > 0:
+    if self.__poly_models:
       self.__update_color_selection_button()
       self.__update_transparency_slider()
+      self.__show()
+    else:
+      self.__hide()
 
 
   def __update_color_selection_button(self):
@@ -128,7 +77,7 @@ class VtkPolyModelGUI(Observer):
     color_strings = set()
     # Get all colors
     for model in self.__poly_models:
-      color_strings.add(self.__rgb_tuple_to_hex_string(model.get_diffuse_color()))
+      color_strings.add(self.__rgb_tuple_to_hex_string(model.get_color()))
     # Update the button depending on whether we have a single or multiple colors
     if len(color_strings) == 1:
       self.__select_color_btn.setStyleSheet("background-color: " + next(iter(color_strings)))
@@ -137,7 +86,7 @@ class VtkPolyModelGUI(Observer):
 
 
   def __update_transparency_slider(self):
-    if len(self.__poly_models) <= 0:
+    if not self.__poly_models:
       return
 
     transparency_sum = 0.0
@@ -154,3 +103,58 @@ class VtkPolyModelGUI(Observer):
 
     # Restore the state
     self.__ignore_transparency_slider_value_changed_callback = ignore_transparency_slider_value_changed_callback
+
+
+  def __rgb_tuple_to_hex_string(self, rgb):
+    """Assumes that the first three values in the 'rgb' tuple (or list) are in the range [0, 1]. Returns a hex color in the form #xyzuvw."""
+    hex_color = "#"
+    for k in range(3):
+      hex_color += hex(int(255.0*rgb[k]))[2:].zfill(2) # scale to range [0, 255], convert to hex, remove the "0x" and fill with zeroes
+    return hex_color
+
+
+  def __on_color_button_clicked(self):
+    if not self.__poly_models:
+      return
+
+    # Get the current color of the button
+    current_color = self.__select_color_btn.palette().color(QtGui.QPalette.Window)
+    # Open a color chooser with the current color as default
+    selected_color = QtWidgets.QColorDialog.getColor(current_color)
+    # Make sure that the user clicked on OK (i.e., that she selected a color)
+    if not selected_color.isValid():
+      return
+
+    # Scale the color to the range [0, 1] (that's what VTK needs)
+    r = selected_color.red() / 255.0
+    g = selected_color.green() / 255.0
+    b = selected_color.blue() / 255.0
+
+    # Loop over the models and assign them the selected color
+    for model in self.__poly_models:
+      model.set_color(r, g, b)
+
+    # Notify the data container that some of its data changed (this will call this objects)
+    self.__data_container.update_color()
+
+
+  def __on_transparency_slider_value_changed(self):
+    if self.__ignore_transparency_slider_value_changed_callback or not self.__poly_models:
+      return
+
+    transparency = self.__transparency_slider.value() / 100.0
+
+    # Loop over the models and assign them the selected color
+    for model in self.__poly_models:
+      model.set_transparency(transparency)
+
+    # Notify the data container that some of its data changed (this will call this objects)
+    self.__data_container.update_transparency()
+
+
+  def __hide(self):
+    self.gui_widget.hide()
+
+
+  def __show(self):
+    self.gui_widget.show()

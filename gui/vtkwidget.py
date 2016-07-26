@@ -45,11 +45,11 @@ class VtkWidget(Observer):
     # Decide what to do depending on what changed
     if change == DataContainer.change_is_new_data:
       self.__add_data_items(data)
-    elif change == DataContainer.change_is_data_visibility:
+    elif change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
       self.update_clipping_range_and_render()
     elif change == DataContainer.change_is_new_selection:
       self.__highlight_models(data)
-    elif change == DataContainer.change_is_color or change == DataContainer.change_is_transparency:
+    else:
       self.render()
 
 
