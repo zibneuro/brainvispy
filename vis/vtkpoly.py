@@ -20,15 +20,15 @@ class VtkPolyModel(VtkModel):
 
 
   def visibility_on(self):
-    self.prop_3d.VisibilityOn()
+    self.actor.VisibilityOn()
 
 
   def visibility_off(self):
-    self.prop_3d.VisibilityOff()
+    self.actor.VisibilityOff()
 
 
   def toggle_visibility(self):
-    self.prop_3d.SetVisibility(1 - self.prop_3d.GetVisibility())
+    self.actor.SetVisibility(1 - self.actor.GetVisibility())
 
 
   def highlight_on(self):
@@ -66,5 +66,5 @@ class VtkPolyModel(VtkModel):
 
 
   @property
-  def prop_3d(self):
-    return self.__actor
+  def vtk_property(self):
+    return self.actor.GetProperty()

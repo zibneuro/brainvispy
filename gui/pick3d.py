@@ -15,10 +15,8 @@ class ModelPicker(Observer):
     self.__picker = self.__interactor.GetPicker()
     self.__perform_picking = True
     
-    self.__ignore_observable_change = False
-
     # Here we keep the selected models (by props)
-    self.__selected_props = set()
+    self.__selected_vtk_properties = set()
 
     self.__interactor_style.AddObserver("LeftButtonPressEvent", self.__on_left_button_pressed)
     self.__interactor_style.AddObserver("LeftButtonReleaseEvent", self.__on_left_button_released)
@@ -29,32 +27,21 @@ class ModelPicker(Observer):
     # Perform the picking
     self.__picker.Pick(xy_pos[0], xy_pos[1], 0, renderer)
     # Get what you picked
-    picked_prop = self.__picker.GetProp3D()
-    # Make sure we really picked something
-    if picked_prop:
-      # Remove the selected model if the user holds the ctrl key and selects it for the second time
-      if self.__interactor.GetControlKey() and picked_prop in self.__selected_props:
-        self.__selected_props.remove(picked_prop)
-        picked_prop = None
+    picked_vtk_property = None    
+    if self.__picker.GetProp3D():
+      picked_vtk_property = self.__picker.GetProp3D().GetProperty()
 
-    # Clear the current selection if the user doesn't hold the ctrl. key
-    if not self.__interactor.GetControlKey():
-      self.__selected_props.clear()
+    if not self.__interactor.GetControlKey(): # the user doesn't hold ctrl. key
+      self.__selected_vtk_properties.clear()
+    elif picked_vtk_property in self.__selected_vtk_properties: # the user holds ctrl. and selects the same model twice
+      self.__selected_vtk_properties.remove(picked_vtk_property)
+      picked_vtk_property = None # unselected the already selected model
 
-    if picked_prop:
-      self.__selected_props.add(picked_prop)
-
-    # We will notify the data container to update its selection. This would call this object's
-    # observable_changed method. We are not interested in that since we are initiating the change.
-    # That's why the following lines:
-    ignore_observable_change = self.__ignore_observable_change # svae the current state
-    self.__ignore_observable_change = True
+    if picked_vtk_property:
+      self.__selected_vtk_properties.add(picked_vtk_property)
 
     # Update the container which then notifies all observers (including this one that new selection was made)
-    self.__data_container.set_model_selection_by_props(list(self.__selected_props))
-    
-    # Restore the state
-    self.__ignore_observable_change = ignore_observable_change
+    self.__data_container.set_model_selection_by_vtk_properties(list(self.__selected_vtk_properties))
 
 
   def __on_left_button_pressed(self, obj, event):
@@ -76,9 +63,7 @@ class ModelPicker(Observer):
 
 
   def observable_changed(self, change, data):
-    if self.__ignore_observable_change:
-      return
     if change == DataContainer.change_is_new_selection:
-      self.__selected_props.clear()
+      self.__selected_vtk_properties.clear()
       for model in data:
-        self.__selected_props.add(model.prop_3d)
+        self.__selected_vtk_properties.add(model.vtk_property)

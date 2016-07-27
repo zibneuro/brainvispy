@@ -17,21 +17,16 @@ class DataContainer(Observable):
 
   def __init__(self):
     Observable.__init__(self)
-    # The data sorted according to file names
-    self.file_name_to_volume_models = dict()
-    self.file_name_to_poly_models = dict()
-    # The same data sorted according to 3D props
-    self.prop_3d_to_volume_models = dict()
-    self.prop_3d_to_poly_models = dict()
+    # The models indexed by file names
+    self.__file_name_to_models = dict()
+    # The same models indexed by vtkProperty (necessary for picking in the 3D window)
+    self.__vtk_property_to_models = dict()
 
     # This one saves how many times a name has been used (in order to give unique names)
     self.__name_histogram = dict()
 
     # Initialize the random number generator
     random.seed()
-
-  def compute_random_rgb_color(self):
-    return vtk.vtkMath.HSVToRGB((random.uniform(0.0, 0.6), 0.8, 1.0))
 
 
   def load_files(self, file_names, progress_bar = None):
@@ -47,7 +42,7 @@ class DataContainer(Observable):
 
   def get_models(self):
     """Returns a list of all models (volume and poly)."""
-    return list(self.file_name_to_volume_models.values()) + list(self.file_name_to_poly_models.values())
+    return list(self.__file_name_to_models.values())
 
 
   def update_visibility(self):
@@ -68,10 +63,10 @@ class DataContainer(Observable):
     self.notify_observers_abount_change(DataContainer.change_is_slice_index, None)
 
 
-  def set_model_selection_by_props(self, props):
+  def set_model_selection_by_vtk_properties(self, props):
     existing_selected_models = list()
     for prop in props:
-      model = self.get_model_by_prop(prop)
+      model = self.get_model_by_vtk_property(prop)
       if model:
         existing_selected_models.append(model)
     # Norify the observers about the new selection
@@ -88,25 +83,21 @@ class DataContainer(Observable):
     self.notify_observers_abount_change(DataContainer.change_is_new_selection, existing_selected_models)
 
 
-  def get_model_by_file_name(self, model_name):
+  def get_model_by_file_name(self, file_name):
     """Returns the model which has the provided name or None if no such model exists."""
-    model = self.file_name_to_volume_models.get(model_name)
-    if model:
-      return model
-    return self.file_name_to_poly_models.get(model_name)
+    return self.__file_name_to_models.get(file_name)
 
 
-  def get_model_by_prop(self, prop):
-    """Returns the model which has the provided name or None if no such model exists."""
-    model = self.prop_3d_to_volume_models.get(prop)
-    if model:
-      return model
-    return self.prop_3d_to_poly_models.get(prop)
+  def get_model_by_vtk_property(self, vtk_property):
+    if not isinstance(vtk_property, vtk.vtkProperty):
+      raise TypeError("the input has to be a vtkProperty")
+    """Returns the model which has the provided vtkProperty or None."""
+    return self.__vtk_property_to_models.get(vtk_property)
 
 
   def has_data(self, file_name):
     """Returns True if the data from 'file_name' is already in this container and False otherwise."""
-    return self.file_name_to_volume_models.get(file_name) != None or self.file_name_to_poly_models.get(file_name) != None
+    return self.__file_name_to_models.get(file_name) != None
 
 
   def __create_unique_name(self, file_name):
@@ -147,22 +138,25 @@ class DataContainer(Observable):
 
 
   def __create_and_save_model(self, file_name, data):
-    """Creates and save a model of the right type. Returns the new model if the data type is known and None otherwise."""
+    """Create and save a model of the right type. Returns the new model if the data type is known and None otherwise."""
+    model = None
     # Decide what to do with the data according to its type
     if isinstance(data, vtk.vtkImageData):
-      # Create a new volume model and save it
-      volume_model = VtkVolumeModel(file_name, self.__create_unique_name(file_name), data)
-      self.file_name_to_volume_models[file_name] = volume_model
-      self.prop_3d_to_volume_models[volume_model.prop_3d] = volume_model
-      return volume_model
+      model = VtkVolumeModel(file_name, self.__create_unique_name(file_name), data)
     elif isinstance(data, vtk.vtkPolyData):
-      # Create a new poly-data model and save it
-      poly_model = VtkPolyModel(file_name, self.__create_unique_name(file_name), data)
-      rgb = self.compute_random_rgb_color()
-      poly_model.set_color(rgb[0], rgb[1], rgb[2])
-      self.file_name_to_poly_models[file_name] = poly_model
-      self.prop_3d_to_poly_models[poly_model.prop_3d] = poly_model
-      return poly_model
+      model = VtkPolyModel(file_name, self.__create_unique_name(file_name), data)
+      rgb = self.__compute_random_rgb_color()
+      model.set_color(rgb[0], rgb[1], rgb[2])
+    else:
+      # Unknown data type
+      return None
+
+    # Save the model
+    self.__file_name_to_models[file_name] = model
+    self.__vtk_property_to_models[model.vtk_property] = model
 
     # Unknown data type
-    return None
+    return model
+
+  def __compute_random_rgb_color(self):
+    return vtk.vtkMath.HSVToRGB((random.uniform(0.0, 0.6), 0.8, 1.0))

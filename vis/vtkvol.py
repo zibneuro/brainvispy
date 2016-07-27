@@ -56,5 +56,5 @@ class VtkVolumeModel(VtkModel):
 
 
   @property
-  def prop_3d(self):
-    return self.__image_slicer.GetProp3D()
+  def vtk_property(self):
+    return self.__image_slicer.GetTexturePlaneProperty()
