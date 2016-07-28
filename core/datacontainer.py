@@ -29,6 +29,13 @@ class DataContainer(Observable):
     random.seed()
 
 
+  def is_empty(self):
+    if not self.__file_name_to_models:
+      return True
+    else:
+      return False
+
+
   def load_files(self, file_names, progress_bar = None):
     """Loads the (supported) data files and notifies the observers about the new data."""
     unique_file_names = list()

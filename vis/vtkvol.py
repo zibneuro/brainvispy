@@ -47,6 +47,10 @@ class VtkVolumeModel(VtkModel):
     self.__image_slicer.SetEnabled(1 - self.__image_slicer.GetEnabled())
 
 
+  def is_visible(self):
+    return self.__image_slicer.GetEnabled() == 1
+
+
   def highlight_on(self):
     pass
 

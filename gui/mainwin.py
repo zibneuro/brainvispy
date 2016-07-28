@@ -6,6 +6,7 @@ from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
 from gui.propspanel import PropsPanel
 from core.datacontainer import DataContainer
+from IO.project import ProjectIO
 
 
 #==================================================================================================
@@ -33,22 +34,33 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __add_menus(self):
-    # Load file(s)    
+    # Open project
+    open_project_action = QtWidgets.QAction('Open project', self)
+    open_project_action.setShortcut('Ctrl+O')
+    open_project_action.triggered.connect(self.__on_open_project)
+    # Load file(s)
     load_files_action = QtWidgets.QAction('Load file(s)', self)
     load_files_action.setShortcut('Ctrl+L')
     load_files_action.triggered.connect(self.__on_load_files)
     # Load folder
-    load_folder_action = QtWidgets.QAction('Load folder', self)
+    load_folder_action = QtWidgets.QAction('Import folder', self)
     load_folder_action.setShortcut('Ctrl+I')
     load_folder_action.triggered.connect(self.__on_load_folder)
+    # Save project
+    save_project_action = QtWidgets.QAction('Save project', self)
+    save_project_action.setShortcut('Ctrl+S')
+    save_project_action.triggered.connect(self.__on_save_project)
     # Quit
     quit_action = QtWidgets.QAction('Quit', self)
     quit_action.setShortcut('Ctrl+Q')
-    quit_action.triggered.connect(QtWidgets.qApp.quit)
+    quit_action.triggered.connect(self.close)
 
-    file_menu = self.menuBar().addMenu(r"&FILE")
+    file_menu = self.menuBar().addMenu("FILE")
+    file_menu.addAction(open_project_action)
     file_menu.addAction(load_files_action)
     file_menu.addAction(load_folder_action)
+    file_menu.addSeparator()
+    file_menu.addAction(save_project_action)
     file_menu.addSeparator()
     file_menu.addAction(quit_action)
 
@@ -65,6 +77,10 @@ class MainWindow(QtWidgets.QMainWindow):
     # Add the dock which shows the properties of the selected object (on the right in the main window)
     self.props_panel = PropsPanel(self.__data_container)
     self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.props_panel.dock_widget)
+
+
+  def __on_open_project(self):
+    print("Open project")
 
 
   def __on_load_files(self):
@@ -95,3 +111,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # Let the data_container load the files. The data_container will notify its observers that new data was loaded.
     self.__data_container.load_files(full_file_names, self.__file_load_progress_bar)
+
+
+  def __on_save_project(self):
+    if self.__data_container.is_empty():
+      print("nothing to save")
+      return
+    # Get the project name
+    project_name = "/nfs/visual/bzfpapaz/research/data/bvpy_projects/first.bvpy.xml"
+    
+    try:
+      ProjectIO().save(project_name, self.__data_container)
+      print("saved '" + project_name + "'")
+    except Exception as err:
+      print(err)
+
+
+  def closeEvent(self, event):
+    reply = QtWidgets.QMessageBox.question(self, "Question", "Exit?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+    if reply == QtWidgets.QMessageBox.Yes:
+      event.accept()
+    else:
+      event.ignore()
