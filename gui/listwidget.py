@@ -6,26 +6,27 @@ from PyQt5 import QtCore, QtWidgets
 #============================================================================================================
 # ListWidgetItem ============================================================================================
 #============================================================================================================
-class ListWidgetItem:
-  def __init__(self, model, qt_list_item):
+class ListWidgetItem(QtWidgets.QListWidgetItem):
+  def __init__(self, model):
+    super().__init__(model.name)
+
     self.model = model
-    self.qt_list_item = qt_list_item
     self.is_hidden = False
-    self.is_selected = False
+    self.setSelected(False)
 
   def update_model_visibility(self):
     if self.__is_checked(): self.model.visibility_on()
     else: self.model.visibility_off()
 
   def __is_checked(self):
-    return self.qt_list_item.checkState() == QtCore.Qt.Checked
+    return self.checkState() == QtCore.Qt.Checked
 
   def set_checked(self):
-    if not self.__is_checked(): self.qt_list_item.setCheckState(QtCore.Qt.Checked)
+    if not self.__is_checked(): self.setCheckState(QtCore.Qt.Checked)
     self.model.visibility_on()
 
   def set_unchecked(self):
-    if self.__is_checked(): self.qt_list_item.setCheckState(QtCore.Qt.Unchecked)
+    if self.__is_checked(): self.setCheckState(QtCore.Qt.Unchecked)
     self.model.visibility_off()
 
   def toggle_check_state(self):
@@ -48,7 +49,6 @@ class ListWidget(Observer):
     self.__data_container.add_observer(self)
 
     self.__model_to_item = dict()
-    self.__name_to_item = dict()
     self.__ordered_items = list()
     self.__model_to_selected_item = dict()
 
@@ -76,7 +76,7 @@ class ListWidget(Observer):
     ignore_selection_callback = self.__ignore_selection_callback
     self.__ignore_selection_callback = True
     
-    # First, remove all elements from the list
+    # First, remove all elements from the list (don't call self.__qt_list_widget.clear() since the items are destroyed!)
     for i in range(self.__qt_list_widget.count()):
       self.__qt_list_widget.takeItem(0)
 
@@ -84,13 +84,13 @@ class ListWidget(Observer):
     for item in self.__ordered_items:
       if text in item.model.name.lower():
         item.is_hidden = False
-        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), item.qt_list_item)
+        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), item)
       else:
         item.is_hidden = True
 
     # Mark all selected items as such in the QListWidget
     for selected_item in self.__model_to_selected_item.values():
-      selected_item.qt_list_item.setSelected(True)
+      selected_item.setSelected(True)
 
     # Restore the state
     self.__ignore_selection_callback = ignore_selection_callback
@@ -146,10 +146,8 @@ class ListWidget(Observer):
     
     selected_models = list()
     
-    # Collect the names of the models selected by the user
-    for qt_item in self.__qt_list_widget.selectedItems():
-      item = self.__name_to_item.get(str(qt_item.text()))
-      if item:
+    # Collect the models selected by the user
+    for item in self.__qt_list_widget.selectedItems():
         selected_models.append(item.model)
 
     # If the user holds the ctrl. key, add the hidden selected items to the current ones
@@ -163,34 +161,32 @@ class ListWidget(Observer):
 
 
   def __on_item_changed(self, item):
-    # Get the changed data item
-    list_item = self.__name_to_item.get(str(item.text()))
-    if list_item:
-      list_item.update_model_visibility()
-      # Shall we update the data container and thus notify all its observers?
-      if self.__update_data_container_visibility:
-        self.__data_container.update_visibility()
+    item.update_model_visibility()
+    # Shall we update the data container and thus notify all its observers?
+    if self.__update_data_container_visibility:
+      self.__data_container.update_visibility()
 
 
   def __add_data_items(self, models):
     # Add one checkable list item per model
     for model in models:
       # First, create the Qt list item
-      qt_list_item = QtWidgets.QListWidgetItem(model.name) # Better not to pass the Qt List as second argument. When passing it, itemChanged gets triggered.
-      qt_list_item.setFlags(qt_list_item.flags() | QtCore.Qt.ItemIsUserCheckable)
-      qt_list_item.setCheckState(QtCore.Qt.Checked)
+      #qt_list_item = QtWidgets.QListWidgetItem(model.name) # Better not to pass the Qt List as second argument. When passing it, itemChanged gets triggered.
+      #qt_list_item.setFlags(qt_list_item.flags() | QtCore.Qt.ItemIsUserCheckable)
+      #qt_list_item.setCheckState(QtCore.Qt.Checked)
       # Create our own data item
-      item = ListWidgetItem(model, qt_list_item)
+      item = ListWidgetItem(model)
+      item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+      item.setCheckState(QtCore.Qt.Checked)
       # Save the item in the dictionaries
-      self.__name_to_item[model.name] = item
       self.__model_to_item[model] = item
       # Save the item in the ordered list
       if isinstance(model, VtkVolumeModel):
         self.__ordered_items.insert(0, item)
-        self.__qt_list_widget.insertItem(0, qt_list_item)
+        self.__qt_list_widget.insertItem(0, item)
       else:
         self.__ordered_items.append(item)
-        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), qt_list_item)
+        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), item)
 
 
   def __update_selection(self, data):
@@ -203,8 +199,6 @@ class ListWidget(Observer):
 
     # First, unselect all
     self.__qt_list_widget.clearSelection()
-    for item in self.__model_to_selected_item.values():
-      item.is_selected = False
     self.__model_to_selected_item.clear()
 
     item = None
@@ -213,13 +207,12 @@ class ListWidget(Observer):
     for model in data:
       item = self.__model_to_item.get(model)
       if item:
-        item.is_selected = True
-        item.qt_list_item.setSelected(True)
+        item.setSelected(True)
         self.__model_to_selected_item[model] = item
 
     # If there was only one item => scroll to it
     if len(data) == 1 and item:
-      self.__qt_list_widget.scrollToItem(item.qt_list_item)
+      self.__qt_list_widget.scrollToItem(item)
 
     # Restore the state
     self.__ignore_selection_callback = ignore_selection_callback

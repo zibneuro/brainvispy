@@ -22,9 +22,6 @@ class DataContainer(Observable):
     # The same models indexed by vtkProperty (necessary for picking in the 3D window)
     self.__vtk_property_to_models = dict()
 
-    # This one saves how many times a name has been used (in order to give unique names)
-    self.__name_histogram = dict()
-
     # Initialize the random number generator
     random.seed()
 
@@ -107,20 +104,6 @@ class DataContainer(Observable):
     return self.__file_name_to_models.get(file_name) != None
 
 
-  def __create_unique_name(self, file_name):
-    # Take the file name without the path as a base for the new name
-    name = os.path.split(file_name)[1]
-    # How many times has this name been used
-    used_n_times = self.__name_histogram.get(name)
-    
-    if used_n_times: # We will use 'name' once more => increment the counter
-      self.__name_histogram[name] = used_n_times + 1
-      return name + " (" + str(used_n_times) + ")"
-    else: # 'name' has never been used before
-      self.__name_histogram[name] = 1
-      return name
-
-
   def __add_data_items(self, file_name_data_pairs):
     # These will be the new data items (we do not want the same data twice)
     new_models = list()
@@ -149,9 +132,9 @@ class DataContainer(Observable):
     model = None
     # Decide what to do with the data according to its type
     if isinstance(data, vtk.vtkImageData):
-      model = VtkVolumeModel(file_name, self.__create_unique_name(file_name), data)
+      model = VtkVolumeModel(file_name, os.path.split(file_name)[1], data)
     elif isinstance(data, vtk.vtkPolyData):
-      model = VtkPolyModel(file_name, self.__create_unique_name(file_name), data)
+      model = VtkPolyModel(file_name, os.path.split(file_name)[1], data)
       rgb = self.__compute_random_rgb_color()
       model.set_color(rgb[0], rgb[1], rgb[2])
     else:

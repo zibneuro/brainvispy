@@ -17,9 +17,12 @@ class MainWindow(QtWidgets.QMainWindow):
     QtWidgets.QMainWindow.__init__(self)
 
     self.__qt_app = qt_app
+
     # This is the main guy. Almost all GUI elements are observers of this guy. It stores the data
     # and triggers events (e.g., when new data is loaded) to which its observers react.
     self.__data_container = DataContainer()
+    # This guy handles the IO
+    self.__project_io = ProjectIO()
 
     self.__file_load_progress_bar = ProgressBarFrame(self, self.__qt_app)
 
@@ -50,6 +53,10 @@ class MainWindow(QtWidgets.QMainWindow):
     save_project_action = QtWidgets.QAction('Save project', self)
     save_project_action.setShortcut('Ctrl+S')
     save_project_action.triggered.connect(self.__on_save_project)
+    # Save as project
+    save_project_as_action = QtWidgets.QAction('Save project as', self)
+    save_project_as_action.setShortcut('Ctrl+Shift+S')
+    save_project_as_action.triggered.connect(self.__on_save_project_as)
     # Quit
     quit_action = QtWidgets.QAction('Quit', self)
     quit_action.setShortcut('Ctrl+Q')
@@ -57,10 +64,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     file_menu = self.menuBar().addMenu("FILE")
     file_menu.addAction(open_project_action)
+    file_menu.addAction(save_project_action)
+    file_menu.addAction(save_project_as_action)
+    file_menu.addSeparator()    
     file_menu.addAction(load_files_action)
     file_menu.addAction(load_folder_action)
-    file_menu.addSeparator()
-    file_menu.addAction(save_project_action)
     file_menu.addSeparator()
     file_menu.addAction(quit_action)
 
@@ -88,15 +96,16 @@ class MainWindow(QtWidgets.QMainWindow):
     default_folder = r"/local/data/zbrain/masks"
 
     # Let the user select the files (file_names[0] will be the list with the file names)
-    file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", default_folder, r"All Files (*.*)")
+    file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", default_folder, r"All files (*.*)")
 
     # Let the data_container load the files. The data_container will notify its observers that new data was loaded.
-    self.__data_container.load_files(file_names[0], self.__file_load_progress_bar)
+    if file_names[0]:
+      self.__data_container.load_files(file_names[0], self.__file_load_progress_bar)
 
 
   def __on_load_folder(self):
     #default_folder = r"C:\Users\papazov\Google Drive\research\data\models" # Windows
-    default_folder = r"/local/data/zbrain/masks/test_meshes"
+    default_folder = r"/local/data/zbrain/masks/2_test_meshes"
   
     folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Load all files from a folder", default_folder)
     # Make sure we got an existing directory
@@ -114,21 +123,33 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_save_project(self):
-    if self.__data_container.is_empty():
-      print("nothing to save")
-      return
-    # Get the project name
-    project_name = "/nfs/visual/bzfpapaz/research/data/bvpy_projects/first.bvpy.xml"
-    
+    # Ask the user to specify a project name if necessary
+    if self.__project_io.has_file_name():
+      self.__save_project()
+    else:
+      self.__on_save_project_as()
+
+
+  def __on_save_project_as(self):
+    # Ask the user to specify a project name if necessary
+    default_folder = "/nfs/visual/bzfpapaz/research/data/bvpy_projects/"
+    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as ...", default_folder, r"XML Files (*.xml)")
+    if project_file_name[0]:
+      # Save the file name selected by the user
+      self.__project_io.set_file_name(project_file_name[0] + ".xml")
+      self.__save_project()
+
+
+  def __save_project(self):
     try:
-      ProjectIO().save(project_name, self.__data_container)
-      print("saved '" + project_name + "'")
+      self.__project_io.save(self.__data_container)
+      print("saved '" + self.__project_io.get_file_name() + "'")
     except Exception as err:
       print(err)
 
 
   def closeEvent(self, event):
-    reply = QtWidgets.QMessageBox.question(self, "Question", "Exit?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+    reply = QtWidgets.QMessageBox.question(self, "Question", "Quit?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
     if reply == QtWidgets.QMessageBox.Yes:
       event.accept()
     else:
