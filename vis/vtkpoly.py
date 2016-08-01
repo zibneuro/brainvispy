@@ -19,6 +19,10 @@ class VtkPolyModel(VtkModel):
     renderer.AddActor(self.actor)
 
 
+  def remove_yourself(self, renderer, interactor):
+    renderer.RemoveActor(self.actor)
+
+
   def visibility_on(self):
     self.actor.VisibilityOn()
 

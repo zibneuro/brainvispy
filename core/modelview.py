@@ -29,7 +29,7 @@ class Observable:
       self.observers.append(observer)
 
 
-  def notify_observers_abount_change(self, change, data):
+  def notify_observers_about_change(self, change, data):
     """The model should call this method when it changed and pass the specific change (should be one of the self.change_is_XXX members) and some data.
     This method then calls the observable_changed method of all registered observers passing 'change' and 'data' to each one."""
     for observer in self.observers:

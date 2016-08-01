@@ -18,6 +18,10 @@ class VtkModel(metaclass = abc.ABCMeta):
     pass
 
   @abc.abstractmethod
+  def remove_yourself(self, renderer, interactor):
+    pass
+
+  @abc.abstractmethod
   def is_visible(self):
     pass
 

@@ -46,9 +46,11 @@ class VtkWidget(Observer):
     if change == DataContainer.change_is_new_data:
       self.__add_data_items(data)
     elif change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
-      self.update_clipping_range_and_render()
+      self.reset_clipping_range()
     elif change == DataContainer.change_is_new_selection:
       self.__highlight_models(data)
+    elif change == DataContainer.change_is_deleted_models:
+      self.__delete_models(data)
     else:
       self.render()
 
@@ -57,7 +59,7 @@ class VtkWidget(Observer):
     """Renders the scene"""
     self.render_window_interactor.Render()
 
-  def update_clipping_range_and_render(self):
+  def reset_clipping_range(self):
     """Resets the clipping range of the camera and renders the scene"""
     self.renderer.ResetCameraClippingRange()
     self.render_window_interactor.Render()
@@ -121,3 +123,9 @@ class VtkWidget(Observer):
       model.highlight_on()
     # Update the view
     self.render()
+
+
+  def __delete_models(self, models):
+    for model in models:
+      model.remove_yourself(self.renderer, self.render_window_interactor)
+    self.reset_clipping_range()

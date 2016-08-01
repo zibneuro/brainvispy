@@ -23,6 +23,10 @@ class VtkVolumeModel(VtkModel):
     self.__image_slicer.InteractionOff()
 
 
+  def remove_yourself(self, renderer, interactor):
+    self.__image_slicer.Off()
+
+
   def get_number_of_slices(self):
     return 1 + self.__image_data.GetExtent()[5]
 

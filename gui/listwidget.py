@@ -49,18 +49,17 @@ class ListWidget(Observer):
     self.__data_container.add_observer(self)
 
     self.__model_to_item = dict()
-    self.__ordered_items = list()
     self.__model_to_selected_item = dict()
-
-    # The following ones are used in some of the callbacks
-    self.__update_data_container_visibility = True
-    self.__ignore_selection_callback = False
+    self.__ordered_items = list()    
 
     self.__qt_list_widget = QtWidgets.QListWidget()
     self.__qt_list_widget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
     self.__qt_list_widget.itemSelectionChanged.connect(self.__on_item_selection)
     self.__qt_list_widget.itemChanged.connect(self.__on_item_changed)
 
+    # The following ones are used in some of the callbacks
+    self.__update_data_container_visibility = True
+    self.__ignore_selection_callback = False
 
   def observable_changed(self, change, data):
     # Decide what to do depending on the change
@@ -68,6 +67,8 @@ class ListWidget(Observer):
       self.__add_data_items(data)
     elif change == DataContainer.change_is_new_selection:
       self.__update_selection(data)
+    elif change == DataContainer.change_is_deleted_models:
+      self.__delete_models(data)
 
 
   def show_items_containing_text(self, text):
@@ -202,7 +203,6 @@ class ListWidget(Observer):
     self.__model_to_selected_item.clear()
 
     item = None
-
     # Select only those in 'data'
     for model in data:
       item = self.__model_to_item.get(model)
@@ -215,6 +215,35 @@ class ListWidget(Observer):
       self.__qt_list_widget.scrollToItem(item)
 
     # Restore the state
+    self.__ignore_selection_callback = ignore_selection_callback
+
+
+  def __delete_models(self, models):
+    for model in models:
+      self.__delete_model(model)
+
+
+  def __delete_model(self, model):
+    ignore_selection_callback = self.__ignore_selection_callback
+    self.__ignore_selection_callback = True
+
+    # Get the list item corresponding to the model
+    item = self.__model_to_item.get(model)
+    
+    # Remove the model from the dictionaries 
+    try:
+      del self.__model_to_item[model]
+      del self.__model_to_selected_item[model]
+    except KeyError:
+      pass
+    # Remove the corresponding item from the QListWidget and another internal list
+    if item:
+      self.__qt_list_widget.takeItem(self.__qt_list_widget.row(item))
+      try:
+        self.__ordered_items.remove(item)
+      except KeyError:
+        pass
+
     self.__ignore_selection_callback = ignore_selection_callback
 
 
