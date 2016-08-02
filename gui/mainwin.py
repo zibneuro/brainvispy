@@ -88,7 +88,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_open_project(self):
-    print("Open project")
+    default_folder = "/home/visual/bzfpapaz/research/data/bvpy_projects"
+    #project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open BrainVisPy project ...", default_folder, r"XML Files (*.xml)")
+    #if project_file_name[0]:
+      #errors = self.__project_io.open(project_file_name[0], self.__data_container)
+    errors = self.__project_io.open("/home/visual/bzfpapaz/research/data/bvpy_projects/two_guys.xml", self.__data_container)
+    if not errors:
+      print("All 6")
 
 
   def __on_load_files(self):
@@ -135,8 +141,13 @@ class MainWindow(QtWidgets.QMainWindow):
     default_folder = "/nfs/visual/bzfpapaz/research/data/bvpy_projects/"
     project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as ...", default_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
-      # Save the file name selected by the user
-      self.__project_io.set_file_name(project_file_name[0] + ".xml")
+      ext = os.path.splitext(project_file_name[0])[1].lower()
+      if ext and ext == ".xml":
+        project_file_name = project_file_name[0]
+      else:
+        project_file_name = project_file_name[0] + ".xml"
+      # Now that we have the right file name, save the project
+      self.__project_io.set_file_name(project_file_name)
       self.__save_project()
 
 

@@ -36,6 +36,17 @@ class DataContainer(Observable):
       return False
 
 
+  def clear(self):
+    """Removes everything from the container leaving it empty. The observers get notified."""
+    # Notify the observers about the changes
+    self.notify_observers_about_change(DataContainer.change_is_deleted_models, list(self.__file_name_to_models.values()))
+    self.notify_observers_about_change(DataContainer.change_is_new_selection, list())
+    # Now, clear everything
+    self.__file_name_to_models = dict()
+    self.__vtk_property_to_models = dict()
+    self.__selected_models = set()
+
+
   def load_files(self, file_names, progress_bar = None):
     """Loads the (supported) data files and notifies the observers about the new data."""
     unique_file_names = list()
