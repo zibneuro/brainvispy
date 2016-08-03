@@ -61,6 +61,7 @@ class ListWidget(Observer):
     self.__update_data_container_visibility = True
     self.__ignore_selection_callback = False
 
+
   def observable_changed(self, change, data):
     # Decide what to do depending on the change
     if change == DataContainer.change_is_new_data:

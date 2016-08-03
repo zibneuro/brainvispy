@@ -18,18 +18,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
     self.__qt_app = qt_app
 
+    # This guy is used by several classes to indicate the progress of the heavy work
+    self.__file_load_progress_bar = ProgressBarFrame(self, self.__qt_app)
+
     # This is the main guy. Almost all GUI elements are observers of this guy. It stores the data
     # and triggers events (e.g., when new data is loaded) to which its observers react.
     self.__data_container = DataContainer()
-    # This guy handles the IO
-    self.__project_io = ProjectIO()
 
-    self.__file_load_progress_bar = ProgressBarFrame(self, self.__qt_app)
+    # This guy handles the file/project IO
+    self.__project_io = ProjectIO(self.__file_load_progress_bar)
 
     self.__add_menus()
     self.__setup_main_frame()
 
-    # Setup the position and size of the main window
+    self.setWindowTitle("BrainVisPy")
+
+    # Make sure that the our window appears on the primary screen
     desktop_widget = QtWidgets.QDesktopWidget()
     rect = desktop_widget.availableGeometry(desktop_widget.primaryScreen())
     self.move(rect.x(), rect.y())
@@ -83,18 +87,17 @@ class MainWindow(QtWidgets.QMainWindow):
     self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.__data_panel.dock_widget)
 
     # Add the dock which shows the properties of the selected object (on the right in the main window)
-    self.props_panel = PropsPanel(self.__data_container)
-    self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.props_panel.dock_widget)
+    self.__props_panel = PropsPanel(self.__data_container)
+    self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.__props_panel.dock_widget)
 
 
   def __on_open_project(self):
     default_folder = "/home/visual/bzfpapaz/research/data/bvpy_projects"
-    #project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open BrainVisPy project ...", default_folder, r"XML Files (*.xml)")
-    #if project_file_name[0]:
-      #errors = self.__project_io.open(project_file_name[0], self.__data_container)
-    errors = self.__project_io.open("/home/visual/bzfpapaz/research/data/bvpy_projects/two_guys.xml", self.__data_container)
-    if not errors:
-      print("All 6")
+    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open BrainVisPy project ...", default_folder, r"XML Files (*.xml)")
+    if project_file_name[0]:
+      errors = self.__project_io.open_project(project_file_name[0], self.__data_container)
+      if not errors:
+        print("All 6")
 
 
   def __on_load_files(self):
@@ -104,9 +107,9 @@ class MainWindow(QtWidgets.QMainWindow):
     # Let the user select the files (file_names[0] will be the list with the file names)
     file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", default_folder, r"All files (*.*)")
 
-    # Let the data_container load the files. The data_container will notify its observers that new data was loaded.
+    # Load the files. The data_container will notify its observers that new data was loaded.
     if file_names[0]:
-      self.__data_container.load_files(file_names[0], self.__file_load_progress_bar)
+      self.__project_io.load_files(file_names[0], self.__data_container)
 
 
   def __on_load_folder(self):
@@ -124,8 +127,8 @@ class MainWindow(QtWidgets.QMainWindow):
     for file_name in os.listdir(folder_name):
       full_file_names.append(folder_name + "/" + file_name) # works on Windows too
 
-    # Let the data_container load the files. The data_container will notify its observers that new data was loaded.
-    self.__data_container.load_files(full_file_names, self.__file_load_progress_bar)
+    # Load the files. The data_container will notify its observers that new data was loaded.
+    self.__project_io.load_files(full_file_names, self.__data_container)
 
 
   def __on_save_project(self):
@@ -153,7 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __save_project(self):
     try:
-      self.__project_io.save(self.__data_container)
+      self.__project_io.save_project(self.__data_container)
       print("saved '" + self.__project_io.get_file_name() + "'")
     except Exception as err:
       print(err)

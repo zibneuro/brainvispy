@@ -6,17 +6,17 @@ from .vtkqgl import VTKQGLWidget
 from .pick3d import ModelPicker
 
 class VtkWidget(Observer):
-  def __init__(self, parent_qt_frame, data_container, progress_bar = None):
-    self.__data_container = data_container
+  def __init__(self, parent_qt_frame, data_container, progress_bar):
     # Make sure that the data container has the right type
-    if not isinstance(self.__data_container, DataContainer):
-      raise TypeError("the data container has the wrong type")
+    if not isinstance(data_container, DataContainer):
+      raise TypeError("the data container has to be of type DataContainer")
     # Register itself as an observer to the data_container
+    self.__data_container = data_container
     self.__data_container.add_observer(self)
 
-    self.__progress_bar = None
-    if progress_bar and isinstance(progress_bar, ProgressBar):
-      self.__progress_bar = progress_bar
+    if not isinstance(progress_bar, ProgressBar):
+      raise TypeError("the progress bar has to be of type ProgressBar")
+    self.__progress_bar = progress_bar
 
     # The render window
     self.__vtk_widget = VTKQGLWidget(parent_qt_frame)
@@ -92,8 +92,7 @@ class VtkWidget(Observer):
 
   def __add_data_items(self, data_items):
     # Tell the user we are busy
-    if self.__progress_bar:
-      self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
+    self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
 
     counter = 0
 
@@ -102,16 +101,14 @@ class VtkWidget(Observer):
       counter += 1
       #self.renderer.AddViewProp(data_item.prop_3d)
       data_item.add_yourself(self.renderer, self.render_window_interactor)
-      if self.__progress_bar:
-        self.__progress_bar.set_progress(counter)
+      self.__progress_bar.set_progress(counter)
 
     # Make sure that we see all the new data
     if len(data_items) > 0:
       self.reset_view()
 
     # We are done
-    if self.__progress_bar:
-      self.__progress_bar.done()
+    self.__progress_bar.done()
 
 
   def __highlight_models(self, models):

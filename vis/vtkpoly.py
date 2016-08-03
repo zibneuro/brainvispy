@@ -1,8 +1,9 @@
 import vtk
+import random
 from .vtkmodel import VtkModel
 
 class VtkPolyModel(VtkModel):
-  def __init__(self, file_name, name, poly_data):
+  def __init__(self, poly_data, file_name, name = "VtkPolyModel"):
     if not isinstance(poly_data, vtk.vtkPolyData):
       raise TypeError("input has to be vtkPolyData")
 
@@ -13,6 +14,11 @@ class VtkPolyModel(VtkModel):
     self.__actor = vtk.vtkActor()
     self.__actor.SetMapper(mapper)
     self.__actor.GetProperty().SetAmbient(0.05)
+
+
+  @staticmethod
+  def generate_random_rgb_color():
+    return vtk.vtkMath.HSVToRGB((random.uniform(0.0, 0.6), 0.8, 1.0))
 
 
   def add_yourself(self, renderer, interactor):

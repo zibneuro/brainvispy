@@ -1,9 +1,11 @@
+import os
 import xml.etree.ElementTree as ET
 from core.progress import ProgressBar
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
 from .obj import OBJReader
+from .vtkio import VtkIO
 
 class ModelElements:
   def __init__(self):
@@ -25,7 +27,10 @@ class ModelElements:
 
 
 class ProjectIO:
-  def __init__(self):
+  def __init__(self, progress_bar):
+    if not isinstance(progress_bar, ProgressBar):
+      raise TypeError("the progress bar has to be of type ProgressBar")
+    self.__progress_bar = progress_bar
     self.__project_file_name = None
 
 
@@ -41,7 +46,23 @@ class ProjectIO:
     return self.__project_file_name
 
 
-  def open(self, project_file_name, data_container):
+  def load_files(self, file_names, data_container):
+    model_data = list()
+    # Create a ModelElements object for each file
+    for file_name in file_names:
+      model = ModelElements()
+      model.name = os.path.split(file_name)[1]
+      model.file_name = file_name
+      model.visibility = 1
+      model.rgb_color = VtkPolyModel.generate_random_rgb_color()
+      model.transparency = 0
+      model.slice_index = 0
+      model_data.append(model)
+    # Call the method which now does the loading using the data generated above
+    self.__load_models(model_data, data_container)
+
+
+  def open_project(self, project_file_name, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("input has to be of type DataContainer")
     # This is the new project file name
@@ -50,21 +71,26 @@ class ProjectIO:
     # Remove everything from the data container
     data_container.clear()
 
-    # Load the data from the project and return the error messages (if any)
-    model_data = self.__load_model_data_from_project_file(project_file_name, data_container)
-    
-    for model in model_data:
-      model.print()
-    
-    return list()
+    # Parse the XML file, i.e., read all the elements (name, file name, color, ...) of the models saved in
+    # the XML project file
+    try:
+      model_data = self.__parse_xml_project_file(project_file_name)
+    except Exception as error:
+      error_msg = list()
+      error_msg.append(str(error))
+      return error_msg
+
+    # Now, do the real data loading (i.e., load the mesh/volume data), create the models and add them to the
+    # container. Return a list of errors if any (e.g., which files cound not be loaded, etc..)
+    return self.__load_models(model_data, data_container)
 
 
-  def __load_model_data_from_project_file(self, project_file_name, data_container):
+  def __parse_xml_project_file(self, project_file_name):
     # Parse the XML file
     project = ET.parse(project_file_name).getroot()
 
     # This list stores all the info per model
-    model_data = list()
+    models = list()
 
     # Load the attributes of each model
     for model in project:
@@ -88,12 +114,52 @@ class ProjectIO:
               color_string = prop.text.split(" ")
               model_elements.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
       # Save all the elements for that model
-      model_data.append(model_elements)
+      models.append(model_elements)
     # We are done with the XML file, return the loaded model data
-    return model_data
+    return models
 
 
-  def save(self, data_container):
+  def __load_models(self, model_data, data_container):
+    """Using the model data from the list 'model_data' this method loads the mesh/volume data from disk,
+    creates the models and adds them to the 'data_container'. Returns a list of errors if any (e.g., file
+    cound not be loaded etc...)"""
+    vtk_io = VtkIO()
+    models = list()
+
+    # Let the user know we are doing something    
+    self.__progress_bar.init(1, len(model_data), "Loading files: ")
+    counter = 0
+    
+    # Load the data from disk and initialize the model attributes
+    for attributes in model_data:
+      # Do the heavy job: load the file from disk
+      model = vtk_io.load(attributes.file_name)
+      if model:
+        self.__initialize_model(model, attributes)
+        models.append(model)
+      # Update the progress bar
+      counter += 1
+      self.__progress_bar.set_progress(counter)
+
+    # We are done here
+    self.__progress_bar.done()
+    # Now let the container adopt the new models
+    data_container.add_models(models)
+
+
+  def __initialize_model(self, model, attributes):
+    model.set_name(attributes.name)
+    if attributes.visibility: model.visibility_on()
+    else: model.visibility_off()
+
+    if isinstance(model, VtkVolumeModel):
+      model.set_slice_index(attributes.slice_index)
+    elif isinstance(model, VtkPolyModel):
+      model.set_transparency(attributes.transparency)
+      model.set_color(attributes.rgb_color[0], attributes.rgb_color[1], attributes.rgb_color[2])
+
+
+  def save_project(self, data_container):
     '''Saves all models in the 'data_container' in an XML file whose name you have to set with set_file_name().'''
     if not isinstance(data_container, DataContainer):
       raise TypeError("input has to be of type DataContainer")

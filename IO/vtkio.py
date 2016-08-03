@@ -1,8 +1,8 @@
 import vtk
-import sys
 import os
 import os.path
-from core.progress import ProgressBar
+from vis.vtkpoly import VtkPolyModel
+from vis.vtkvol import VtkVolumeModel
 from .obj import OBJReader
 
 class VtkIO:
@@ -17,12 +17,24 @@ class VtkIO:
       return vtk.vtkPLYReader()
     if (lower_file_ext == ".obj"):
       return OBJReader()
-    
     return None
 
 
-  def load_file(self, file_name):
-    '''Loads and returns the provided file. Returns None uppon failure.'''
+  def load(self, file_name):
+    """Loads the data from the file 'file_name' and returns either VtkVolumeModel, VtkPolyModel or None."""
+    vtk_data = self.__load_data_from_file(file_name)
+
+    # Make sure we got data we can handle
+    if isinstance(vtk_data, vtk.vtkImageData):
+      return VtkVolumeModel(vtk_data, file_name)
+    elif isinstance(vtk_data, vtk.vtkPolyData):
+      return VtkPolyModel(vtk_data, file_name)
+
+    # We can not deal with the provided file
+    return None
+
+
+  def __load_data_from_file(self, file_name):
     # Get the right data reader depending on the file extension
     data_reader = self.get_reader(os.path.splitext(file_name)[1])
     if not data_reader:
@@ -31,36 +43,3 @@ class VtkIO:
     data_reader.SetFileName(file_name)
     data_reader.Update()
     return data_reader.GetOutput()
-
-
-  def load_files(self, file_names, progress_bar = None):
-    """Returns the loaded data (the ones that could be loaded) in a list of pairs (file name, data)."""
-    # Make sure that 'progress_bar' has the right type
-    if progress_bar and not isinstance(progress_bar, ProgressBar):
-      progress_bar = None
-    
-    # Inform the user that the loading begins
-    if progress_bar:
-      progress_bar.init(1, len(file_names), "Loading files: ")
-
-    file_name_data_pairs = list()
-    counter = 0
-
-    # Load the files
-    for file_name in file_names:
-      counter += 1
-      # Make sure we have a file
-      if os.path.isfile(file_name):
-        data = self.load_file(file_name)
-        if data:
-          file_name_data_pairs.append((file_name, data))
-
-      # Update the progress bar
-      if progress_bar:
-        progress_bar.set_progress(counter)
-
-    # Done with loading
-    if progress_bar:
-      progress_bar.done()
-
-    return file_name_data_pairs
