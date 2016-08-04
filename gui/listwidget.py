@@ -9,25 +9,40 @@ from PyQt5 import QtCore, QtWidgets
 class ListWidgetItem(QtWidgets.QListWidgetItem):
   def __init__(self, model):
     super().__init__(model.name)
-
+    # Save the model
     self.model = model
+
+    # Shall it be checked (i.e., is the model visible)
+    if self.model.is_visible(): self.setCheckState(QtCore.Qt.Checked)
+    else: self.setCheckState(QtCore.Qt.Unchecked)
+
+    # Per default the item is not hidden and not selected
     self.is_hidden = False
     self.setSelected(False)
+
 
   def update_model_visibility(self):
     if self.__is_checked(): self.model.visibility_on()
     else: self.model.visibility_off()
 
+
   def __is_checked(self):
     return self.checkState() == QtCore.Qt.Checked
+
 
   def set_checked(self):
     if not self.__is_checked(): self.setCheckState(QtCore.Qt.Checked)
     self.model.visibility_on()
 
+
   def set_unchecked(self):
     if self.__is_checked(): self.setCheckState(QtCore.Qt.Unchecked)
     self.model.visibility_off()
+
+
+  def set_hidden(self, hidden):
+    self.is_hidden = hidden
+
 
   def toggle_check_state(self):
     if self.__is_checked():
@@ -172,14 +187,9 @@ class ListWidget(Observer):
   def __add_data_items(self, models):
     # Add one checkable list item per model
     for model in models:
-      # First, create the Qt list item
-      #qt_list_item = QtWidgets.QListWidgetItem(model.name) # Better not to pass the Qt List as second argument. When passing it, itemChanged gets triggered.
-      #qt_list_item.setFlags(qt_list_item.flags() | QtCore.Qt.ItemIsUserCheckable)
-      #qt_list_item.setCheckState(QtCore.Qt.Checked)
       # Create our own data item
       item = ListWidgetItem(model)
       item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-      item.setCheckState(QtCore.Qt.Checked)
       # Save the item in the dictionaries
       self.__model_to_item[model] = item
       # Save the item in the ordered list

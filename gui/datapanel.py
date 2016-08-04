@@ -47,7 +47,6 @@ class DataPanel(Observer):
     visibility_group.setLayout(visibility_group_layout)
 
     # Put all the stuff in a box layout
-    #dock_layout = QtWidgets.QVBoxLayout()
     dock_layout = QtWidgets.QGridLayout()
     dock_layout.addWidget(QtWidgets.QLabel("search:"), 0, 0, 1, -1)
     dock_layout.addWidget(self.__data_search, 1, 0, 1, -1)
@@ -67,7 +66,8 @@ class DataPanel(Observer):
   def observable_changed(self, change, data):
     if change == DataContainer.change_is_new_selection:
       self.__update_buttons_according_to_selection(data)
-
+    elif change == DataContainer.change_is_new_data:
+      self.__data_search.clear()
 
   def __update_buttons_according_to_selection(self, data):
     if len(data) > 0:

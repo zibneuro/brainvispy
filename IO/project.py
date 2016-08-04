@@ -4,6 +4,7 @@ from core.progress import ProgressBar
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
+from gui.vtkwidget import VtkWidget
 from .obj import OBJReader
 from .vtkio import VtkIO
 
@@ -62,7 +63,7 @@ class ProjectIO:
     self.__load_models(model_data, data_container)
 
 
-  def open_project(self, project_file_name, data_container):
+  def open_project(self, project_file_name, data_container, vtk_widget):
     if not isinstance(data_container, DataContainer):
       raise TypeError("input has to be of type DataContainer")
     # This is the new project file name
@@ -159,16 +160,25 @@ class ProjectIO:
       model.set_color(attributes.rgb_color[0], attributes.rgb_color[1], attributes.rgb_color[2])
 
 
-  def save_project(self, data_container):
+  def save_project(self, data_container, vtk_widget):
     '''Saves all models in the 'data_container' in an XML file whose name you have to set with set_file_name().'''
     if not isinstance(data_container, DataContainer):
-      raise TypeError("input has to be of type DataContainer")
+      raise TypeError("the input data container has to be of type DataContainer")
+
+    if not isinstance(vtk_widget, VtkWidget):
+      raise TypeError("the input vtk widget has to be of type VtkWidget")
 
     if not self.has_file_name():
       raise Exception("Error in " + self.__class__.__name__ + ": file name not set")
 
-    # First, create an XML object
+    # First, create an XML object for the whole project
     xml_project = ET.Element("BrainVisPy_Project")
+
+    # Save some camera parameters
+    xml_camera_parameters = ET.SubElement(xml_project, "camera_parameters")
+    ET.SubElement(xml_camera_parameters, "position").text = "pos"
+    ET.SubElement(xml_camera_parameters, "look_at").text = "look_at"
+    ET.SubElement(xml_camera_parameters, "view_up").text = "view_up"
 
     # Loop over all models in the data container
     for model in data_container.get_models():

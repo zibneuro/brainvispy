@@ -16,13 +16,12 @@ class MainWindow(QtWidgets.QMainWindow):
   def __init__(self, qt_app):
     QtWidgets.QMainWindow.__init__(self)
 
-    self.__qt_app = qt_app
-
     # This guy is used by several classes to indicate the progress of the heavy work
-    self.__file_load_progress_bar = ProgressBarFrame(self, self.__qt_app)
+    self.__file_load_progress_bar = ProgressBarFrame(self, qt_app)
 
     # This is the main guy. Almost all GUI elements are observers of this guy. It stores the data
-    # and triggers events (e.g., when new data is loaded) to which its observers react.
+    # and triggers events (e.g., when new data is loaded/deleted and much more). The observers react
+    # to these events.
     self.__data_container = DataContainer()
 
     # This guy handles the file/project IO
@@ -31,9 +30,13 @@ class MainWindow(QtWidgets.QMainWindow):
     self.__add_menus()
     self.__setup_main_frame()
 
-    self.setWindowTitle("BrainVisPy")
+    # Load some info from a config file (like the folder where the user saved her last project)
+    self.__config_file_name = "./brainvispy_config.xml"
+    self.__load_config_file()
 
-    # Make sure that the our window appears on the primary screen
+    # Change the title of the main window
+    self.setWindowTitle("BrainVisPy")
+    # Make sure that the main window appears (maximized) on the primary screen
     desktop_widget = QtWidgets.QDesktopWidget()
     rect = desktop_widget.availableGeometry(desktop_widget.primaryScreen())
     self.move(rect.x(), rect.y())
@@ -52,7 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # Load folder
     load_folder_action = QtWidgets.QAction('Import folder', self)
     load_folder_action.setShortcut('Ctrl+I')
-    load_folder_action.triggered.connect(self.__on_load_folder)
+    load_folder_action.triggered.connect(self.__on_import_folder)
     # Save project
     save_project_action = QtWidgets.QAction('Save project', self)
     save_project_action.setShortcut('Ctrl+S')
@@ -92,35 +95,34 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_open_project(self):
-    default_folder = "/home/visual/bzfpapaz/research/data/bvpy_projects"
-    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open BrainVisPy project ...", default_folder, r"XML Files (*.xml)")
+    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open BrainVisPy project ...", self.__open_project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
-      errors = self.__project_io.open_project(project_file_name[0], self.__data_container)
+      # Open the project
+      errors = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
+      # Save the folder the user loaded the project from
+      self.__open_project_folder = os.path.split(project_file_name[0])[0]
       if not errors:
         print("All 6")
 
 
   def __on_load_files(self):
-    #default_folder = r"C:\Users\papazov\Google Drive\research\data\models" # Windows
-    default_folder = r"/local/data/zbrain/masks"
-
     # Let the user select the files (file_names[0] will be the list with the file names)
-    file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", default_folder, r"All files (*.*)")
+    file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", self.__load_files_folder, r"All files (*.*)")
 
     # Load the files. The data_container will notify its observers that new data was loaded.
     if file_names[0]:
       self.__project_io.load_files(file_names[0], self.__data_container)
+      # Take the first file name and extract the folder from it
+      self.__load_files_folder = os.path.split(file_names[0][0])[0]
 
 
-  def __on_load_folder(self):
-    #default_folder = r"C:\Users\papazov\Google Drive\research\data\models" # Windows
-    default_folder = r"/local/data/zbrain/masks/2_test_meshes"
-  
-    folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Load all files from a folder", default_folder)
+  def __on_import_folder(self):
+    folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Load all files from a folder", self.__import_folder)
     # Make sure we got an existing directory
     if not os.path.isdir(folder_name):
       return
 
+    self.__import_folder = folder_name
     full_file_names = list()
 
     # Get the *full* file names
@@ -141,8 +143,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __on_save_project_as(self):
     # Ask the user to specify a project name if necessary
-    default_folder = "/nfs/visual/bzfpapaz/research/data/bvpy_projects/"
-    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as ...", default_folder, r"XML Files (*.xml)")
+    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as ...", self.__save_project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
       ext = os.path.splitext(project_file_name[0])[1].lower()
       if ext and ext == ".xml":
@@ -156,15 +157,30 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __save_project(self):
     try:
-      self.__project_io.save_project(self.__data_container)
+      self.__project_io.save_project(self.__data_container, self.__vtk_widget)
+      self.__save_project_folder = os.path.split(self.__project_io.get_file_name())[0]
       print("saved '" + self.__project_io.get_file_name() + "'")
     except Exception as err:
       print(err)
 
 
+  def __load_config_file(self):
+    # First set these default names (in case we fail to open the config file)
+    self.__open_project_folder = "./"
+    self.__save_project_folder = "./"
+    self.__import_folder = "./"
+    self.__load_files_folder = "./"
+
+
+  def __update_config_file(self):
+    pass
+
+
   def closeEvent(self, event):
     reply = QtWidgets.QMessageBox.question(self, "Question", "Quit?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
     if reply == QtWidgets.QMessageBox.Yes:
+      # Save some info (like the folder of the current project and other stuff) to a config file (to have it for next time)
+      self.__update_config_file()
       event.accept()
     else:
       event.ignore()
