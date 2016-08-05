@@ -96,10 +96,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_open_project(self):
-    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open a BrainVisPy project", self.__open_project_folder, r"XML Files (*.xml)")
+    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open a BrainVisPy project", self.__project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
       # Save the folder the user loaded the project from
-      self.__open_project_folder = os.path.split(project_file_name[0])[0]
+      self.__project_folder = os.path.split(project_file_name[0])[0]
       # Open the project
       errors = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
       if not errors:
@@ -140,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __on_save_project_as(self):
     # Ask the user to specify a project name if necessary
-    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as", self.__save_project_folder, r"XML Files (*.xml)")
+    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as", self.__project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
       ext = os.path.splitext(project_file_name[0])[1].lower()
       if ext and ext == ".xml":
@@ -154,7 +154,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __save_project(self):
     try:
-      self.__save_project_folder = os.path.split(self.__project_io.get_file_name())[0]
+      self.__project_folder = os.path.split(self.__project_io.get_file_name())[0]
       self.__project_io.save_project(self.__data_container, self.__vtk_widget)
       print("saved '" + self.__project_io.get_file_name() + "'")
     except Exception as err:
@@ -163,16 +163,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __load_config_file(self):
     # First set these default names (in case we fail to open the config file)
-    self.__open_project_folder = "./"
-    self.__save_project_folder = "./"
+    self.__project_folder = "./"
     self.__import_folder = "./"
     self.__load_files_folder = "./"
     # Now try to open the file and read the true folder names
     try:
       config = ET.parse(self.__config_file_name).getroot()
       for element in config:
-        if element.tag == "open_project_folder": self.__open_project_folder = element.text
-        elif element.tag == "save_project_folder": self.__save_project_folder = element.text
+        if element.tag == "project_folder": self.__project_folder = element.text
         elif element.tag == "import_folder": self.__import_folder = element.text
         elif element.tag == "load_files_folder": self.__load_files_folder = element.text
     except Exception as exception:
@@ -184,8 +182,7 @@ class MainWindow(QtWidgets.QMainWindow):
       # First, create an XML object for the whole project
       xml_config = ET.Element("BrainVisPy_Config_File")
       # Save the current config stuff
-      ET.SubElement(xml_config, "open_project_folder").text = self.__open_project_folder
-      ET.SubElement(xml_config, "save_project_folder").text = self.__save_project_folder
+      ET.SubElement(xml_config, "project_folder").text = self.__project_folder
       ET.SubElement(xml_config, "import_folder").text = self.__import_folder
       ET.SubElement(xml_config, "load_files_folder").text = self.__load_files_folder
       # Write the whole XML tree to file
