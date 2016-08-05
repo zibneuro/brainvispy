@@ -55,20 +55,44 @@ class VtkWidget(Observer):
       self.render()
 
 
+  def get_camera_position(self):
+    return self.renderer.GetActiveCamera().GetPosition()
+
+  def set_camera_position(self, position):
+    return self.renderer.GetActiveCamera().SetPosition(position)
+
+
+  def get_camera_look_at(self):
+    return self.renderer.GetActiveCamera().GetFocalPoint()
+
+  def set_camera_look_at(self, look_at):
+    return self.renderer.GetActiveCamera().SetFocalPoint(look_at)
+
+
+  def get_camera_view_up(self):
+    return self.renderer.GetActiveCamera().GetViewUp()
+
+  def set_camera_view_up(self, view_up):
+    return self.renderer.GetActiveCamera().SetViewUp(view_up)
+
+
   def render(self):
     """Renders the scene"""
     self.render_window_interactor.Render()
+
 
   def reset_clipping_range(self):
     """Resets the clipping range of the camera and renders the scene"""
     self.renderer.ResetCameraClippingRange()
     self.render_window_interactor.Render()
 
+
   def reset_view(self):
     """Modifies the camera such that all (visible) data items are in the viewing frustum."""
     self.renderer.ResetCamera()
     self.renderer.ResetCameraClippingRange()
     self.render_window_interactor.Render()
+
 
   @property
   def widget(self):
@@ -93,20 +117,16 @@ class VtkWidget(Observer):
   def __add_data_items(self, data_items):
     # Tell the user we are busy
     self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
-
     counter = 0
-
     # Add all the data to the renderer
     for data_item in data_items:
       counter += 1
       #self.renderer.AddViewProp(data_item.prop_3d)
       data_item.add_yourself(self.renderer, self.render_window_interactor)
       self.__progress_bar.set_progress(counter)
-
     # Make sure that we see all the new data
     if len(data_items) > 0:
       self.reset_view()
-
     # We are done
     self.__progress_bar.done()
 

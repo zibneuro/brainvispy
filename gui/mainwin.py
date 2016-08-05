@@ -98,12 +98,15 @@ class MainWindow(QtWidgets.QMainWindow):
   def __on_open_project(self):
     project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open a BrainVisPy project", self.__project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
-      # Save the folder the user loaded the project from
-      self.__project_folder = os.path.split(project_file_name[0])[0]
+      # Get the project folder and the project name
+      self.__project_folder, project_name = os.path.split(project_file_name[0])
       # Open the project
       errors = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
-      if not errors:
-        print("All 6")
+      # Update the window title
+      self.setWindowTitle(project_name + "  -  BrainVisPy")
+      if errors:
+        for err in errors:
+          print(err)
 
 
   def __on_load_files(self):
@@ -154,11 +157,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __save_project(self):
     try:
-      self.__project_folder = os.path.split(self.__project_io.get_file_name())[0]
+      # Get the project folder and the project name
+      self.__project_folder, project_name = os.path.split(self.__project_io.get_file_name())
+      # Save the project
       self.__project_io.save_project(self.__data_container, self.__vtk_widget)
-      print("saved '" + self.__project_io.get_file_name() + "'")
+      # Update the window title
+      self.setWindowTitle(project_name + "  -  BrainVisPy")
     except Exception as err:
-      print(err)
+      raise err #print(err)
 
 
   def __load_config_file(self):

@@ -8,6 +8,13 @@ from gui.vtkwidget import VtkWidget
 from .obj import OBJReader
 from .vtkio import VtkIO
 
+class CameraParameters:
+  def __init__(self):
+    self.position = None
+    self.look_at = None
+    self.view_up = None
+
+
 class ModelElements:
   def __init__(self):
     self.name = None
@@ -16,15 +23,6 @@ class ModelElements:
     self.rgb_color = None
     self.transparency = None
     self.slice_index = None
-
-  def print(self):
-    print("model:")
-    print("  name:         " + self.name)
-    print("  file_name:    " + self.file_name)
-    print("  visibility:  ", self.visibility)
-    print("  rgb color:   ", self.rgb_color)
-    print("  transparency:", self.transparency)
-    print("  slice index: ", self.slice_index)
 
 
 class ProjectIO:
@@ -72,17 +70,25 @@ class ProjectIO:
     # Remove everything from the data container
     data_container.clear()
 
-    # Parse the XML file, i.e., read all the elements (name, file name, color, ...) of the models saved in
-    # the XML project file
+    # Parse the XML project file and return the info in our own format
     try:
-      model_data = self.__parse_xml_project_file(project_file_name)
+      camera_parameters, model_data = self.__parse_xml_project_file(project_file_name)
     except Exception as error:
       error_msg = list()
       error_msg.append(str(error))
       return error_msg
 
+    # Setup the VTK widget based on what we parsed
+    print("loaded:")
+    print(camera_parameters.position)
+    print(camera_parameters.look_at)
+    print(camera_parameters.view_up)
+    vtk_widget.set_camera_position(camera_parameters.position)
+    vtk_widget.set_camera_look_at(camera_parameters.view_up)
+    vtk_widget.set_camera_view_up(camera_parameters.look_at)
+
     # Now, do the real data loading (i.e., load the mesh/volume data), create the models and add them to the
-    # container. Return a list of errors if any (e.g., which files cound not be loaded, etc..)
+    # container. Return a list of errors if any (e.g., which files could not be loaded, etc..)
     return self.__load_models(model_data, data_container)
 
 
@@ -94,30 +100,48 @@ class ProjectIO:
     models = list()
 
     # Load the attributes of each model
-    for model in project:
-      # Make sure we really have a model
-      if model.tag != "model":
-        continue
+    for element in project:
+      if   element.tag == "camera_parameters": camera_parameters = self.__parse_camera_parameters(element)
+      elif element.tag == "model": models.append(self.__parse_model(element))
 
-      # Create a new object to store the elements of the current model
-      model_elements = ModelElements()
+    # We are done with the XML file, return the parsed stuff
+    return camera_parameters, models
 
-      # Read all the elements of 'model'
-      for element in model:
-        if   element.tag == "name": model_elements.name = element.text
-        elif element.tag == "file_name": model_elements.file_name = element.text
-        elif element.tag == "properties":
-          for prop in element:
-            if   prop.tag == "visibility": model_elements.visibility = float(prop.text)
-            elif prop.tag == "transparency": model_elements.transparency = float(prop.text)
-            elif prop.tag == "slice_index": model_elements.slice_index = float(prop.text)
-            elif prop.tag == "rgb_color":
-              color_string = prop.text.split(" ")
-              model_elements.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
-      # Save all the elements for that model
-      models.append(model_elements)
-    # We are done with the XML file, return the loaded model data
-    return models
+
+  def __parse_camera_parameters(self, xml_camera):
+    camera_parameters = CameraParameters()
+    # Get the parameters from the XML element
+    for element in xml_camera:
+      if element.tag == "position":
+        p = element.text.split(" ")
+        camera_parameters.position = float(p[0]), float(p[1]), float(p[2])
+      elif element.tag == "look_at":
+        p = element.text.split(" ")
+        camera_parameters.look_at = float(p[0]), float(p[1]), float(p[2])
+      elif element.tag == "view_up":
+        p = element.text.split(" ")
+        camera_parameters.view_up = float(p[0]), float(p[1]), float(p[2])
+    # Return the camera parameters
+    return camera_parameters
+
+
+  def __parse_model(self, xml_model):
+    # Create a new object to store the elements of the current model
+    model_elements = ModelElements()
+    # Read all the elements of 'xml_model'
+    for element in xml_model:
+      if   element.tag == "name": model_elements.name = element.text
+      elif element.tag == "file_name": model_elements.file_name = element.text
+      elif element.tag == "properties":
+        for prop in element:
+          if   prop.tag == "visibility": model_elements.visibility = float(prop.text)
+          elif prop.tag == "transparency": model_elements.transparency = float(prop.text)
+          elif prop.tag == "slice_index": model_elements.slice_index = float(prop.text)
+          elif prop.tag == "rgb_color":
+           color_string = prop.text.split(" ")
+           model_elements.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
+    # Return what we have parsed
+    return model_elements
 
 
   def __load_models(self, model_data, data_container):
@@ -175,29 +199,35 @@ class ProjectIO:
     xml_project = ET.Element("BrainVisPy_Project")
 
     # Save some camera parameters
-    xml_camera_parameters = ET.SubElement(xml_project, "camera_parameters")
-    ET.SubElement(xml_camera_parameters, "position").text = "pos"
-    ET.SubElement(xml_camera_parameters, "look_at").text = "look_at"
-    ET.SubElement(xml_camera_parameters, "view_up").text = "view_up"
+    self.__add_camera_parameters_to_xml_element(vtk_widget, ET.SubElement(xml_project, "camera_parameters"))
 
-    # Loop over all models in the data container
+    # Save the data of each model to the XML file
     for model in data_container.get_models():
-      xml_model = ET.SubElement(xml_project, "model")
-      ET.SubElement(xml_model, "name").text = model.name
-      ET.SubElement(xml_model, "file_name").text = model.file_name
-      self.__add_model_properties_to_xml_element(model, ET.SubElement(xml_model, "properties"))
+      self.__add_model_data_to_xml_element(model, ET.SubElement(xml_project, "model"))
 
     # Write the whole XML tree to file
     ET.ElementTree(xml_project).write(self.__project_file_name)
 
 
-  def __add_model_properties_to_xml_element(self, model, xml_element):
-    """This method adds the volume or poly properties (depending of what kind of 'model' we have) to the
-    provided xml element."""
+  def __add_camera_parameters_to_xml_element(self, vtk_widget, xml_element):
+    """This method adds all camera parameters to the provided xml element."""
+    position = vtk_widget.get_camera_position()
+    ET.SubElement(xml_element, "position").text = str(position[0]) + " " + str(position[1]) + " " + str(position[2])
+    look_at = vtk_widget.get_camera_look_at()
+    ET.SubElement(xml_element, "look_at").text = str(look_at[0]) + " " + str(look_at[1]) + " " + str(look_at[2])
+    view_up = vtk_widget.get_camera_view_up()
+    ET.SubElement(xml_element, "view_up").text = str(view_up[0]) + " " + str(view_up[1]) + " " + str(view_up[2])
+
+
+  def __add_model_data_to_xml_element(self, model, xml_element):
+    """This method adds all model data to the provided xml element."""
+    ET.SubElement(xml_element, "name").text = model.name
+    ET.SubElement(xml_element, "file_name").text = model.file_name
+    properties = ET.SubElement(xml_element, "properties")
     if isinstance(model, VtkPolyModel):
-      self.__add_poly_properties_to_xml_element(model, xml_element)
+      self.__add_poly_properties_to_xml_element(model, properties)
     elif isinstance(model, VtkVolumeModel):
-      self.__add_volume_properties_to_xml_element(model, xml_element)
+      self.__add_volume_properties_to_xml_element(model, properties)
 
 
   def __add_poly_properties_to_xml_element(self, model, xml_element):
