@@ -1,6 +1,7 @@
 import os
 import vtk
 from PyQt5 import QtCore, QtWidgets
+import xml.etree.ElementTree as ET
 from gui.vtkwidget import VtkWidget
 from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
@@ -95,12 +96,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_open_project(self):
-    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open BrainVisPy project ...", self.__open_project_folder, r"XML Files (*.xml)")
+    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Open a BrainVisPy project", self.__open_project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
-      # Open the project
-      errors = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
       # Save the folder the user loaded the project from
       self.__open_project_folder = os.path.split(project_file_name[0])[0]
+      # Open the project
+      errors = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
       if not errors:
         print("All 6")
 
@@ -108,29 +109,25 @@ class MainWindow(QtWidgets.QMainWindow):
   def __on_load_files(self):
     # Let the user select the files (file_names[0] will be the list with the file names)
     file_names = QtWidgets.QFileDialog.getOpenFileNames(self, "Load file(s)", self.__load_files_folder, r"All files (*.*)")
-
     # Load the files. The data_container will notify its observers that new data was loaded.
     if file_names[0]:
-      self.__project_io.load_files(file_names[0], self.__data_container)
       # Take the first file name and extract the folder from it
       self.__load_files_folder = os.path.split(file_names[0][0])[0]
+      # Load the files
+      self.__project_io.load_files(file_names[0], self.__data_container)
 
 
   def __on_import_folder(self):
-    folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Load all files from a folder", self.__import_folder)
+    folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Import folder (load all files from a folder)", self.__import_folder)
     # Make sure we got an existing directory
-    if not os.path.isdir(folder_name):
-      return
-
-    self.__import_folder = folder_name
-    full_file_names = list()
-
-    # Get the *full* file names
-    for file_name in os.listdir(folder_name):
-      full_file_names.append(folder_name + "/" + file_name) # works on Windows too
-
-    # Load the files. The data_container will notify its observers that new data was loaded.
-    self.__project_io.load_files(full_file_names, self.__data_container)
+    if os.path.isdir(folder_name):
+      self.__import_folder = folder_name
+      full_file_names = list()
+      # Get the *full* file names
+      for file_name in os.listdir(folder_name):
+        full_file_names.append(folder_name + "/" + file_name) # works on Windows too
+      # Load the files. The data_container will notify its observers that new data was loaded.
+      self.__project_io.load_files(full_file_names, self.__data_container)
 
 
   def __on_save_project(self):
@@ -143,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __on_save_project_as(self):
     # Ask the user to specify a project name if necessary
-    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as ...", self.__save_project_folder, r"XML Files (*.xml)")
+    project_file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save project as", self.__save_project_folder, r"XML Files (*.xml)")
     if project_file_name[0]:
       ext = os.path.splitext(project_file_name[0])[1].lower()
       if ext and ext == ".xml":
@@ -157,8 +154,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __save_project(self):
     try:
-      self.__project_io.save_project(self.__data_container, self.__vtk_widget)
       self.__save_project_folder = os.path.split(self.__project_io.get_file_name())[0]
+      self.__project_io.save_project(self.__data_container, self.__vtk_widget)
       print("saved '" + self.__project_io.get_file_name() + "'")
     except Exception as err:
       print(err)
@@ -170,10 +167,31 @@ class MainWindow(QtWidgets.QMainWindow):
     self.__save_project_folder = "./"
     self.__import_folder = "./"
     self.__load_files_folder = "./"
+    # Now try to open the file and read the true folder names
+    try:
+      config = ET.parse(self.__config_file_name).getroot()
+      for element in config:
+        if element.tag == "open_project_folder": self.__open_project_folder = element.text
+        elif element.tag == "save_project_folder": self.__save_project_folder = element.text
+        elif element.tag == "import_folder": self.__import_folder = element.text
+        elif element.tag == "load_files_folder": self.__load_files_folder = element.text
+    except Exception as exception:
+      print("Could not load config stuff: " + str(exception))
 
 
   def __update_config_file(self):
-    pass
+    try:
+      # First, create an XML object for the whole project
+      xml_config = ET.Element("BrainVisPy_Config_File")
+      # Save the current config stuff
+      ET.SubElement(xml_config, "open_project_folder").text = self.__open_project_folder
+      ET.SubElement(xml_config, "save_project_folder").text = self.__save_project_folder
+      ET.SubElement(xml_config, "import_folder").text = self.__import_folder
+      ET.SubElement(xml_config, "load_files_folder").text = self.__load_files_folder
+      # Write the whole XML tree to file
+      ET.ElementTree(xml_config).write(self.__config_file_name)
+    except Exception as exception:
+      print("Could not save the current config stuff: " + str(exception))
 
 
   def closeEvent(self, event):
