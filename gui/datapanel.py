@@ -69,6 +69,7 @@ class DataPanel(Observer):
     elif change == DataContainer.change_is_new_data:
       self.__data_search.clear()
 
+
   def __update_buttons_according_to_selection(self, data):
     if len(data) > 0:
       self.__btn_delete_selected_models.setEnabled(True)

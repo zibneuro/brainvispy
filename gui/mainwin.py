@@ -176,9 +176,15 @@ class MainWindow(QtWidgets.QMainWindow):
     try:
       config = ET.parse(self.__config_file_name).getroot()
       for element in config:
-        if element.tag == "project_folder": self.__project_folder = element.text
-        elif element.tag == "import_folder": self.__import_folder = element.text
-        elif element.tag == "load_files_folder": self.__load_files_folder = element.text
+        if element.tag == "project_folder":
+          self.__project_folder = element.text
+          print("project folder: " + self.__project_folder)
+        elif element.tag == "import_folder":
+          self.__import_folder = element.text
+          print("import folder: " + self.__import_folder)
+        elif element.tag == "load_files_folder":
+          self.__load_files_folder = element.text
+          print("load files folder: " + self.__load_files_folder)
     except Exception as exception:
       print("Could not load config stuff: " + str(exception))
 

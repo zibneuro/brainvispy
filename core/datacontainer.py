@@ -25,8 +25,8 @@ class DataContainer(Observable):
   def clear(self):
     """Removes everything from the container leaving it empty. The observers get notified."""
     # Notify the observers about the changes
-    self.notify_observers_about_change(DataContainer.change_is_deleted_models, list(self.__vtk_property_to_models.values()))
     self.notify_observers_about_change(DataContainer.change_is_new_selection, list())
+    self.notify_observers_about_change(DataContainer.change_is_deleted_models, list(self.__vtk_property_to_models.values()))
     # Now, clear everything
     self.__vtk_property_to_models = dict()
     self.__selected_models = set()

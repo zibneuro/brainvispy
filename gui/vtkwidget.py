@@ -26,6 +26,9 @@ class VtkWidget(Observer):
     # This guy is very important: it handles all the model selection in the 3D view
     self.__model_picker = ModelPicker(self.__data_container, self.render_window_interactor)
 
+    # We might or might not want to reset the view after new models have been added
+    self.__reset_view_after_adding_models = True
+
     # We want to see xyz axes in the lower left corner of the window
     lower_left_axes_actor = vtk.vtkAxesActor()
     lower_left_axes_actor.SetXAxisLabelText("X")
@@ -95,6 +98,15 @@ class VtkWidget(Observer):
 
 
   @property
+  def reset_view_after_adding_models(self):
+    return self.__reset_view_after_adding_models
+
+
+  def do_reset_view_after_adding_models(self, value):
+    self.__reset_view_after_adding_models = value
+
+
+  @property
   def widget(self):
     return self.__vtk_widget
 
@@ -115,6 +127,8 @@ class VtkWidget(Observer):
 
 
   def __add_data_items(self, data_items):
+    if not data_items:
+      return
     # Tell the user we are busy
     self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
     counter = 0
@@ -125,7 +139,7 @@ class VtkWidget(Observer):
       data_item.add_yourself(self.renderer, self.render_window_interactor)
       self.__progress_bar.set_progress(counter)
     # Make sure that we see all the new data
-    if len(data_items) > 0:
+    if self.__reset_view_after_adding_models:
       self.reset_view()
     # We are done
     self.__progress_bar.done()

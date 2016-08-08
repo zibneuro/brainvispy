@@ -14,6 +14,11 @@ class CameraParameters:
     self.look_at = None
     self.view_up = None
 
+  def print(self):
+    print("pos:", self.position)
+    print("look at:", self.look_at)
+    print("view up:", self.view_up)
+
 
 class ModelElements:
   def __init__(self):
@@ -79,17 +84,26 @@ class ProjectIO:
       return error_msg
 
     # Setup the VTK widget based on what we parsed
-    print("loaded:")
-    print(camera_parameters.position)
-    print(camera_parameters.look_at)
-    print(camera_parameters.view_up)
+    vtk_widget.reset_view()
     vtk_widget.set_camera_position(camera_parameters.position)
-    vtk_widget.set_camera_look_at(camera_parameters.view_up)
-    vtk_widget.set_camera_view_up(camera_parameters.look_at)
+    vtk_widget.set_camera_look_at(camera_parameters.look_at)
+    vtk_widget.set_camera_view_up(camera_parameters.view_up)
+
+    # Make sure that the VTK widget doesn't reset the view after the models are loaded below (since this would mess up the camera parameters we just set)
+    reset_view = vtk_widget.reset_view_after_adding_models
+    vtk_widget.do_reset_view_after_adding_models(False)
 
     # Now, do the real data loading (i.e., load the mesh/volume data), create the models and add them to the
     # container. Return a list of errors if any (e.g., which files could not be loaded, etc..)
-    return self.__load_models(model_data, data_container)
+    error_messages = self.__load_models(model_data, data_container)
+
+    # Make sure we see all models
+    vtk_widget.reset_clipping_range()
+
+    # Restore the state of the VTK widget
+    vtk_widget.do_reset_view_after_adding_models(reset_view)
+
+    return error_messages
 
 
   def __parse_xml_project_file(self, project_file_name):
