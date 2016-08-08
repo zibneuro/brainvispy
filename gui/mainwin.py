@@ -101,12 +101,22 @@ class MainWindow(QtWidgets.QMainWindow):
       # Get the project folder and the project name
       self.__project_folder, project_name = os.path.split(project_file_name[0])
       # Open the project
-      errors = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
+      error_messages = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
       # Update the window title
       self.setWindowTitle(project_name + "  -  BrainVisPy")
-      if errors:
-        for err in errors:
-          print(err)
+      if error_messages:
+        self.__show_error_messages(error_messages)
+
+
+  def __show_error_messages(self, error_messages):
+    dia = QtWidgets.QDialog(self, QtCore.Qt.Window)
+    layout = QtWidgets.QVBoxLayout()
+    layout.addWidget(QtWidgets.QLabel("Errors:"))
+    layout.addWidget(QtWidgets.QListWidget(dia))
+    layout.addWidget(QtWidgets.QPushButton("OK"))
+    dia.setLayout(layout)
+    dia.setModal(True)
+    dia.show()
 
 
   def __on_load_files(self):
@@ -178,13 +188,10 @@ class MainWindow(QtWidgets.QMainWindow):
       for element in config:
         if element.tag == "project_folder":
           self.__project_folder = element.text
-          print("project folder: " + self.__project_folder)
         elif element.tag == "import_folder":
           self.__import_folder = element.text
-          print("import folder: " + self.__import_folder)
         elif element.tag == "load_files_folder":
           self.__load_files_folder = element.text
-          print("load files folder: " + self.__load_files_folder)
     except Exception as exception:
       print("Could not load config stuff: " + str(exception))
 

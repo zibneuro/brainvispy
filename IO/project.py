@@ -164,6 +164,7 @@ class ProjectIO:
     cound not be loaded etc...)"""
     vtk_io = VtkIO()
     models = list()
+    error_messages = list()
 
     # Let the user know we are doing something    
     self.__progress_bar.init(1, len(model_data), "Loading files: ")
@@ -172,10 +173,12 @@ class ProjectIO:
     # Load the data from disk and initialize the model attributes
     for attributes in model_data:
       # Do the heavy job: load the file from disk
-      model = vtk_io.load(attributes.file_name)
+      model, err_msg = vtk_io.load(attributes.file_name)
       if model:
         self.__initialize_model(model, attributes)
         models.append(model)
+      else:
+        error_messages.append(err_msg)
       # Update the progress bar
       counter += 1
       self.__progress_bar.set_progress(counter)
@@ -184,6 +187,8 @@ class ProjectIO:
     self.__progress_bar.done()
     # Now let the container adopt the new models
     data_container.add_models(models)
+    # Return the error messages (if any)
+    return error_messages
 
 
   def __initialize_model(self, model, attributes):
