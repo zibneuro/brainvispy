@@ -105,18 +105,33 @@ class MainWindow(QtWidgets.QMainWindow):
       # Update the window title
       self.setWindowTitle(project_name + "  -  BrainVisPy")
       if error_messages:
-        self.__show_error_messages(error_messages)
+        self.__show_messages(error_messages, "Errors while loading project:")
 
 
-  def __show_error_messages(self, error_messages):
-    dia = QtWidgets.QDialog(self, QtCore.Qt.Window)
+  def __show_messages(self, messages, title):
+    # This guy shows the messages
+    message_box = QtWidgets.QDialog(self, QtCore.Qt.Window)
+    message_box.setWindowTitle("Message box")
+    # Put the messages in a QListWidget
+    msg_list = QtWidgets.QListWidget(message_box)
+    msg_list.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+    msg_list.setFocusPolicy(QtCore.Qt.NoFocus)
+    for msg in messages:
+      msg_list.insertItem(0, msg)
+    msg_list.setMinimumWidth(min(self.size().width() / 4, msg_list.sizeHintForColumn(0)))
+    # Create the OK button
+    ok_btn = QtWidgets.QPushButton("OK")
+    ok_btn.setFixedSize(75, 25)
+    ok_btn.clicked.connect(message_box.close)
+    # Put everything in a layout    
     layout = QtWidgets.QVBoxLayout()
-    layout.addWidget(QtWidgets.QLabel("Errors:"))
-    layout.addWidget(QtWidgets.QListWidget(dia))
-    layout.addWidget(QtWidgets.QPushButton("OK"))
-    dia.setLayout(layout)
-    dia.setModal(True)
-    dia.show()
+    layout.addWidget(QtWidgets.QLabel(title))
+    layout.addWidget(msg_list)
+    layout.addWidget(ok_btn)
+    layout.setAlignment(ok_btn, QtCore.Qt.AlignCenter)
+    message_box.setLayout(layout)
+    message_box.setModal(True)
+    message_box.show()
 
 
   def __on_load_files(self):

@@ -22,12 +22,13 @@ class CameraParameters:
 
 class ModelElements:
   def __init__(self):
-    self.name = None
-    self.file_name = None
-    self.visibility = None
-    self.rgb_color = None
-    self.transparency = None
-    self.slice_index = None
+    self.name = "unknown"
+    self.file_name = ""
+    self.relative_file_name = ""
+    self.visibility = 1 # visible by default
+    self.rgb_color = 0.8, 0.8, 0.8 # gray by default
+    self.transparency = 0 # non-transparent by default
+    self.slice_index = 0 # the first slice index by default
 
 
 class ProjectIO:
@@ -146,6 +147,7 @@ class ProjectIO:
     for element in xml_model:
       if   element.tag == "name": model_elements.name = element.text
       elif element.tag == "file_name": model_elements.file_name = element.text
+      elif element.tag == "relative_file_name": model_elements.relative_file_name = element.text
       elif element.tag == "properties":
         for prop in element:
           if   prop.tag == "visibility": model_elements.visibility = float(prop.text)
@@ -166,24 +168,42 @@ class ProjectIO:
     models = list()
     error_messages = list()
 
+    # Get the project folder
+    project_folder = os.path.split(self.__project_file_name)[0]
+
     # Let the user know we are doing something    
     self.__progress_bar.init(1, len(model_data), "Loading files: ")
     counter = 0
     
     # Load the data from disk and initialize the model attributes
     for attributes in model_data:
-      # Do the heavy job: load the file from disk
-      model, err_msg = vtk_io.load(attributes.file_name)
-      if model:
-        self.__initialize_model(model, attributes)
-        models.append(model)
-      else:
-        error_messages.append(err_msg)
       # Update the progress bar
       counter += 1
       self.__progress_bar.set_progress(counter)
 
-    # We are done here
+      # Try with the relative path first
+      rel_file_name = os.path.join(project_folder, attributes.relative_file_name)
+      model = vtk_io.load(rel_file_name)
+      if model:
+        self.__initialize_model(model, attributes)
+        models.append(model)
+        continue
+
+      # Obviously, we failed to load the model using the relative path
+      final_error_message = "Couldn't load '" + attributes.name + "'. Tried with\n" + rel_file_name
+
+      # Try with the absolute path
+      model = vtk_io.load(attributes.file_name)
+      if model:
+        self.__initialize_model(model, attributes)
+        models.append(model)
+        continue
+
+      # Failed with the absolute path too
+      final_error_message += "\n" + attributes.file_name + "\n"
+      error_messages.append(final_error_message)
+
+    # We are done with model loading
     self.__progress_bar.done()
     # Now let the container adopt the new models
     data_container.add_models(models)
@@ -214,7 +234,10 @@ class ProjectIO:
     if not self.has_file_name():
       raise Exception("Error in " + self.__class__.__name__ + ": file name not set")
 
-    # First, create an XML object for the whole project
+    # Get the project folder
+    project_folder = os.path.split(self.__project_file_name)[0]
+
+    # Create an XML object for the whole project
     xml_project = ET.Element("BrainVisPy_Project")
 
     # Save some camera parameters
@@ -222,7 +245,7 @@ class ProjectIO:
 
     # Save the data of each model to the XML file
     for model in data_container.get_models():
-      self.__add_model_data_to_xml_element(model, ET.SubElement(xml_project, "model"))
+      self.__add_model_data_to_xml_element(model, project_folder, ET.SubElement(xml_project, "model"))
 
     # Write the whole XML tree to file
     ET.ElementTree(xml_project).write(self.__project_file_name)
@@ -238,15 +261,22 @@ class ProjectIO:
     ET.SubElement(xml_element, "view_up").text = str(view_up[0]) + " " + str(view_up[1]) + " " + str(view_up[2])
 
 
-  def __add_model_data_to_xml_element(self, model, xml_element):
+  def __add_model_data_to_xml_element(self, model, project_folder, xml_element):
     """This method adds all model data to the provided xml element."""
     ET.SubElement(xml_element, "name").text = model.name
     ET.SubElement(xml_element, "file_name").text = model.file_name
+    ET.SubElement(xml_element, "relative_file_name").text = self.__compute_relative_file_name(model.file_name, project_folder)
     properties = ET.SubElement(xml_element, "properties")
     if isinstance(model, VtkPolyModel):
       self.__add_poly_properties_to_xml_element(model, properties)
     elif isinstance(model, VtkVolumeModel):
       self.__add_volume_properties_to_xml_element(model, properties)
+
+
+  def __compute_relative_file_name(self, abs_file_name, project_folder):
+    abs_path, file_name = os.path.split(abs_file_name)
+    rel_path = os.path.relpath(abs_path, project_folder)
+    return os.path.join(rel_path, file_name)
 
 
   def __add_poly_properties_to_xml_element(self, model, xml_element):

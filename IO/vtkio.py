@@ -24,19 +24,19 @@ class VtkIO:
     """Loads the data from the file 'file_name' and returns either VtkVolumeModel, VtkPolyModel or None. It
     returns an error message (string) as a second argument (empty string if no error)."""
     # Make sure the file exists
-    if not os.path.isfile(file_name):
-      return None, "cannot open '" + file_name + "'"
-    
+    if not file_name or not os.path.isfile(file_name):
+      return None
+
     vtk_data = self.__load_data_from_file(file_name)
 
     # Make sure we got data we can handle
     if isinstance(vtk_data, vtk.vtkImageData):
-      return VtkVolumeModel(vtk_data, file_name), "" # return the model and an empty error message
+      return VtkVolumeModel(vtk_data, file_name)
     elif isinstance(vtk_data, vtk.vtkPolyData):
-      return VtkPolyModel(vtk_data, file_name), "" # return the model and an empty error message
+      return VtkPolyModel(vtk_data, file_name)
 
     # We can not deal with the provided file
-    return None, "we have no reader for this file type"
+    return None
 
 
   def __load_data_from_file(self, file_name):
