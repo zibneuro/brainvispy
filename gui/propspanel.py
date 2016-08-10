@@ -1,4 +1,3 @@
-from core.modelview import Observer
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
@@ -6,7 +5,7 @@ from .polygui import VtkPolyModelGUI
 from .volgui import VtkVolumeModelGUI
 from PyQt5 import QtCore, QtWidgets
 
-class PropsPanel(Observer):
+class PropsPanel:
   """This is the dock widget for the properties of a selected models(s). It has a list showing the
   selected models and specialized GUI elements which show the properties of polygonal and volume
   models."""

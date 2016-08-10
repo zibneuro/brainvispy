@@ -1,5 +1,4 @@
 from vis.vtkvol import VtkVolumeModel
-from core.modelview import Observer
 from core.datacontainer import DataContainer
 from PyQt5 import QtCore, QtWidgets
 
@@ -54,8 +53,9 @@ class ListWidgetItem(QtWidgets.QListWidgetItem):
 #============================================================================================================
 # ListWidget ================================================================================================
 #============================================================================================================
-class ListWidget(Observer):
+class ListWidget(QtWidgets.QListWidget):
   def __init__(self, data_container):
+    super().__init__()
     self.__data_container = data_container
     # Make sure that the data container has the right type
     if not isinstance(self.__data_container, DataContainer):
@@ -66,11 +66,10 @@ class ListWidget(Observer):
     self.__model_to_item = dict()
     self.__model_to_selected_item = dict()
     self.__ordered_items = list()    
-
-    self.__qt_list_widget = QtWidgets.QListWidget()
-    self.__qt_list_widget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-    self.__qt_list_widget.itemSelectionChanged.connect(self.__on_item_selection)
-    self.__qt_list_widget.itemChanged.connect(self.__on_item_changed)
+ 
+    self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+    self.itemSelectionChanged.connect(self.__on_item_selection)
+    self.itemChanged.connect(self.__on_item_changed)
 
     # The following ones are used in some of the callbacks
     self.__update_data_container_visibility = True
@@ -93,15 +92,15 @@ class ListWidget(Observer):
     ignore_selection_callback = self.__ignore_selection_callback
     self.__ignore_selection_callback = True
     
-    # First, remove all elements from the list (don't call self.__qt_list_widget.clear() since the items are destroyed!)
-    for i in range(self.__qt_list_widget.count()):
-      self.__qt_list_widget.takeItem(0)
+    # First, remove all elements from the list (don't call self.clear() since the items are destroyed!)
+    for i in range(self.count()):
+      self.takeItem(0)
 
     # Insert all elements whose names contain 'text'
     for item in self.__ordered_items:
       if text in item.model.name.lower():
         item.is_hidden = False
-        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), item)
+        self.insertItem(self.count(), item)
       else:
         item.is_hidden = True
 
@@ -157,6 +156,13 @@ class ListWidget(Observer):
     self.__data_container.update_visibility()
 
 
+  def keyPressEvent(self, event):
+    # Do the default Qt stuff
+    super().keyPressEvent(event)
+    if event.key() == QtCore.Qt.Key_Delete:
+      self.__data_container.delete_selected_models()
+
+
   def __on_item_selection(self):
     if self.__ignore_selection_callback:
       return
@@ -164,7 +170,7 @@ class ListWidget(Observer):
     selected_models = list()
     
     # Collect the models selected by the user
-    for item in self.__qt_list_widget.selectedItems():
+    for item in self.selectedItems():
         selected_models.append(item.model)
 
     # If the user holds the ctrl. key, add the hidden selected items to the current ones
@@ -195,10 +201,10 @@ class ListWidget(Observer):
       # Save the item in the ordered list
       if isinstance(model, VtkVolumeModel):
         self.__ordered_items.insert(0, item)
-        self.__qt_list_widget.insertItem(0, item)
+        self.insertItem(0, item)
       else:
         self.__ordered_items.append(item)
-        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), item)
+        self.insertItem(self.count(), item)
 
 
   def __update_selection(self, data):
@@ -210,7 +216,7 @@ class ListWidget(Observer):
     self.__ignore_selection_callback = True
 
     # First, unselect all
-    self.__qt_list_widget.clearSelection()
+    self.clearSelection()
     self.__model_to_selected_item.clear()
 
     item = None
@@ -223,7 +229,7 @@ class ListWidget(Observer):
 
     # If there was only one item => scroll to it
     if len(data) == 1 and item:
-      self.__qt_list_widget.scrollToItem(item)
+      self.scrollToItem(item)
 
     # Restore the state
     self.__ignore_selection_callback = ignore_selection_callback
@@ -249,15 +255,10 @@ class ListWidget(Observer):
       pass
     # Remove the corresponding item from the QListWidget and another internal list
     if item:
-      self.__qt_list_widget.takeItem(self.__qt_list_widget.row(item))
+      self.takeItem(self.row(item))
       try:
         self.__ordered_items.remove(item)
       except KeyError:
         pass
 
     self.__ignore_selection_callback = ignore_selection_callback
-
-
-  @property
-  def qt_list_widget(self):
-    return self.__qt_list_widget

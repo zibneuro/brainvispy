@@ -1,8 +1,7 @@
 import vtk
-from core.modelview import Observer
 from core.datacontainer import DataContainer
 
-class ModelPicker(Observer):
+class ModelPicker:
   def __init__(self, data_container, interactor):
     self.__data_container = data_container
     # Make sure that the data container has the right type

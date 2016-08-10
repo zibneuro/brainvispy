@@ -1,9 +1,8 @@
-from core.modelview import Observer
 from core.datacontainer import DataContainer
 from vis.vtkvol import VtkVolumeModel
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-class VtkVolumeModelGUI(Observer):
+class VtkVolumeModelGUI:
   """This is the dock widget for the properties of a selected data item(s)"""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):

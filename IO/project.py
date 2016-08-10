@@ -169,7 +169,10 @@ class ProjectIO:
     error_messages = list()
 
     # Get the project folder
-    project_folder = os.path.split(self.__project_file_name)[0]
+    if self.__project_file_name:
+      project_folder = os.path.split(self.__project_file_name)[0]
+    else:
+      project_folder = ""
 
     # Let the user know we are doing something    
     self.__progress_bar.init(1, len(model_data), "Loading files: ")

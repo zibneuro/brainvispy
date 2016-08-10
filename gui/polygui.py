@@ -1,9 +1,8 @@
-from core.modelview import Observer
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-class VtkPolyModelGUI(Observer):
+class VtkPolyModelGUI:
   """This is the dock widget for the properties of a selected data item(s)"""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):

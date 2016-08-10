@@ -1,6 +1,5 @@
 import os
 from .listwidget import ListWidget
-from core.modelview import Observer
 from core.datacontainer import DataContainer
 from PyQt5 import QtWidgets, QtCore, QtWidgets
 
@@ -8,7 +7,7 @@ from PyQt5 import QtWidgets, QtCore, QtWidgets
 #==================================================================================================
 # DataPanel =======================================================================================
 #==================================================================================================
-class DataPanel(Observer):
+class DataPanel:
   """This is the dock widget for the loaded models. It will have: (1) a line edit where the user
   can search for a model among the loaded ones, (2) a button to delete the selected models, (3) a
   list with the loaded models, (4) buttons to control the model visibility."""
@@ -52,7 +51,7 @@ class DataPanel(Observer):
     dock_layout.addWidget(self.__data_search, 1, 0, 1, -1)
     dock_layout.addWidget(QtWidgets.QLabel("loaded data:"), 2, 0, 1, -1)
     dock_layout.addWidget(self.__btn_delete_selected_models, 2, 1, 1, 1)
-    dock_layout.addWidget(self.__list_widget.qt_list_widget, 3, 0, 1, -1)
+    dock_layout.addWidget(self.__list_widget, 3, 0, 1, -1)
     dock_layout.addWidget(visibility_group, 4, 0, 1, -1)
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()

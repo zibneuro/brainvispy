@@ -1,12 +1,12 @@
 import vtk
 from core.progress import ProgressBar
 from core.datacontainer import DataContainer
-from core.modelview import Observer
 from .vtkqgl import VTKQGLWidget
 from .pick3d import ModelPicker
 
-class VtkWidget(Observer):
+class VtkWidget:
   def __init__(self, parent_qt_frame, data_container, progress_bar):
+    self.test_1 = 2
     # Make sure that the data container has the right type
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has to be of type DataContainer")
@@ -22,6 +22,8 @@ class VtkWidget(Observer):
     self.__vtk_widget = VTKQGLWidget(parent_qt_frame)
     self.__vtk_widget.renderer.SetBackground(0.4, 0.41, 0.42)
     self.__vtk_widget.enable_depthpeeling()
+
+    self.__vtk_widget.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
 
     # This guy is very important: it handles all the model selection in the 3D view
     self.__model_picker = ModelPicker(self.__data_container, self.render_window_interactor)
@@ -42,6 +44,13 @@ class VtkWidget(Observer):
     self.__lower_left_axes_widget.SetViewport(0.0, 0.0, 0.2, 0.2)
     self.__lower_left_axes_widget.SetEnabled(1)
     self.__lower_left_axes_widget.InteractiveOff()
+
+
+  def __on_key_released(self, interactor, data):
+    if data == "KeyReleaseEvent":
+      key = interactor.GetKeySym()
+      if key == "Delete":
+        self.__data_container.delete_selected_models()
 
 
   def observable_changed(self, change, data):

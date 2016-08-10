@@ -1,12 +1,5 @@
 import abc
-
-#======================================================================================================
-# Observer ============================================================================================
-#======================================================================================================
-class Observer(metaclass = abc.ABCMeta):
-  @abc.abstractmethod
-  def observable_changed(self, change, data):
-    pass
+import inspect
 
 #======================================================================================================
 # Observable ==========================================================================================
@@ -17,10 +10,15 @@ class Observable:
     self.observers = list()
 
   def add_observer(self, observer):
-    """'observer' will start observing this object which means that it will get notified when the Observable changes by calling the appropriate methods in Observer."""
-    # Make sure that the observer is an instance of Observer
-    if not isinstance(observer, Observer):
-      raise TypeError("input has to be an instance of Observer")
+    # This is the error to raise if 'observer' doesn't have the observable_changed method
+    type_error = TypeError("the observer has to implement the method observable_changed(self, change, data)")
+
+    try:
+      arg_names = inspect.getargspec(observer.observable_changed)[0]
+      if len(arg_names) != 3 or arg_names[0] != "self" or arg_names[1] != "change" or arg_names[2] != "data":
+        raise type_error
+    except:
+      raise type_error
 
     # Make sure that 'observer' is not already in the list (we add each observer only once)
     try:

@@ -85,6 +85,8 @@ class DataContainer(Observable):
 
 
   def delete_selected_models(self):
+    if not self.__selected_models:
+      return
     # Make a copy of the list of selected models since we are going to modify it in the next loop
     selected_models = list(self.__selected_models)
     for model in selected_models:
