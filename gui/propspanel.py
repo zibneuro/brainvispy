@@ -21,6 +21,7 @@ class PropsPanel:
     self.__selection_list_label = QtWidgets.QLabel("no selected objects")
     self.__qt_list_widget = QtWidgets.QListWidget()
     self.__qt_list_widget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+    self.__qt_list_widget.setFocusPolicy(QtCore.Qt.NoFocus)
     dock_layout = QtWidgets.QVBoxLayout()
     dock_layout.addWidget(self.__selection_list_label)
     dock_layout.addWidget(self.__qt_list_widget)
