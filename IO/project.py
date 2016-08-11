@@ -23,8 +23,8 @@ class CameraParameters:
 class ModelElements:
   def __init__(self):
     self.name = "unknown"
-    self.file_name = ""
-    self.relative_file_name = ""
+    self.file_name = None
+    self.relative_file_name = None
     self.visibility = 1 # visible by default
     self.rgb_color = 0.8, 0.8, 0.8 # gray by default
     self.transparency = 0 # non-transparent by default
@@ -184,27 +184,30 @@ class ProjectIO:
       counter += 1
       self.__progress_bar.set_progress(counter)
 
+      # If an error occurs, be prepared
+      error_message = "Couldn't load '" + attributes.name + "'. Tried with\n"
+
       # Try with the relative path first
-      rel_file_name = os.path.join(project_folder, attributes.relative_file_name)
-      model = vtk_io.load(rel_file_name)
-      if model:
-        self.__initialize_model(model, attributes)
-        models.append(model)
-        continue
+      if attributes.relative_file_name:
+        rel_file_name = os.path.join(project_folder, attributes.relative_file_name)
+        model = vtk_io.load(rel_file_name)
+        if model:
+          self.__initialize_model(model, attributes)
+          models.append(model)
+          continue
+        # Failed
+        error_message += rel_file_name + "\n"
 
-      # Obviously, we failed to load the model using the relative path
-      final_error_message = "Couldn't load '" + attributes.name + "'. Tried with\n" + rel_file_name
-
-      # Try with the absolute path
-      model = vtk_io.load(attributes.file_name)
-      if model:
-        self.__initialize_model(model, attributes)
-        models.append(model)
-        continue
-
-      # Failed with the absolute path too
-      final_error_message += "\n" + attributes.file_name + "\n"
-      error_messages.append(final_error_message)
+      # Try with the absolute file name
+      if attributes.file_name:
+        model = vtk_io.load(attributes.file_name)
+        if model:
+          self.__initialize_model(model, attributes)
+          models.append(model)
+          continue
+        # Failed with the absolute path too
+        error_message += attributes.file_name + "\n"
+        error_messages.append(error_message)
 
     # We are done with model loading
     self.__progress_bar.done()
