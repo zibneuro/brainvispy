@@ -9,7 +9,7 @@ We build VTK from source using CMake and g++.
 
 ![Cmake OS X screenshot 1](cmake_osx_screenshot_1.PNG "")
 
-* Hit **Configure** and wait until it is done. Change the entries marked by a red dot as shown:
+* Hit **Configure** and wait until it is done. Change the entries marked by red dots as shown:
 
 ![Cmake OS X screenshot 2](cmake_osx_screenshot_2.PNG "")
 
@@ -17,7 +17,7 @@ We build VTK from source using CMake and g++.
 
 ![Cmake OS X screenshot 2](cmake_osx_screenshot_3.PNG "")
 
-  These values are based on the output of `python3-config --include`. You should run this command in a shell and adapt the CMake entries above according to the output. On our system `python3-config --include` gives `-I/usr/local/Cellar/python3/3.5.2_1/Frameworks/Python.framework/Versions/3.5/include/python3.5m`.
+  These values are based on the output of `python3-config --include`. You should run this command in a shell and adapt the CMake entries above according to the output. On our system, `python3-config --include` gives `-I/usr/local/Cellar/python3/3.5.2_1/Frameworks/Python.framework/Versions/3.5/include/python3.5m`.
 
 * Hit **Configure** again and when it's done hit **Generate**. Close CMake when the generating is done.
 * Go to the **build** directory and run `make install` in a shell (or `sudo make install`).
