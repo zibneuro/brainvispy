@@ -9,11 +9,11 @@ We build VTK from source using CMake and g++.
 
 ![Cmake OS X screenshot 1](cmake_osx_screenshot_1.PNG "")
 
-* Hit **Configure** and wait until it is done. Change the blue marked entries to the shown vaules:
+* Hit **Configure** and wait until it is done. Change the blue marked entries as shown:
 
 ![Cmake OS X screenshot 2](cmake_osx_screenshot_2.PNG "")
 
-* Hit **Configure** again and when it is done click on the checkbox `Advanced` in the upper right part of CMake. Find the following four lines and set them to the show values:
+* Hit **Configure** again and when it is done click on the checkbox `Advanced` in the upper right part of CMake. Find the following four lines and set them as shown here:
 
 ![Cmake OS X screenshot 2](cmake_osx_screenshot_3.PNG "")
 
