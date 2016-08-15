@@ -2,7 +2,7 @@
 
 We build VTK from source using CMake and a Windows compiler (here, we employ the freely available Visual Studio Express 2013 for desktop).
 
-* Install CMake and VS Express 2013 for desktop (this is trivial).
+* Install CMake and VS Express 2013 for desktop.
 * Download the latest stable VTK source code (at the time of writing it is 7.0.0) from http://www.vtk.org/download/.
 * Unzip the file, enter the main directory and create a new folder (usually) called **build**.
 * Open CMake and fill in the first two lines as shown in the screenshot (you should change **C:\Users\papazov\Software** to the folder where you downloaded VTK):
@@ -11,9 +11,9 @@ We build VTK from source using CMake and a Windows compiler (here, we employ the
 
 * Hit **Configure** and set up the dialog which pops up as shown here:
 
-![Cmake Windows screenshot 1](cmake_win_screenshot_2.PNG "")
+![Cmake Windows screenshot 2](cmake_win_screenshot_2.PNG "")
 
-* Hit **Finish**. CMake starts the configuration process. Once it is done, change the blue marked entries to the shown vaules:
+* Hit **Finish**. CMake starts the configuration process. Once it is done, change the blue marked entries to the shown vaules (the other ones are automatically filled with the right values):
 
 ![Cmake Windows screenshot 3](cmake_win_screenshot_3.PNG "")
 
