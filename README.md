@@ -49,12 +49,12 @@ We use OS X El Capitan (Version 10.11.6).
   * Add **/usr/local/VTK/7.0/lib** to the **DYLD_LIBRARY_PATH** environment variable.
   * Add **/usr/local/VTK/7.0/lib/python3/site-packages:/usr/local/VTK/7.0/lib/python3/site-packages/vtk** to the **PYTHONPATH** environment variable.
 
-You can do both by adding
+  You can do both by adding
 
-    export DYLD_LIBRARY_PATH=/usr/local/VTK/7.0/lib:$DYLD_LIBRARY_PATH
-    export PYTHONPATH=/usr/local/VTK/7.0/lib/python3/site-packages:/usr/local/VTK/7.0/lib/python3/site-packages/vtk
+      export DYLD_LIBRARY_PATH=/usr/local/VTK/7.0/lib:$DYLD_LIBRARY_PATH
+      export PYTHONPATH=/usr/local/VTK/7.0/lib/python3/site-packages:/usr/local/VTK/7.0/lib/python3/site-packages/vtk
 
-to the file `.bash_profile` which is in your home directory (create it if it doesn't exist).
+  to the file `.bash_profile` which is in your home directory (create it if it doesn't exist).
 
 * **Run BrainVisPy.**
   * Check out this repository or download the code. Open a command prompt and go to the directory containing **main.py**. Run `python3 main.py`
