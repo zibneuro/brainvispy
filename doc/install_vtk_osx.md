@@ -9,7 +9,7 @@ We build VTK from source using CMake and g++.
 
 ![Cmake OS X screenshot 1](cmake_osx_screenshot_1.PNG "")
 
-* Hit **Configure** and wait until it is done. Change the blue marked entries as shown:
+* Hit **Configure** and wait until it is done. Change the entries marked by a red dot as shown:
 
 ![Cmake OS X screenshot 2](cmake_osx_screenshot_2.PNG "")
 
