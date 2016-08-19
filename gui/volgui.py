@@ -2,11 +2,13 @@ from core.datacontainer import DataContainer
 from vis.vtkvol import VtkVolumeModel
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-class VtkVolumeModelGUI:
+class VtkVolumeModelGUI(QtWidgets.QGroupBox):
   """This is the dock widget for the properties of a selected data item(s)"""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
+
+    super().__init__("volume properties")
 
     # Register yourself as an observer
     self.__data_container = data_container
@@ -32,9 +34,8 @@ class VtkVolumeModelGUI:
     layout.addWidget(self.__single_model_label)
     #layout.setHorizontalSpacing(10)
     # Group the GUI elements together
-    self.gui_widget = QtWidgets.QGroupBox("volume properties")
-    self.gui_widget.setLayout(layout)
-    self.__hide()
+    self.setLayout(layout)
+    self.hide()
 
 
   def observable_changed(self, change, data):
@@ -56,7 +57,7 @@ class VtkVolumeModelGUI:
     num_vol_models = len(self.__vol_models)
     
     if num_vol_models == 0:
-      self.__hide() # hide the whole stuff and exit
+      self.hide() # hide the whole stuff and exit
       return
     elif num_vol_models == 1:
       self.__update_slice_slider(self.__vol_models[0])
@@ -69,7 +70,7 @@ class VtkVolumeModelGUI:
       self.__single_model_label.show()
 
     # Show the whole GUI
-    self.__show()
+    self.show()
 
 
   def __update_slice_slider(self, vol_model):
@@ -93,11 +94,3 @@ class VtkVolumeModelGUI:
     self.__vol_models[0].set_slice_index(self.__slice_slider.value())
     # Notify the data container that some of its data changed (this will call this objects)
     self.__data_container.update_slice_index()
-
-
-  def __hide(self):
-    self.gui_widget.hide()
-
-
-  def __show(self):
-    self.gui_widget.show()

@@ -4,9 +4,9 @@ from core.datacontainer import DataContainer
 from .vtkqgl import VTKQGLWidget
 from .pick3d import ModelPicker
 
-class VtkWidget:
+class VtkWidget(VTKQGLWidget):
   def __init__(self, parent_qt_frame, data_container, progress_bar):
-    self.test_1 = 2
+    super().__init__(parent_qt_frame)
     # Make sure that the data container has the right type
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has to be of type DataContainer")
@@ -19,11 +19,9 @@ class VtkWidget:
     self.__progress_bar = progress_bar
 
     # The render window
-    self.__vtk_widget = VTKQGLWidget(parent_qt_frame)
-    self.__vtk_widget.renderer.SetBackground(0.4, 0.41, 0.42)
-    self.__vtk_widget.enable_depthpeeling()
-
-    self.__vtk_widget.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
+    self.renderer.SetBackground(0.4, 0.41, 0.42)
+    self.enable_depthpeeling()
+    self.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
 
     # This guy is very important: it handles all the model selection in the 3D view
     self.__model_picker = ModelPicker(self.__data_container, self.render_window_interactor)
@@ -113,26 +111,6 @@ class VtkWidget:
 
   def do_reset_view_after_adding_models(self, value):
     self.__reset_view_after_adding_models = value
-
-
-  @property
-  def widget(self):
-    return self.__vtk_widget
-
-
-  @property
-  def render_window(self):
-    return self.widget.render_window
-
-
-  @property
-  def render_window_interactor(self):
-    return self.widget.render_window_interactor
-
-
-  @property
-  def renderer(self):
-    return self.widget.renderer
 
 
   def __add_data_items(self, data_items):

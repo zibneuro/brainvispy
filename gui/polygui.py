@@ -2,11 +2,13 @@ from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-class VtkPolyModelGUI:
+class VtkPolyModelGUI(QtWidgets.QGroupBox):
   """This is the dock widget for the properties of a selected data item(s)"""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
+
+    super().__init__("surface properties")
 
     # Register yourself as an observer
     self.__data_container = data_container
@@ -40,9 +42,8 @@ class VtkPolyModelGUI:
     layout.addWidget(self.__transparency_slider, 1, 1)
     layout.setHorizontalSpacing(10)
     # Group the GUI elements together
-    self.gui_widget = QtWidgets.QGroupBox("surface properties")
-    self.gui_widget.setLayout(layout)
-    self.__hide()
+    self.setLayout(layout)
+    self.hide()
 
 
   def observable_changed(self, change, data):
@@ -66,9 +67,9 @@ class VtkPolyModelGUI:
     if self.__poly_models:
       self.__update_color_selection_button()
       self.__update_transparency_slider()
-      self.__show()
+      self.show()
     else:
-      self.__hide()
+      self.hide()
 
 
   def __update_color_selection_button(self):
@@ -149,11 +150,3 @@ class VtkPolyModelGUI:
 
     # Notify the data container that some of its data changed (this will call this objects)
     self.__data_container.update_transparency()
-
-
-  def __hide(self):
-    self.gui_widget.hide()
-
-
-  def __show(self):
-    self.gui_widget.show()

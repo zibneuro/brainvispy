@@ -7,13 +7,16 @@ from PyQt5 import QtWidgets, QtCore, QtWidgets
 #==================================================================================================
 # DataPanel =======================================================================================
 #==================================================================================================
-class DataPanel:
+class DataPanel(QtWidgets.QDockWidget):
   """This is the dock widget for the loaded models. It will have: (1) a line edit where the user
   can search for a model among the loaded ones, (2) a button to delete the selected models, (3) a
   list with the loaded models, (4) buttons to control the model visibility."""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the input data container has the wrong type")
+
+    super().__init__("data panel")
+    self.setFeatures(QtWidgets.QDockWidget.DockWidgetFloatable | QtWidgets.QDockWidget.DockWidgetMovable)
 
     self.__data_container = data_container
     self.__data_container.add_observer(self)
@@ -56,10 +59,8 @@ class DataPanel:
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()
     dock_frame.setLayout(dock_layout)
-    # Create the dock widget
-    self.dock_widget = QtWidgets.QDockWidget("data panel")
-    self.dock_widget.setFeatures(QtWidgets.QDockWidget.DockWidgetFloatable | QtWidgets.QDockWidget.DockWidgetMovable)
-    self.dock_widget.setWidget(dock_frame)
+    # Setup the dock widget
+    self.setWidget(dock_frame)
 
 
   def observable_changed(self, change, data):

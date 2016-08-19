@@ -84,15 +84,15 @@ class MainWindow(QtWidgets.QMainWindow):
   def __setup_main_frame(self):
     # Create the OpenGL-based VTK widget
     self.__vtk_widget = VtkWidget(self, self.__data_container, self.__file_load_progress_bar)
-    self.setCentralWidget(self.__vtk_widget.widget)
+    self.setCentralWidget(self.__vtk_widget)
 
     # Add the dock which shows the list of the loaded data (on the left in the main window)
     self.__data_panel = DataPanel(self.__data_container)
-    self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.__data_panel.dock_widget)
+    self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.__data_panel)
 
     # Add the dock which shows the properties of the selected object (on the right in the main window)
     self.__props_panel = PropsPanel(self.__data_container)
-    self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.__props_panel.dock_widget)
+    self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.__props_panel)
 
 
   def __on_open_project(self):

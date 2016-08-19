@@ -5,13 +5,16 @@ from .polygui import VtkPolyModelGUI
 from .volgui import VtkVolumeModelGUI
 from PyQt5 import QtCore, QtWidgets
 
-class PropsPanel:
+class PropsPanel(QtWidgets.QDockWidget):
   """This is the dock widget for the properties of a selected models(s). It has a list showing the
   selected models and specialized GUI elements which show the properties of polygonal and volume
   models."""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
+
+    super().__init__("properties panel")
+    self.setFeatures(QtWidgets.QDockWidget.DockWidgetFloatable | QtWidgets.QDockWidget.DockWidgetMovable)
 
     # Register yourself as an observer
     self.__data_container = data_container;
@@ -30,16 +33,14 @@ class PropsPanel:
     dock_layout.setAlignment(QtCore.Qt.AlignTop)
 
     # The GUIs for the volume and poly and models
-    dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container).gui_widget)
-    dock_layout.addWidget(VtkPolyModelGUI(self.__data_container).gui_widget)    
+    dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container))
+    dock_layout.addWidget(VtkPolyModelGUI(self.__data_container))    
 
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()
     dock_frame.setLayout(dock_layout)
-    # Create the dock widget
-    self.dock_widget = QtWidgets.QDockWidget("properties panel")
-    self.dock_widget.setFeatures(QtWidgets.QDockWidget.DockWidgetFloatable | QtWidgets.QDockWidget.DockWidgetMovable)
-    self.dock_widget.setWidget(dock_frame)
+    # Setup the dock
+    self.setWidget(dock_frame)
 
 
   def observable_changed(self, change, data):
