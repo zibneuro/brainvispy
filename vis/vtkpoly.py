@@ -14,6 +14,7 @@ class VtkPolyModel(VtkModel):
     self.__actor = vtk.vtkActor()
     self.__actor.SetMapper(mapper)
     self.__actor.GetProperty().SetAmbient(0.05)
+    self.__actor.GetProperty().BackfaceCullingOff()
 
 
   @staticmethod
@@ -72,6 +73,15 @@ class VtkPolyModel(VtkModel):
   def set_color(self, r, g, b):
     self.__actor.GetProperty().SetDiffuseColor(r, g, b)
     self.__actor.GetProperty().SetAmbientColor(r, g, b)
+
+
+  def set_see_inside(self, value):
+    self.__actor.GetProperty().SetFrontfaceCulling(value)
+
+
+  @property
+  def see_inside(self):
+    return self.__actor.GetProperty().GetFrontfaceCulling()
 
 
   @property

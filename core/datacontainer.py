@@ -9,6 +9,7 @@ class DataContainer(Observable):
   change_is_transparency = 5
   change_is_slice_index = 6
   change_is_deleted_models = 7
+  change_is_see_inside = 8
 
   def __init__(self):
     Observable.__init__(self)
@@ -64,6 +65,10 @@ class DataContainer(Observable):
     self.notify_observers_about_change(DataContainer.change_is_slice_index, list())
 
 
+  def update_see_inside(self):
+    self.notify_observers_about_change(DataContainer.change_is_see_inside, list())
+
+
   def set_model_selection_by_vtk_properties(self, props):
     self.__selected_models = set()
     for prop in props:
@@ -83,6 +88,18 @@ class DataContainer(Observable):
     # Notify the observers about the new selection
     self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
 
+
+  def invert_model_selection(self):
+    # Remove the selected and add the non-selected models to the selection
+    for model in self.__vtk_property_to_models.values():
+      try:
+        self.__selected_models.remove(model)
+      except KeyError:
+        self.__selected_models.add(model)
+
+    # Notify the observers about the new selection
+    self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
+        
 
   def delete_selected_models(self):
     if not self.__selected_models:

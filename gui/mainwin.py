@@ -146,10 +146,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_import_folder(self):
-    folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Import folder (load all files from a folder)", self.__import_folder)
+    folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Import folder (load all files from a folder)", self.__load_files_folder)
     # Make sure we got an existing directory
     if os.path.isdir(folder_name):
-      self.__import_folder = folder_name
+      self.__load_files_folder = folder_name
       full_file_names = list()
       # Get the *full* file names
       for file_name in os.listdir(folder_name):
@@ -195,7 +195,6 @@ class MainWindow(QtWidgets.QMainWindow):
   def __load_config_file(self):
     # First set these default names (in case we fail to open the config file)
     self.__project_folder = "./"
-    self.__import_folder = "./"
     self.__load_files_folder = "./"
     # Now try to open the file and read the true folder names
     try:
@@ -203,8 +202,6 @@ class MainWindow(QtWidgets.QMainWindow):
       for element in config:
         if element.tag == "project_folder":
           self.__project_folder = element.text
-        elif element.tag == "import_folder":
-          self.__import_folder = element.text
         elif element.tag == "load_files_folder":
           self.__load_files_folder = element.text
     except Exception as exception:
@@ -217,7 +214,6 @@ class MainWindow(QtWidgets.QMainWindow):
       xml_config = ET.Element("BrainVisPy_Config_File")
       # Save the current config stuff
       ET.SubElement(xml_config, "project_folder").text = self.__project_folder
-      ET.SubElement(xml_config, "import_folder").text = self.__import_folder
       ET.SubElement(xml_config, "load_files_folder").text = self.__load_files_folder
       # Write the whole XML tree to file
       ET.ElementTree(xml_config).write(self.__config_file_name)
@@ -226,7 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def closeEvent(self, event):
-    reply = QtWidgets.QMessageBox.question(self, "Question", "Quit?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+    reply = QtWidgets.QMessageBox.question(self, "Question", "Quit?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes)
     if reply == QtWidgets.QMessageBox.Yes:
       # Save some info (like the folder of the current project and other stuff) to a config file (to have it for next time)
       self.__update_config_file()

@@ -2,7 +2,7 @@ BrainVisPy is written in **Python3** and uses **PyQt5**,  **python-qt5-gl** and 
 
 # Install and Run
 
-In the following, we describe how to install and run BrainVisPy on Windows and Linux.
+In the following, we describe how to install and run BrainVisPy on Windows, Linux and OS X.
 
 ## Windows
 

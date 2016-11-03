@@ -13,4 +13,4 @@ We build VTK from source using CMake and g++.
 
 * Hit **c** again and when it's done hit **g** (for generate).
 * In the console, type in `make`
-* Type in `make install` (or `sudo make install`). This installs VTK in **/usr/local/vtk7**.
+* Type in `make install` (or `sudo make install`). This installs VTK in **/local/usr/vtk-7.0.0**.

@@ -23,6 +23,10 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     # This one is used in a callback
     self.__ignore_transparency_slider_value_changed_callback = False
 
+    # The see inside checkbox
+    self.__see_inside_checkbox = QtWidgets.QCheckBox("see inside region")
+    self.__see_inside_checkbox.setTristate(False)
+    self.__see_inside_checkbox.clicked.connect(self.__on_see_inside_checkbox_clicked)
     # The color button
     self.__select_color_btn = QtWidgets.QPushButton()
     self.__select_color_btn.clicked.connect(self.__on_color_button_clicked)
@@ -36,10 +40,11 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     self.__transparency_slider.valueChanged.connect(self.__on_transparency_slider_value_changed)
     # Add the GUI elements to a layout
     layout = QtWidgets.QGridLayout()
-    layout.addWidget(QtWidgets.QLabel("color"), 0, 0)
-    layout.addWidget(self.__select_color_btn, 1, 0)
-    layout.addWidget(QtWidgets.QLabel("transparency"), 0, 1)
-    layout.addWidget(self.__transparency_slider, 1, 1)
+    layout.addWidget(self.__see_inside_checkbox, 0, 0, 1, 2)
+    layout.addWidget(QtWidgets.QLabel("color"), 1, 0, 1, 1, QtCore.Qt.AlignHCenter)
+    layout.addWidget(self.__select_color_btn, 2, 0, 1, 1)
+    layout.addWidget(QtWidgets.QLabel("transparency"), 1, 1, 1, 1, QtCore.Qt.AlignHCenter)
+    layout.addWidget(self.__transparency_slider, 2, 1, 1, 1)
     layout.setHorizontalSpacing(10)
     # Group the GUI elements together
     self.setLayout(layout)
@@ -65,11 +70,26 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
         self.__poly_models.append(model)
 
     if self.__poly_models:
+      self.__update_see_inside_checkbox()
       self.__update_color_selection_button()
       self.__update_transparency_slider()
       self.show()
     else:
       self.hide()
+
+
+  def __update_see_inside_checkbox(self):
+    see_inside_counter = 0
+    
+    for model in self.__poly_models:
+      see_inside_counter += model.see_inside
+
+    if see_inside_counter == 0:
+      self.__see_inside_checkbox.setCheckState(QtCore.Qt.Unchecked)
+    elif see_inside_counter == len(self.__poly_models):
+      self.__see_inside_checkbox.setCheckState(QtCore.Qt.Checked)
+    else:
+      self.__see_inside_checkbox.setCheckState(QtCore.Qt.PartiallyChecked)
 
 
   def __update_color_selection_button(self):
@@ -111,6 +131,17 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     for k in range(3):
       hex_color += hex(int(255.0*rgb[k]))[2:].zfill(2) # scale to range [0, 255], convert to hex, remove the "0x" and fill with zeroes
     return hex_color
+
+
+  def __on_see_inside_checkbox_clicked(self):
+    # Shall we see inside each model?
+    see_inside = 1 if self.__see_inside_checkbox.checkState() == QtCore.Qt.Checked else 0
+    self.__see_inside_checkbox.setTristate(False)
+    # Update the "see inside" property of each model
+    for model in self.__poly_models:
+      model.set_see_inside(see_inside)
+    # Update the container
+    self.__data_container.update_see_inside()
 
 
   def __on_color_button_clicked(self):

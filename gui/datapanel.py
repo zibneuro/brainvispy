@@ -9,8 +9,8 @@ from PyQt5 import QtWidgets, QtCore, QtWidgets
 #==================================================================================================
 class DataPanel(QtWidgets.QDockWidget):
   """This is the dock widget for the loaded models. It will have: (1) a line edit where the user
-  can search for a model among the loaded ones, (2) a button to delete the selected models, (3) a
-  list with the loaded models, (4) buttons to control the model visibility."""
+  can search for a model among the loaded ones, (2) buttons to manage the model selection/deletion,
+  (3) a list with the loaded models, (4) buttons to control the model visibility."""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the input data container has the wrong type")
@@ -25,6 +25,8 @@ class DataPanel(QtWidgets.QDockWidget):
     self.__data_search = QtWidgets.QLineEdit()
     self.__data_search.textChanged.connect(self.__on_search_text_changed)
     # (2)
+    self.__btn_invert_model_selection = QtWidgets.QPushButton("invert selection")
+    self.__btn_invert_model_selection.clicked.connect(self.__on_invert_model_selection)
     self.__btn_delete_selected_models = QtWidgets.QPushButton("delete selected")
     self.__btn_delete_selected_models.clicked.connect(self.__on_delete_selected_models)
     self.__btn_delete_selected_models.setEnabled(False)
@@ -53,7 +55,8 @@ class DataPanel(QtWidgets.QDockWidget):
     dock_layout.addWidget(QtWidgets.QLabel("search:"), 0, 0, 1, -1)
     dock_layout.addWidget(self.__data_search, 1, 0, 1, -1)
     dock_layout.addWidget(QtWidgets.QLabel("loaded data:"), 2, 0, 1, -1)
-    dock_layout.addWidget(self.__btn_delete_selected_models, 2, 1, 1, 1)
+    dock_layout.addWidget(self.__btn_invert_model_selection, 2, 1, 1, 1)
+    dock_layout.addWidget(self.__btn_delete_selected_models, 2, 2, 1, 1)
     dock_layout.addWidget(self.__list_widget, 3, 0, 1, -1)
     dock_layout.addWidget(visibility_group, 4, 0, 1, -1)
     # Group everything in a frame
@@ -81,6 +84,10 @@ class DataPanel(QtWidgets.QDockWidget):
 
   def __on_search_text_changed(self, search_text):
     self.__list_widget.show_items_containing_text(search_text.lower())
+
+
+  def __on_invert_model_selection(self):
+    self.__data_container.invert_model_selection()
 
 
   def __on_delete_selected_models(self):
