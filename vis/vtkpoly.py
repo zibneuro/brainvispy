@@ -9,11 +9,14 @@ class VtkPolyModel(VtkModel):
 
     super().__init__(file_name, name)
 
+    self.__off_ambient = 0.05
+    self.__on_ambient = 0.3
+
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputData(poly_data)
     self.__actor = vtk.vtkActor()
     self.__actor.SetMapper(mapper)
-    self.__actor.GetProperty().SetAmbient(0.05)
+    self.__actor.GetProperty().SetAmbient(self.__off_ambient)
     self.__actor.GetProperty().BackfaceCullingOff()
 
 
@@ -47,11 +50,11 @@ class VtkPolyModel(VtkModel):
 
 
   def highlight_on(self):
-    self.__actor.GetProperty().SetAmbient(0.5)
+    self.__actor.GetProperty().SetAmbient(self.__on_ambient)
 
 
   def highlight_off(self):
-    self.__actor.GetProperty().SetAmbient(0.05)
+    self.__actor.GetProperty().SetAmbient(self.__off_ambient)
 
 
   def set_transparency(self, value):
