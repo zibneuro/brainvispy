@@ -3,6 +3,7 @@ from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
 from .polygui import VtkPolyModelGUI
 from .volgui import VtkVolumeModelGUI
+from .neuronsgui import CreateNeuronsGUI
 from PyQt5 import QtCore, QtWidgets
 
 class PropsPanel(QtWidgets.QDockWidget):
@@ -34,7 +35,8 @@ class PropsPanel(QtWidgets.QDockWidget):
 
     # The GUIs for the volume and poly and models
     dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container))
-    dock_layout.addWidget(VtkPolyModelGUI(self.__data_container))    
+    dock_layout.addWidget(VtkPolyModelGUI(self.__data_container))
+    dock_layout.addWidget(CreateNeuronsGUI(self.__data_container))
 
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()

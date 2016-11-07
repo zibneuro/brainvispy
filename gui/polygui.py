@@ -40,11 +40,11 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     self.__transparency_slider.valueChanged.connect(self.__on_transparency_slider_value_changed)
     # Add the GUI elements to a layout
     layout = QtWidgets.QGridLayout()
-    layout.addWidget(self.__see_inside_checkbox, 0, 0, 1, 2)
-    layout.addWidget(QtWidgets.QLabel("color"), 1, 0, 1, 1, QtCore.Qt.AlignHCenter)
-    layout.addWidget(self.__select_color_btn, 2, 0, 1, 1)
-    layout.addWidget(QtWidgets.QLabel("transparency"), 1, 1, 1, 1, QtCore.Qt.AlignHCenter)
-    layout.addWidget(self.__transparency_slider, 2, 1, 1, 1)
+    layout.addWidget(QtWidgets.QLabel("color"), 0, 0, 1, 1, QtCore.Qt.AlignHCenter)
+    layout.addWidget(self.__select_color_btn, 1, 0, 1, 1)
+    layout.addWidget(QtWidgets.QLabel("transparency"), 0, 1, 1, 1, QtCore.Qt.AlignHCenter)
+    layout.addWidget(self.__transparency_slider, 1, 1, 1, 1)
+    layout.addWidget(self.__see_inside_checkbox, 2, 0, 1, 2)
     layout.setHorizontalSpacing(10)
     # Group the GUI elements together
     self.setLayout(layout)

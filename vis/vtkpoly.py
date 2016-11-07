@@ -5,7 +5,7 @@ from .vtkmodel import VtkModel
 class VtkPolyModel(VtkModel):
   def __init__(self, poly_data, file_name, name = "VtkPolyModel"):
     if not isinstance(poly_data, vtk.vtkPolyData):
-      raise TypeError("input has to be vtkPolyData")
+      raise TypeError("poly_data has to be vtkPolyData")
 
     super().__init__(file_name, name)
 
