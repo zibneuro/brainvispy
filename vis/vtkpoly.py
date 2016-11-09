@@ -3,17 +3,17 @@ import random
 from .vtkmodel import VtkModel
 
 class VtkPolyModel(VtkModel):
-  def __init__(self, poly_data, file_name, name = "VtkPolyModel"):
-    if not isinstance(poly_data, vtk.vtkPolyData):
-      raise TypeError("poly_data has to be vtkPolyData")
+  def __init__(self, vtk_poly_data, name = "VtkPolyModel"):
+    if not isinstance(vtk_poly_data, vtk.vtkPolyData):
+      raise TypeError("vtk_poly_data has to be vtkPolyData")
 
-    super().__init__(file_name, name)
+    VtkModel.__init__(self, name)
 
     self.__off_ambient = 0.05
     self.__on_ambient = 0.3
 
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputData(poly_data)
+    mapper.SetInputData(vtk_poly_data)
     self.__actor = vtk.vtkActor()
     self.__actor.SetMapper(mapper)
     self.__actor.GetProperty().SetAmbient(self.__off_ambient)

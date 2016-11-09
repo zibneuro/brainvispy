@@ -2,18 +2,18 @@ import vtk
 from .vtkmodel import VtkModel
 
 class VtkVolumeModel(VtkModel):
-  def __init__(self, image_data, file_name, name = "VtkVolumeModel"):
-    if not isinstance(image_data, vtk.vtkImageData):
+  def __init__(self, vtk_image_data, name = "VtkVolumeModel"):
+    if not isinstance(vtk_image_data, vtk.vtkImageData):
       raise TypeError("input has to be vtkImageData")
 
-    super().__init__(file_name, name)
+    VtkModel.__init__(self, name)
 
-    self.__image_data = image_data
+    self.__vtk_image_data = vtk_image_data
 
     # The slicer for the volume data
     self.__image_slicer = vtk.vtkImagePlaneWidget()
     self.__image_slicer.SetResliceInterpolateToCubic()
-    self.__image_slicer.SetInputData(image_data)
+    self.__image_slicer.SetInputData(vtk_image_data)
     self.__image_slicer.SetPlaneOrientationToZAxes()
 
 
@@ -28,7 +28,7 @@ class VtkVolumeModel(VtkModel):
 
 
   def get_number_of_slices(self):
-    return 1 + self.__image_data.GetExtent()[5]
+    return 1 + self.__vtk_image_data.GetExtent()[5]
 
 
   def get_slice_index(self):

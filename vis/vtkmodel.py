@@ -1,20 +1,15 @@
 import abc
 
 class VtkModel(metaclass = abc.ABCMeta):
-  def __init__(self, file_name, name):
-    self._file_name = file_name
-    self._name = name
-
-  @property
-  def file_name(self):
-    return self._file_name
+  def __init__(self, name):
+    self.__name = name
 
   def set_name(self, name):
-    self._name = name
+    self.__name = name
 
   @property
   def name(self):
-    return self._name
+    return self.__name
 
   @abc.abstractmethod
   def add_yourself(self, renderer, interactor):

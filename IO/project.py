@@ -20,15 +20,31 @@ class CameraParameters:
     print("view up:", self.view_up)
 
 
-class ModelElements:
+class BrainRegionParameters:
   def __init__(self):
-    self.name = "unknown"
-    self.file_name = None
-    self.relative_file_name = None
-    self.visibility = 1 # visible by default
-    self.rgb_color = 0.8, 0.8, 0.8 # gray by default
-    self.transparency = 0 # non-transparent by default
-    self.slice_index = 0 # the first slice index by default
+    self.name = "brain region"
+    self.abs_file_name = None
+    self.rel_file_name = None
+    self.visibility = 1
+    self.rgb_color = (0.8, 0.8, 0.8)
+    self.transparency = 0
+
+
+class NeuronParameters:
+  def __init__(self):
+    self.name = "neuron"
+    self.index = -1
+    self.sphere_radius = 0.5
+    self.position = (0, 0, 0)    
+    self.rgb_color = (0.8, 0.1, 0.0)
+
+
+class ConnectivityParameters:
+  def __init__(self):
+    self.name = "connection"
+    self.cylinder_radius = 0.5
+    self.neuron_indices = (-1, -1)
+    self.rgb_color = (0.1, 0.8, 0.0)
 
 
 class ProjectIO:
@@ -76,13 +92,18 @@ class ProjectIO:
     # Remove everything from the data container
     data_container.clear()
 
+    error_messages = list()
+    camera_parameters = CameraParameters()
+    brain_region_parameters = list()
+    neuron_parameters = list()
+    connection_parameters = list()
+
     # Parse the XML project file and return the info in our own format
     try:
-      camera_parameters, model_data = self.__parse_xml_project_file(project_file_name)
+      self.__parse_xml_project_file(project_file_name, camera_parameters, brain_region_parameters, neuron_parameters, connection_parameters)
     except Exception as error:
-      error_msg = list()
-      error_msg.append(str(error))
-      return error_msg
+      error_messages.append(str(error))
+      return error_messages
 
     # Setup the VTK widget based on what we parsed
     vtk_widget.reset_view()
@@ -94,39 +115,35 @@ class ProjectIO:
     reset_view = vtk_widget.reset_view_after_adding_models
     vtk_widget.do_reset_view_after_adding_models(False)
 
-    # Now, do the real data loading (i.e., load the mesh/volume data), create the models and add them to the
-    # container. Return a list of errors if any (e.g., which files could not be loaded, etc..)
-    error_messages = self.__load_models(model_data, data_container)
+    # Load the brain regions (i.e., the meshes from disk)
+    self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
+    # Create the neurons
+    self.__add_neurons(neuron_parameters, data_container, error_messages)
+    # Create the connections
+    self.__add_connections(connection_parameters, data_container, error_messages)
 
     # Make sure we see all models
     vtk_widget.reset_clipping_range()
-
     # Restore the state of the VTK widget
     vtk_widget.do_reset_view_after_adding_models(reset_view)
 
     return error_messages
 
 
-  def __parse_xml_project_file(self, project_file_name):
+  def __parse_xml_project_file(self, project_file_name, camera_parameters, brain_region_parameters, neuron_parameters, connection_parameters):
     # Parse the XML file
     project = ET.parse(project_file_name).getroot()
 
-    # This list stores all the info per model
-    models = list()
-
-    # Load the attributes of each model
     for element in project:
-      if   element.tag == "camera_parameters": camera_parameters = self.__parse_camera_parameters(element)
-      elif element.tag == "model": models.append(self.__parse_model(element))
+      if   element.tag == "camera_parameters": self.__parse_camera(element, camera_parameters)
+      elif element.tag == "brain_region": brain_region_parameters.append(self.__parse_brain_region(element))
+      elif element.tag == "neuron": neuron_parameters.append(self.__parse_neuron(element))
+      elif element.tag == "connection": connection_parameters.append(self.__parse_connection(element))
 
-    # We are done with the XML file, return the parsed stuff
-    return camera_parameters, models
 
-
-  def __parse_camera_parameters(self, xml_camera):
-    camera_parameters = CameraParameters()
+  def __parse_camera(self, xml_input, camera_parameters):
     # Get the parameters from the XML element
-    for element in xml_camera:
+    for element in xml_input:
       if element.tag == "position":
         p = element.text.split(" ")
         camera_parameters.position = float(p[0]), float(p[1]), float(p[2])
@@ -136,28 +153,107 @@ class ProjectIO:
       elif element.tag == "view_up":
         p = element.text.split(" ")
         camera_parameters.view_up = float(p[0]), float(p[1]), float(p[2])
-    # Return the camera parameters
-    return camera_parameters
 
 
-  def __parse_model(self, xml_model):
-    # Create a new object to store the elements of the current model
-    model_elements = ModelElements()
-    # Read all the elements of 'xml_model'
-    for element in xml_model:
-      if   element.tag == "name": model_elements.name = element.text
-      elif element.tag == "file_name": model_elements.file_name = element.text
-      elif element.tag == "relative_file_name": model_elements.relative_file_name = element.text
-      elif element.tag == "properties":
-        for prop in element:
-          if   prop.tag == "visibility": model_elements.visibility = float(prop.text)
-          elif prop.tag == "transparency": model_elements.transparency = float(prop.text)
-          elif prop.tag == "slice_index": model_elements.slice_index = float(prop.text)
-          elif prop.tag == "rgb_color":
-           color_string = prop.text.split(" ")
-           model_elements.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
+  def __parse_brain_region(self, xml_input):
+    # Create a new object to store the parsed elements
+    brain_region = BrainRegionParameters()
+    # Read all the elements of 'xml_input'
+    for element in xml_input:
+      if   element.tag == "name": brain_region.name = element.text
+      elif element.tag == "abs_file_name": brain_region.abs_file_name = element.text
+      elif element.tag == "rel_file_name": brain_region.rel_file_name = element.text
+      elif element.tag == "visibility": brain_region.visibility = float(element.text)
+      elif element.tag == "transparency": brain_region.transparency = float(element.text)
+      elif element.tag == "rgb_color":
+        color_string = element.text.split(" ")
+        brain_region.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
     # Return what we have parsed
-    return model_elements
+    return brain_region
+
+
+  def __parse_neuron(self, xml_input):
+    # Create a new object to store the parsed elements
+    neuron = NeuronParameters()
+    # Read all the elements of 'xml_input'
+    for element in xml_input:
+      if   element.tag == "name": neuron.name = element.text
+      elif element.tag == "index": neuron.index = int(element.text)
+      elif element.tag == "sphere_radius": neuron.sphere_radius = float(element.text)
+      elif element.tag == "position":
+        pos_string = element.text.split(" ")
+        neuron.position = (float(pos_string[0]), float(pos_string[1]), float(pos_string[2]))
+      elif element.tag == "rgb_color":
+        color_string = element.text.split(" ")
+        neuron.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
+    # Return what we have parsed
+    return neuron
+
+
+  def __parse_connection(self, xml_input):
+    # Create a new object to store the parsed elements
+    connection = ConnectionParameters()
+    # Read all the elements of 'xml_input'
+    for element in xml_input:
+      if   element.tag == "name": connection.name = element.text
+      elif element.tag == "cylinder_radius": connection.cylinder_radius = float(element.text)
+      elif element.tag == "neuron_indices":
+        indices_string = element.text.split(" ")
+        connection.neuron_indices = (int(indices_string[0]), int(indices_string[1]))
+      elif element.tag == "rgb_color":
+        color_string = element.text.split(" ")
+        connection.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
+    # Return what we have parsed
+    return connection
+
+
+  def __load_brain_regions(self, brain_region_parameters, data_container):
+    vtk_io = VtkIO()
+    brain_regions = list()
+    error_messages = list()
+
+    # Get the project folder
+    if self.__project_file_name:
+      project_folder = os.path.split(self.__project_file_name)[0]
+    else:
+      project_folder = ""
+
+    # Let the user know we are doing something    
+    self.__progress_bar.init(1, len(model_data), "Loading files: ")
+    counter = 0
+    
+    # Load the VTK files from disk and create the brain regions
+    for parameters in brain_region_parameters:
+      # Update the progress bar
+      counter += 1
+      self.__progress_bar.set_progress(counter)
+
+      vtk_poly_data = None
+
+      # Try with the absolute file name
+      if parameters.abs_file_name:
+        vtk_poly_data = vtk_io.load(parameters.abs_file_name)
+
+      # Try with the relative file name
+      if not vtk_poly_data:
+        rel_file_name = os.path.join(project_folder, parameters.rel_file_name)
+        vtk_poly_data = vtk_io.load(rel_file_name)
+
+      if vtk_poly_data:
+        brain_regions.append(self.__create_brain_region(vtk_poly_data, parameters))
+      else:
+        error_messages.append("Couldn't load brain region '" + parameters.name + "'\n")
+
+    # We are done with loading
+    self.__progress_bar.done()
+    # Add the new data to the container
+    data_container.add_brain_regions(brain_regions)
+    # Return the error messages (if any)
+    return error_messages
+
+
+  def __add_neurons(neuron_parameters, data_container, error_messages):
+    pass
 
 
   def __load_models(self, model_data, data_container):

@@ -23,7 +23,7 @@ class CreateNeuronsGUI(QtWidgets.QGroupBox):
     self.__num_neurons_spin_box.setValue(10)
     self.__num_neurons_spin_box.setSingleStep(1)
     # The create neurons button
-    self.__create_neurons_btn = QtWidgets.QPushButton("create")
+    self.__create_neurons_btn = QtWidgets.QPushButton("create neuron(s)")
     self.__create_neurons_btn.clicked.connect(self.__on_create_neurons_button_clicked)
 
     # Add the GUI elements to a layout
