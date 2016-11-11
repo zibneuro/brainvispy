@@ -1,10 +1,11 @@
 from core.datacontainer import DataContainer
-from vis.vtkpoly import VtkPolyModel
+from core.controller import Controller
+from anatomy.region import BrainRegion
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-class VtkPolyModelGUI(QtWidgets.QGroupBox):
+class BrainRegionGUI(QtWidgets.QGroupBox):
   """This is the dock widget for the properties of a selected data item(s)"""
-  def __init__(self, data_container):
+  def __init__(self, data_container, controller):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
 
@@ -13,9 +14,11 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     # Register yourself as an observer
     self.__data_container = data_container
     self.__data_container.add_observer(self)
+    
+    self.__controller = controller
 
     # This list keeps the models (objects) we have
-    self.__poly_models = list()
+    self.__brain_regions = list()
 
     # The neutral color for the color button (when the selected objects have different colors)
     self.__neutral_btn_color = "#a0a0a0"
@@ -38,6 +41,16 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     self.__transparency_slider.setMaximum(100)
     self.__transparency_slider.setSingleStep(1)
     self.__transparency_slider.valueChanged.connect(self.__on_transparency_slider_value_changed)
+    # The box where the user enters the number of neurons to create
+    self.__num_neurons_spin_box = QtWidgets.QSpinBox()
+    self.__num_neurons_spin_box.setMinimum(1)
+    self.__num_neurons_spin_box.setMaximum(100)
+    self.__num_neurons_spin_box.setValue(10)
+    self.__num_neurons_spin_box.setSingleStep(1)
+    # The create neurons button
+    self.__create_neurons_btn = QtWidgets.QPushButton("create neuron(s)")
+    self.__create_neurons_btn.clicked.connect(self.__on_create_neurons_button_clicked)
+    
     # Add the GUI elements to a layout
     layout = QtWidgets.QGridLayout()
     layout.addWidget(QtWidgets.QLabel("color"), 0, 0, 1, 1, QtCore.Qt.AlignHCenter)
@@ -45,6 +58,8 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     layout.addWidget(QtWidgets.QLabel("transparency"), 0, 1, 1, 1, QtCore.Qt.AlignHCenter)
     layout.addWidget(self.__transparency_slider, 1, 1, 1, 1)
     layout.addWidget(self.__see_inside_checkbox, 2, 0, 1, 2)
+    layout.addWidget(self.__num_neurons_spin_box, 3, 0)
+    layout.addWidget(self.__create_neurons_btn, 3, 1)
     layout.setHorizontalSpacing(10)
     # Group the GUI elements together
     self.setLayout(layout)
@@ -62,14 +77,14 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
 
 
   def __update(self, models):
-    self.__poly_models = list()
+    self.__brain_regions = list()
 
     # Get the poly models only
     for model in models:
-      if isinstance(model, VtkPolyModel):
-        self.__poly_models.append(model)
+      if isinstance(model, BrainRegion):
+        self.__brain_regions.append(model)
 
-    if self.__poly_models:
+    if self.__brain_regions:
       self.__update_see_inside_checkbox()
       self.__update_color_selection_button()
       self.__update_transparency_slider()
@@ -81,12 +96,12 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
   def __update_see_inside_checkbox(self):
     see_inside_counter = 0
     
-    for model in self.__poly_models:
+    for model in self.__brain_regions:
       see_inside_counter += model.see_inside
 
     if see_inside_counter == 0:
       self.__see_inside_checkbox.setCheckState(QtCore.Qt.Unchecked)
-    elif see_inside_counter == len(self.__poly_models):
+    elif see_inside_counter == len(self.__brain_regions):
       self.__see_inside_checkbox.setCheckState(QtCore.Qt.Checked)
     else:
       self.__see_inside_checkbox.setCheckState(QtCore.Qt.PartiallyChecked)
@@ -96,7 +111,7 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     """Update the button which shows the color of the selected model(s)."""
     color_strings = set()
     # Get all colors
-    for model in self.__poly_models:
+    for model in self.__brain_regions:
       color_strings.add(self.__rgb_tuple_to_hex_string(model.get_color()))
     # Update the button depending on whether we have a single or multiple colors
     if len(color_strings) == 1:
@@ -106,12 +121,12 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
 
 
   def __update_transparency_slider(self):
-    if not self.__poly_models:
+    if not self.__brain_regions:
       return
 
     transparency_sum = 0.0
     # Compute the average transparency of all models and set the slider to this value
-    for model in self.__poly_models:
+    for model in self.__brain_regions:
       transparency_sum += model.get_transparency()
    
     # The line after the next ones would call the transparency slider callback. We do not want that => that's why the folloling lines
@@ -119,7 +134,7 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     self.__ignore_transparency_slider_value_changed_callback = True
     
     # Update the button depending on whether we have a single or multiple colors
-    self.__transparency_slider.setValue(100*transparency_sum / len(self.__poly_models))
+    self.__transparency_slider.setValue(100*transparency_sum / len(self.__brain_regions))
 
     # Restore the state
     self.__ignore_transparency_slider_value_changed_callback = ignore_transparency_slider_value_changed_callback
@@ -138,14 +153,14 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     see_inside = 1 if self.__see_inside_checkbox.checkState() == QtCore.Qt.Checked else 0
     self.__see_inside_checkbox.setTristate(False)
     # Update the "see inside" property of each model
-    for model in self.__poly_models:
+    for model in self.__brain_regions:
       model.set_see_inside(see_inside)
     # Update the container
     self.__data_container.update_see_inside()
 
 
   def __on_color_button_clicked(self):
-    if not self.__poly_models:
+    if not self.__brain_regions:
       return
 
     # Get the current color of the button
@@ -162,7 +177,7 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
     b = selected_color.blue() / 255.0
 
     # Loop over the models and assign them the selected color
-    for model in self.__poly_models:
+    for model in self.__brain_regions:
       model.set_color(r, g, b)
 
     # Notify the data container that some of its data changed (this will call this objects)
@@ -170,14 +185,18 @@ class VtkPolyModelGUI(QtWidgets.QGroupBox):
 
 
   def __on_transparency_slider_value_changed(self):
-    if self.__ignore_transparency_slider_value_changed_callback or not self.__poly_models:
+    if self.__ignore_transparency_slider_value_changed_callback or not self.__brain_regions:
       return
 
     transparency = self.__transparency_slider.value() / 100.0
 
     # Loop over the models and assign them the selected color
-    for model in self.__poly_models:
+    for model in self.__brain_regions:
       model.set_transparency(transparency)
 
     # Notify the data container that some of its data changed (this will call this objects)
     self.__data_container.update_transparency()
+
+
+  def __on_create_neurons_button_clicked(self):
+    self.__controller.generate_neurons(self.__data_container.get_selected_models())

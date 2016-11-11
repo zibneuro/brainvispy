@@ -1,16 +1,16 @@
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
-from .polygui import VtkPolyModelGUI
+from .regiongui import BrainRegionGUI
 from .volgui import VtkVolumeModelGUI
-from .neuronsgui import CreateNeuronsGUI
+from .neuronsgui import NeuronsGUI
 from PyQt5 import QtCore, QtWidgets
 
 class PropsPanel(QtWidgets.QDockWidget):
   """This is the dock widget for the properties of a selected models(s). It has a list showing the
   selected models and specialized GUI elements which show the properties of polygonal and volume
   models."""
-  def __init__(self, data_container):
+  def __init__(self, data_container, controller):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
 
@@ -35,8 +35,8 @@ class PropsPanel(QtWidgets.QDockWidget):
 
     # The GUIs for the volume and poly and models
     dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container))
-    dock_layout.addWidget(VtkPolyModelGUI(self.__data_container))
-    dock_layout.addWidget(CreateNeuronsGUI(self.__data_container))
+    dock_layout.addWidget(BrainRegionGUI(self.__data_container, controller))
+    dock_layout.addWidget(NeuronsGUI(self.__data_container))
 
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()

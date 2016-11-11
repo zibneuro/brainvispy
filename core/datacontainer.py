@@ -33,18 +33,24 @@ class DataContainer(Observable):
     self.__selected_models = set()
 
 
-  def add_models(self, models):
-    for model in models:
-      # Every model has to have a unique vtkProperty
-      if not self.__get_model_by_vtk_property(model.vtk_property):
-        self.__vtk_property_to_models[model.vtk_property] = model
-    # Notify the observers about the new models
-    self.notify_observers_about_change(DataContainer.change_is_new_data, models);
+  def add_models(self, brain_regions):
+    new_brain_regions = list()
+    for brain_region in brain_regions:
+      # Every brain region has to have a unique vtkProperty
+      if not self.__get_model_by_vtk_property(brain_region.vtk_property):
+        self.__vtk_property_to_models[brain_region.vtk_property] = brain_region
+        new_brain_regions.append(brain_region)
+    # Notify the observers about the new brain regions
+    self.notify_observers_about_change(DataContainer.change_is_new_data, new_brain_regions);
 
 
   def get_models(self):
-    """Returns a list of all models (volume and poly)."""
+    """Returns a list of all models."""
     return list(self.__vtk_property_to_models.values())
+
+
+  def get_selected_models(self):
+    return list(self.__selected_models)
 
 
   def update_visibility(self):

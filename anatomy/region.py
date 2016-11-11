@@ -1,3 +1,6 @@
+from core.filemodel import FileModel
+from vis.vtkpoly import VtkPolyModel
+
 class BrainRegion(VtkPolyModel, FileModel):
   def __init__(self, vtk_poly_data, file_name, name, neurons):
     # Init the base classes

@@ -1,9 +1,11 @@
 import os
+import vtk
 import xml.etree.ElementTree as ET
 from core.progress import ProgressBar
 from core.datacontainer import DataContainer
-from vis.vtkpoly import VtkPolyModel
-from vis.vtkvol import VtkVolumeModel
+from anatomy.region import BrainRegion
+from anatomy.neuron import Neuron
+from anatomy.connection import Connection
 from gui.vtkwidget import VtkWidget
 from .obj import OBJReader
 from .vtkio import VtkIO
@@ -14,11 +16,6 @@ class CameraParameters:
     self.look_at = None
     self.view_up = None
 
-  def print(self):
-    print("pos:", self.position)
-    print("look at:", self.look_at)
-    print("view up:", self.view_up)
-
 
 class BrainRegionParameters:
   def __init__(self):
@@ -26,7 +23,7 @@ class BrainRegionParameters:
     self.abs_file_name = None
     self.rel_file_name = None
     self.visibility = 1
-    self.rgb_color = (0.8, 0.8, 0.8)
+    self.rgb_color = BrainRegion.generate_random_rgb_color()
     self.transparency = 0
 
 
@@ -39,7 +36,7 @@ class NeuronParameters:
     self.rgb_color = (0.8, 0.1, 0.0)
 
 
-class ConnectivityParameters:
+class ConnectionParameters:
   def __init__(self):
     self.name = "connection"
     self.cylinder_radius = 0.5
@@ -63,24 +60,38 @@ class ProjectIO:
     return self.__project_file_name != None
 
 
-  def get_file_name(self):
+  @property
+  def file_name(self):
     return self.__project_file_name
 
 
   def load_files(self, file_names, data_container):
-    model_data = list()
-    # Create a ModelElements object for each file
+    vtk_io = VtkIO()
+    brain_regions = list()
+
+    # Let the user know we are doing something    
+    self.__progress_bar.init(1, len(file_names), "Loading files: ")
+    counter = 0
+
     for file_name in file_names:
-      model = ModelElements()
-      model.name = os.path.split(file_name)[1]
-      model.file_name = file_name
-      model.visibility = 1
-      model.rgb_color = VtkPolyModel.generate_random_rgb_color()
-      model.transparency = 0
-      model.slice_index = 0
-      model_data.append(model)
-    # Call the method which now does the loading using the data generated above
-    self.__load_models(model_data, data_container)
+      # Update the progress bar
+      counter += 1
+      self.__progress_bar.set_progress(counter)
+
+      # Load the file
+      vtk_poly_data = vtk_io.load(file_name)
+      if not vtk_poly_data:
+        continue
+
+      if isinstance(vtk_poly_data, vtk.vtkPolyData):
+        # Create and save the brain region
+        brain_region_parameters = self.__create_brain_region_parameters(file_name)
+        brain_regions.append(self.__create_brain_region(vtk_poly_data, brain_region_parameters))
+
+    # We are done with loading
+    self.__progress_bar.done()
+    # Now, add the brain regions to the data container
+    data_container.add_models(brain_regions)
 
 
   def open_project(self, project_file_name, data_container, vtk_widget):
@@ -207,19 +218,18 @@ class ProjectIO:
     return connection
 
 
-  def __load_brain_regions(self, brain_region_parameters, data_container):
+  def __load_brain_regions(self, brain_region_parameters, data_container, error_messages):
     vtk_io = VtkIO()
     brain_regions = list()
-    error_messages = list()
 
-    # Get the project folder
+    # Get the project folder (only used for the relative file paths below)
     if self.__project_file_name:
       project_folder = os.path.split(self.__project_file_name)[0]
     else:
       project_folder = ""
 
     # Let the user know we are doing something    
-    self.__progress_bar.init(1, len(model_data), "Loading files: ")
+    self.__progress_bar.init(1, len(brain_region_parameters), "Loading files: ")
     counter = 0
     
     # Load the VTK files from disk and create the brain regions
@@ -236,93 +246,51 @@ class ProjectIO:
 
       # Try with the relative file name
       if not vtk_poly_data:
-        rel_file_name = os.path.join(project_folder, parameters.rel_file_name)
-        vtk_poly_data = vtk_io.load(rel_file_name)
+        parameters.abs_file_name = os.path.join(project_folder, parameters.rel_file_name)
+        vtk_poly_data = vtk_io.load(parameters.abs_file_name)
 
-      if vtk_poly_data:
+      # Check for errors
+      if not vtk_poly_data:
+        error_messages.append("Couldn't load brain region '" + parameters.name + "'")
+      elif not isinstance(vtk_poly_data, vtk.vtkPolyData):
+        error_messages.append("Brain region '" + parameters.name + "' has to be a polygon mesh.")
+      else: # we are fine -> create a brain region based on the loaded geometry
         brain_regions.append(self.__create_brain_region(vtk_poly_data, parameters))
-      else:
-        error_messages.append("Couldn't load brain region '" + parameters.name + "'\n")
 
     # We are done with loading
     self.__progress_bar.done()
     # Add the new data to the container
-    data_container.add_brain_regions(brain_regions)
-    # Return the error messages (if any)
-    return error_messages
+    data_container.add_models(brain_regions)
 
 
-  def __add_neurons(neuron_parameters, data_container, error_messages):
+  def __add_neurons(self, neuron_parameters, data_container, error_messages):
     pass
 
 
-  def __load_models(self, model_data, data_container):
-    """Using the model data from the list 'model_data' this method loads the mesh/volume data from disk,
-    creates the models and adds them to the 'data_container'. Returns a list of errors if any (e.g., file
-    cound not be loaded etc...)"""
-    vtk_io = VtkIO()
-    models = list()
-    error_messages = list()
-
-    # Get the project folder
-    if self.__project_file_name:
-      project_folder = os.path.split(self.__project_file_name)[0]
-    else:
-      project_folder = ""
-
-    # Let the user know we are doing something    
-    self.__progress_bar.init(1, len(model_data), "Loading files: ")
-    counter = 0
-    
-    # Load the data from disk and initialize the model attributes
-    for attributes in model_data:
-      # Update the progress bar
-      counter += 1
-      self.__progress_bar.set_progress(counter)
-
-      # If an error occurs, be prepared
-      error_message = "Couldn't load '" + attributes.name + "'. Tried with\n"
-
-      # Try with the relative path first
-      if attributes.relative_file_name:
-        rel_file_name = os.path.join(project_folder, attributes.relative_file_name)
-        model = vtk_io.load(rel_file_name)
-        if model:
-          self.__initialize_model(model, attributes)
-          models.append(model)
-          continue
-        # Failed
-        error_message += rel_file_name + "\n"
-
-      # Try with the absolute file name
-      if attributes.file_name:
-        model = vtk_io.load(attributes.file_name)
-        if model:
-          self.__initialize_model(model, attributes)
-          models.append(model)
-          continue
-        # Failed with the absolute path too
-        error_message += attributes.file_name + "\n"
-        error_messages.append(error_message)
-
-    # We are done with model loading
-    self.__progress_bar.done()
-    # Now let the container adopt the new models
-    data_container.add_models(models)
-    # Return the error messages (if any)
-    return error_messages
+  def __add_connections(self, connection_parameters, data_container, error_messages):
+    pass
 
 
-  def __initialize_model(self, model, attributes):
-    model.set_name(attributes.name)
-    if attributes.visibility: model.visibility_on()
-    else: model.visibility_off()
+  def __create_brain_region_parameters(self, abs_file_name):
+    # Initialize an object with default brain region parameters
+    brain_region_parameters = BrainRegionParameters()
+    brain_region_parameters.name = self.__extract_name(abs_file_name)
+    brain_region_parameters.abs_file_name = abs_file_name
+    return brain_region_parameters
 
-    if isinstance(model, VtkVolumeModel):
-      model.set_slice_index(attributes.slice_index)
-    elif isinstance(model, VtkPolyModel):
-      model.set_transparency(attributes.transparency)
-      model.set_color(attributes.rgb_color[0], attributes.rgb_color[1], attributes.rgb_color[2])
+
+  def __create_brain_region(self, vtk_poly_data, parameters):
+    brain_region = BrainRegion(vtk_poly_data, parameters.abs_file_name, parameters.name, neurons = None)
+    brain_region.set_color(parameters.rgb_color[0], parameters.rgb_color[1], parameters.rgb_color[2])
+    if parameters.visibility: brain_region.visibility_on()
+    else: brain_region.visibility_off()
+    brain_region.set_transparency(parameters.transparency)
+    return brain_region
+
+
+  def __extract_name(self, file_name):
+    file_name_no_path = os.path.split(file_name)[1]
+    return os.path.splitext(file_name_no_path)[0]
 
 
   def save_project(self, data_container, vtk_widget):
@@ -343,17 +311,22 @@ class ProjectIO:
     xml_project = ET.Element("BrainVisPy_Project")
 
     # Save some camera parameters
-    self.__add_camera_parameters_to_xml_element(vtk_widget, ET.SubElement(xml_project, "camera_parameters"))
+    self.__save_camera_parameters(vtk_widget, ET.SubElement(xml_project, "camera_parameters"))
 
     # Save the data of each model to the XML file
     for model in data_container.get_models():
-      self.__add_model_data_to_xml_element(model, project_folder, ET.SubElement(xml_project, "model"))
+      if isinstance(model, BrainRegion):
+        self.__save_brain_region(model, project_folder, ET.SubElement(xml_project, "brain_region"))
+      elif isinstance(model, Neuron):
+        self.__save_neuron(model, ET.SubElement(xml_project, "neuron"))
+      elif isinstance(model, Connection):
+        self.__save_connection(model, ET.SubElement(xml_project, "connection"))
 
     # Write the whole XML tree to file
     ET.ElementTree(xml_project).write(self.__project_file_name)
 
 
-  def __add_camera_parameters_to_xml_element(self, vtk_widget, xml_element):
+  def __save_camera_parameters(self, vtk_widget, xml_element):
     """This method adds all camera parameters to the provided xml element."""
     position = vtk_widget.get_camera_position()
     ET.SubElement(xml_element, "position").text = str(position[0]) + " " + str(position[1]) + " " + str(position[2])
@@ -363,38 +336,25 @@ class ProjectIO:
     ET.SubElement(xml_element, "view_up").text = str(view_up[0]) + " " + str(view_up[1]) + " " + str(view_up[2])
 
 
-  def __add_model_data_to_xml_element(self, model, project_folder, xml_element):
-    """This method adds all model data to the provided xml element."""
-    ET.SubElement(xml_element, "name").text = model.name
-    ET.SubElement(xml_element, "file_name").text = model.file_name
-    ET.SubElement(xml_element, "relative_file_name").text = self.__compute_relative_file_name(model.file_name, project_folder)
-    properties = ET.SubElement(xml_element, "properties")
-    if isinstance(model, VtkPolyModel):
-      self.__add_poly_properties_to_xml_element(model, properties)
-    elif isinstance(model, VtkVolumeModel):
-      self.__add_volume_properties_to_xml_element(model, properties)
+  def __save_brain_region(self, brain_region, project_folder, xml_element):
+    ET.SubElement(xml_element, "name").text = brain_region.name
+    ET.SubElement(xml_element, "abs_file_name").text = brain_region.file_name
+    ET.SubElement(xml_element, "rel_file_name").text = self.__compute_relative_file_name(brain_region.file_name, project_folder)
+    ET.SubElement(xml_element, "visibility").text = "1" if brain_region.is_visible() else "0"
+    c = brain_region.get_color()
+    ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
+    ET.SubElement(xml_element, "transparency").text = str(brain_region.get_transparency())
+
+
+  def __save_neuron(self, neuron, xml_element):
+    pass
+
+
+  def __save_connection(self, connection, xml_element):
+    pass
 
 
   def __compute_relative_file_name(self, abs_file_name, project_folder):
     abs_path, file_name = os.path.split(abs_file_name)
     rel_path = os.path.relpath(abs_path, project_folder)
     return os.path.join(rel_path, file_name)
-
-
-  def __add_poly_properties_to_xml_element(self, model, xml_element):
-    """This method adds the poly properties of 'model' to the provided xml element."""
-    if not isinstance(model, VtkPolyModel):
-      return
-    # Add the properties
-    ET.SubElement(xml_element, "visibility").text = "1" if model.is_visible() else "0"
-    c = model.get_color()
-    ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
-    ET.SubElement(xml_element, "transparency").text = str(model.get_transparency())
-
-
-  def __add_volume_properties_to_xml_element(self, model, xml_element):
-    """This method adds the volume properties of 'model' to the provided xml element."""
-    if not isinstance(model, VtkVolumeModel):
-      return
-    # Add the properties
-    ET.SubElement(xml_element, "slice_index").text = str(model.get_slice_index())

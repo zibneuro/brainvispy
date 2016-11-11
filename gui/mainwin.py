@@ -7,6 +7,7 @@ from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
 from gui.propspanel import PropsPanel
 from core.datacontainer import DataContainer
+from core.controller import Controller
 from IO.project import ProjectIO
 
 
@@ -24,6 +25,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # and triggers events (e.g., when new data is loaded/deleted and much more). The observers react
     # to these events.
     self.__data_container = DataContainer()
+    self.__controller = Controller(self.__data_container)
 
     # This guy handles the file/project IO
     self.__project_io = ProjectIO(self.__file_load_progress_bar)
@@ -91,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
     self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.__data_panel)
 
     # Add the dock which shows the properties of the selected object (on the right in the main window)
-    self.__props_panel = PropsPanel(self.__data_container)
+    self.__props_panel = PropsPanel(self.__data_container, self.__controller)
     self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.__props_panel)
 
 
@@ -183,7 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
   def __save_project(self):
     try:
       # Get the project folder and the project name
-      self.__project_folder, project_name = os.path.split(self.__project_io.get_file_name())
+      self.__project_folder, project_name = os.path.split(self.__project_io.file_name)
       # Save the project
       self.__project_io.save_project(self.__data_container, self.__vtk_widget)
       # Update the window title

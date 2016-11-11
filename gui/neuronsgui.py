@@ -1,8 +1,8 @@
 from core.datacontainer import DataContainer
-from vis.vtkpoly import VtkPolyModel
+from anatomy.neuron import Neuron
 from PyQt5 import QtGui, QtWidgets, QtCore
 
-class CreateNeuronsGUI(QtWidgets.QGroupBox):
+class NeuronsGUI(QtWidgets.QGroupBox):
   """This is the dock widget for the properties of a selected data item(s)"""
   def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
@@ -14,7 +14,7 @@ class CreateNeuronsGUI(QtWidgets.QGroupBox):
     self.__data_container = data_container
     self.__data_container.add_observer(self)
 
-    self.__poly_models = list()
+    self.__neurons = list()
 
     # The box where the user enters the number of neurons to create
     self.__num_neurons_spin_box = QtWidgets.QSpinBox()
@@ -42,19 +42,19 @@ class CreateNeuronsGUI(QtWidgets.QGroupBox):
 
 
   def __update(self, models):
-    self.__poly_models = list()
+    self.__neurons = list()
 
     # Get the poly models only
     for model in models:
-      if isinstance(model, VtkPolyModel):
-        self.__poly_models.append(model)
+      if isinstance(model, Neuron):
+        self.__neurons.append(model)
 
-    if self.__poly_models:
+    if self.__neurons:
       self.show()
     else:
       self.hide()
 
 
   def __on_create_neurons_button_clicked(self):
-    if not self.__poly_models:
+    if not self.__neurons:
       return
