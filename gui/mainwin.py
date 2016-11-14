@@ -6,8 +6,6 @@ from gui.vtkwidget import VtkWidget
 from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
 from gui.propspanel import PropsPanel
-from core.datacontainer import DataContainer
-from core.controller import Controller
 from IO.project import ProjectIO
 
 
@@ -15,7 +13,7 @@ from IO.project import ProjectIO
 # MainWindow ======================================================================================
 #==================================================================================================
 class MainWindow(QtWidgets.QMainWindow):
-  def __init__(self, qt_app):
+  def __init__(self, qt_app, data_container, controller):
     QtWidgets.QMainWindow.__init__(self)
 
     # This guy is used by several classes to indicate the progress of the heavy work
@@ -24,8 +22,8 @@ class MainWindow(QtWidgets.QMainWindow):
     # This is the main guy. Almost all GUI elements are observers of this guy. It stores the data
     # and triggers events (e.g., when new data is loaded/deleted and much more). The observers react
     # to these events.
-    self.__data_container = DataContainer()
-    self.__controller = Controller(self.__data_container)
+    self.__data_container = data_container
+    self.__controller = controller
 
     # This guy handles the file/project IO
     self.__project_io = ProjectIO(self.__file_load_progress_bar)

@@ -12,10 +12,10 @@ class VtkPolyModel(VtkModel):
     self.__off_ambient = 0.05
     self.__on_ambient = 0.3
 
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputData(vtk_poly_data)
+    self.__mapper = vtk.vtkPolyDataMapper()
+    self.__mapper.SetInputData(vtk_poly_data)
     self.__actor = vtk.vtkActor()
-    self.__actor.SetMapper(mapper)
+    self.__actor.SetMapper(self.__mapper)
     self.__actor.GetProperty().SetAmbient(self.__off_ambient)
     self.__actor.GetProperty().BackfaceCullingOff()
 
@@ -90,6 +90,11 @@ class VtkPolyModel(VtkModel):
   @property
   def actor(self):
     return self.__actor
+
+
+  @property
+  def vtk_poly_data(self):
+    return self.__mapper.GetInput()
 
 
   @property
