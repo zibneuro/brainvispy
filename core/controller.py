@@ -8,10 +8,5 @@ class Controller:
 
 
   def generate_neurons(self, number_of_neurons_per_region, brain_regions):
-    selected_brain_regions = list()
-    for model in self.__data_container.get_selected_models():
-      if isinstance(model, BrainRegion):
-        selected_brain_regions.append(model)
-    
-    neurons = self.__neuron_generator.generate_neurons(number_of_neurons_per_region, selected_brain_regions)
-    #self.__data_container.add_models(neurons)
+    neurons = self.__neuron_generator.generate_neurons(number_of_neurons_per_region, brain_regions)
+    self.__data_container.add_models(neurons)

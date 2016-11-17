@@ -199,4 +199,4 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
 
 
   def __on_create_neurons_button_clicked(self):
-    self.__controller.generate_neurons(13, self.__data_container.get_selected_models())
+    self.__controller.generate_neurons(self.__num_neurons_spin_box.value(), self.__data_container.get_selected_models())
