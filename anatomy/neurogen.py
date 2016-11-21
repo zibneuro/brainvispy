@@ -22,15 +22,9 @@ class NeuronGenerator:
     rand_points_gen = RandomMeshPointsGenerator(brain_region.vtk_poly_data)
     neuron_positions = rand_points_gen.generate_points_inside_mesh(num_neurons_per_brain_region)
 
-    print("generated", len(neuron_positions), "points on " + brain_region.name)
-
-    # First, generate the neuron positions in the brain region
-    #neuron_positions = self.__generate_random_points_inside_mesh(brain_region.vtk_poly_data,
-    #  num_neurons_per_brain_region)
-
     neurons = list()
 
-    # Now, generate the neurons
+    # Now, generate the geometric neuron representations
     for p in neuron_positions:
       # Create a VTK mesh to visually represent the neuron
       vtk_neuron_representation = self.__create_spherical_neuron_representation(p)

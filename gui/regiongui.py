@@ -9,7 +9,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
 
-    super().__init__("surface properties")
+    super().__init__("BRAIN REGION")
 
     # Register yourself as an observer
     self.__data_container = data_container
@@ -52,15 +52,41 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     self.__create_neurons_btn.clicked.connect(self.__on_create_neurons_button_clicked)
     
     # Add the GUI elements to a layout
-    layout = QtWidgets.QGridLayout()
-    layout.addWidget(QtWidgets.QLabel("color"), 0, 0, 1, 1, QtCore.Qt.AlignHCenter)
-    layout.addWidget(self.__select_color_btn, 1, 0, 1, 1)
-    layout.addWidget(QtWidgets.QLabel("transparency"), 0, 1, 1, 1, QtCore.Qt.AlignHCenter)
-    layout.addWidget(self.__transparency_slider, 1, 1, 1, 1)
-    layout.addWidget(self.__see_inside_checkbox, 2, 0, 1, 2)
-    layout.addWidget(self.__num_neurons_spin_box, 3, 0)
-    layout.addWidget(self.__create_neurons_btn, 3, 1)
-    layout.setHorizontalSpacing(10)
+    layout = QtWidgets.QVBoxLayout()
+    # SURFACE APPEARANCE
+    layout.addWidget(QtWidgets.QLabel("<b>surface appearance</b>"), 0, QtCore.Qt.AlignLeft)
+    appearance_layout = QtWidgets.QGridLayout()
+    appearance_layout.addWidget(QtWidgets.QLabel("color"), 0, 0, QtCore.Qt.AlignLeft)
+    appearance_layout.addWidget(QtWidgets.QLabel("transparency"), 0, 1, QtCore.Qt.AlignHCenter)
+    appearance_layout.addWidget(self.__select_color_btn, 1, 0)
+    appearance_layout.addWidget(self.__transparency_slider, 1, 1)
+    appearance_layout.addWidget(self.__see_inside_checkbox, 2, 0, 1, -1)
+    appearance_frame = QtWidgets.QFrame()
+    appearance_frame.setLayout(appearance_layout)
+    layout.addWidget(appearance_frame)
+    # NEURONS
+    layout.addWidget(QtWidgets.QLabel("<b>neurons</b>"), 0, QtCore.Qt.AlignLeft)
+    # Number of neurons
+    create_neurons_layout = QtWidgets.QHBoxLayout()
+    create_neurons_layout.addWidget(self.__num_neurons_spin_box)
+    create_neurons_layout.addWidget(QtWidgets.QLabel("neurons"), 0, QtCore.Qt.AlignLeft)
+    create_neurons_frame = QtWidgets.QFrame()
+    create_neurons_frame.setLayout(create_neurons_layout)
+    layout.addWidget(create_neurons_frame)
+    layout.setSpacing(1)
+    # Threshold potential
+    threshold_potential_layout = QtWidgets.QGridLayout()
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("threshold potential in range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("min"), 2, 0, 1, 1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QDoubleSpinBox(), 2, 1, 1, 1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("max"), 2, 2, 1, 1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QDoubleSpinBox(), 2, 3, 1, 1, QtCore.Qt.AlignLeft)
+    threshold_potential_frame = QtWidgets.QFrame()
+    threshold_potential_frame.setLayout(threshold_potential_layout)
+    layout.addWidget(threshold_potential_frame)
+    # Create neurons button
+    layout.addWidget(self.__create_neurons_btn)
+
     # Group the GUI elements together
     self.setLayout(layout)
     self.hide()
