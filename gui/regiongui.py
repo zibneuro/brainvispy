@@ -14,7 +14,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     # Register yourself as an observer
     self.__data_container = data_container
     self.__data_container.add_observer(self)
-    
+    # Save the controller - we need this guy
     self.__controller = controller
 
     # This list keeps the models (objects) we have
@@ -22,10 +22,10 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
 
     # The neutral color for the color button (when the selected objects have different colors)
     self.__neutral_btn_color = "#a0a0a0"
-    
     # This one is used in a callback
     self.__ignore_transparency_slider_value_changed_callback = False
 
+    # APPEARANCE GUI elements
     # The see inside checkbox
     self.__see_inside_checkbox = QtWidgets.QCheckBox("see inside region")
     self.__see_inside_checkbox.setTristate(False)
@@ -41,6 +41,25 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     self.__transparency_slider.setMaximum(100)
     self.__transparency_slider.setSingleStep(1)
     self.__transparency_slider.valueChanged.connect(self.__on_transparency_slider_value_changed)
+    
+    # NEURON GENERATION GUI elements
+    # The [min, max] range for the threshold potential
+    # min
+    self.__threshold_potential_min_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__threshold_potential_min_spin_box.setMinimum(-10000)
+    self.__threshold_potential_min_spin_box.setMaximum(10000)
+    self.__threshold_potential_min_spin_box.setValue(-1)
+    self.__threshold_potential_min_spin_box.setSingleStep(0.01)
+    self.__threshold_potential_min_spin_box.setDecimals(2)
+    self.__threshold_potential_min_spin_box.valueChanged.connect(self.__on_threshold_potential_min_spin_box_changed)
+    # max
+    self.__threshold_potential_max_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__threshold_potential_max_spin_box.setMinimum(-10000)
+    self.__threshold_potential_max_spin_box.setMaximum(10000)
+    self.__threshold_potential_max_spin_box.setValue(1)
+    self.__threshold_potential_max_spin_box.setDecimals(2)
+    self.__threshold_potential_max_spin_box.setSingleStep(0.01)
+    self.__threshold_potential_max_spin_box.valueChanged.connect(self.__on_threshold_potential_max_spin_box_changed)
     # The box where the user enters the number of neurons to create
     self.__num_neurons_spin_box = QtWidgets.QSpinBox()
     self.__num_neurons_spin_box.setMinimum(1)
@@ -65,25 +84,25 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     appearance_frame.setLayout(appearance_layout)
     layout.addWidget(appearance_frame)
     # NEURONS
-    layout.addWidget(QtWidgets.QLabel("<b>neurons</b>"), 0, QtCore.Qt.AlignLeft)
+    layout.addWidget(QtWidgets.QLabel("<b>neuron creation</b>"), 0, QtCore.Qt.AlignLeft)
+    # Threshold potential
+    threshold_potential_layout = QtWidgets.QGridLayout()
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("threshold potential in range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("min:"), 1, 0, 1, 1, QtCore.Qt.AlignRight)
+    threshold_potential_layout.addWidget(self.__threshold_potential_min_spin_box, 1, 1, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("max:"), 2, 0, 1, 1, QtCore.Qt.AlignRight)
+    threshold_potential_layout.addWidget(self.__threshold_potential_max_spin_box, 2, 1, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_potential_frame = QtWidgets.QFrame()
+    threshold_potential_frame.setLayout(threshold_potential_layout)
+    layout.addWidget(threshold_potential_frame)
     # Number of neurons
     create_neurons_layout = QtWidgets.QHBoxLayout()
+    create_neurons_layout.addWidget(QtWidgets.QLabel("num. neurons:"), 0, QtCore.Qt.AlignLeft)
     create_neurons_layout.addWidget(self.__num_neurons_spin_box)
-    create_neurons_layout.addWidget(QtWidgets.QLabel("neurons"), 0, QtCore.Qt.AlignLeft)
     create_neurons_frame = QtWidgets.QFrame()
     create_neurons_frame.setLayout(create_neurons_layout)
     layout.addWidget(create_neurons_frame)
     layout.setSpacing(1)
-    # Threshold potential
-    threshold_potential_layout = QtWidgets.QGridLayout()
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("threshold potential in range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("min"), 2, 0, 1, 1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(QtWidgets.QDoubleSpinBox(), 2, 1, 1, 1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("max"), 2, 2, 1, 1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(QtWidgets.QDoubleSpinBox(), 2, 3, 1, 1, QtCore.Qt.AlignLeft)
-    threshold_potential_frame = QtWidgets.QFrame()
-    threshold_potential_frame.setLayout(threshold_potential_layout)
-    layout.addWidget(threshold_potential_frame)
     # Create neurons button
     layout.addWidget(self.__create_neurons_btn)
 
@@ -224,5 +243,20 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     self.__data_container.update_transparency()
 
 
+  def __on_threshold_potential_min_spin_box_changed(self):
+    min_value = self.__threshold_potential_min_spin_box.value()
+    max_value = self.__threshold_potential_max_spin_box.value()
+    if min_value > max_value:
+      self.__threshold_potential_max_spin_box.setValue(min_value)
+
+
+  def __on_threshold_potential_max_spin_box_changed(self):
+    min_value = self.__threshold_potential_min_spin_box.value()
+    max_value = self.__threshold_potential_max_spin_box.value()
+    if max_value < min_value:
+      self.__threshold_potential_min_spin_box.setValue(max_value)
+
+
   def __on_create_neurons_button_clicked(self):
-    self.__controller.generate_neurons(self.__num_neurons_spin_box.value(), self.__data_container.get_selected_models())
+    threshold_range = (self.__threshold_potential_min_spin_box.value(), self.__threshold_potential_max_spin_box.value())
+    self.__controller.generate_neurons(self.__num_neurons_spin_box.value(), self.__brain_regions, threshold_range)

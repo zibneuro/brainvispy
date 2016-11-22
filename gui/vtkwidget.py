@@ -53,8 +53,10 @@ class VtkWidget(VTKQGLWidget):
 
   def observable_changed(self, change, data):
     # Decide what to do depending on what changed
-    if change == DataContainer.change_is_new_data:
-      self.__add_data_items(data)
+    if change == DataContainer.change_is_new_brain_regions:
+      self.__add_data_items(data, self.__reset_view_after_adding_models)
+    elif change == DataContainer.change_is_new_neurons:
+      self.__add_data_items(data, False)
     elif change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
       self.reset_clipping_range()
     elif change == DataContainer.change_is_new_selection:
@@ -113,21 +115,23 @@ class VtkWidget(VTKQGLWidget):
     self.__reset_view_after_adding_models = value
 
 
-  def __add_data_items(self, data_items):
+  def __add_data_items(self, data_items, reset_view_after_adding_models):
     if not data_items:
       return
+
     # Tell the user we are busy
     self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
     counter = 0
     # Add all the data to the renderer
     for data_item in data_items:
       counter += 1
-      #self.renderer.AddViewProp(data_item.prop_3d)
       data_item.add_yourself(self.renderer, self.render_window_interactor)
       self.__progress_bar.set_progress(counter)
     # Make sure that we see all the new data
-    if self.__reset_view_after_adding_models:
+    if reset_view_after_adding_models:
       self.reset_view()
+    else:
+      self.render()
     # We are done
     self.__progress_bar.done()
 

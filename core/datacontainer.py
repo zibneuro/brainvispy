@@ -2,14 +2,16 @@ from .modelview import Observable
 
 class DataContainer(Observable):
   # These are the possible changes that can happen to an Observable
-  change_is_new_data = 1
-  change_is_new_selection = 2
-  change_is_data_visibility = 3
-  change_is_color = 4
-  change_is_transparency = 5
-  change_is_slice_index = 6
-  change_is_deleted_models = 7
-  change_is_see_inside = 8
+  change_is_new_brain_regions = 1
+  change_is_new_neurons = 2
+  change_is_new_selection = 10
+  change_is_data_visibility = 11
+  change_is_color = 12
+  change_is_transparency = 13
+  change_is_slice_index = 14
+  change_is_deleted_models = 15
+  change_is_see_inside = 16
+
 
   def __init__(self):
     Observable.__init__(self)
@@ -33,15 +35,12 @@ class DataContainer(Observable):
     self.__selected_models = set()
 
 
-  def add_models(self, brain_regions):
-    new_brain_regions = list()
-    for brain_region in brain_regions:
-      # Every brain region has to have a unique vtkProperty
-      if not self.__get_model_by_vtk_property(brain_region.vtk_property):
-        self.__vtk_property_to_models[brain_region.vtk_property] = brain_region
-        new_brain_regions.append(brain_region)
-    # Notify the observers about the new brain regions
-    self.notify_observers_about_change(DataContainer.change_is_new_data, new_brain_regions);
+  def add_neurons(self, neurons):
+    self.__add_models(neurons, DataContainer.change_is_new_neurons)
+
+
+  def add_brain_regions(self, brain_regions):
+    self.__add_models(brain_regions, DataContainer.change_is_new_brain_regions)
 
 
   def get_models(self):
@@ -117,6 +116,17 @@ class DataContainer(Observable):
     # Notify the observers about the changes
     self.notify_observers_about_change(DataContainer.change_is_deleted_models, selected_models)
     self.notify_observers_about_change(DataContainer.change_is_new_selection, list())
+
+
+  def __add_models(self, models, what_changed):
+    new_models = list()
+    for model in models:
+      # Every model has to have a unique vtkProperty
+      if not self.__get_model_by_vtk_property(model.vtk_property):
+        self.__vtk_property_to_models[model.vtk_property] = model
+        new_models.append(model)
+    # Notify the observers about the new models
+    self.notify_observers_about_change(what_changed, new_models);
 
 
   def __get_model_by_vtk_property(self, vtk_property):

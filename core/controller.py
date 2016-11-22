@@ -7,6 +7,6 @@ class Controller:
     self.__neuron_generator = NeuronGenerator()
 
 
-  def generate_neurons(self, number_of_neurons_per_region, brain_regions):
-    neurons = self.__neuron_generator.generate_neurons(number_of_neurons_per_region, brain_regions)
-    self.__data_container.add_models(neurons)
+  def generate_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
+    neurons = self.__neuron_generator.generate_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
+    self.__data_container.add_neurons(neurons)

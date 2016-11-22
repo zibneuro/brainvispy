@@ -78,7 +78,7 @@ class ListWidget(QtWidgets.QListWidget):
 
   def observable_changed(self, change, data):
     # Decide what to do depending on the change
-    if change == DataContainer.change_is_new_data:
+    if change == DataContainer.change_is_new_brain_regions:
       self.__add_data_items(data)
     elif change == DataContainer.change_is_new_selection:
       self.__update_selection(data)

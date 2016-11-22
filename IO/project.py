@@ -91,7 +91,7 @@ class ProjectIO:
     # We are done with loading
     self.__progress_bar.done()
     # Now, add the brain regions to the data container
-    data_container.add_models(brain_regions)
+    data_container.add_brain_regions(brain_regions)
 
 
   def open_project(self, project_file_name, data_container, vtk_widget):
@@ -260,7 +260,7 @@ class ProjectIO:
     # We are done with loading
     self.__progress_bar.done()
     # Add the new data to the container
-    data_container.add_models(brain_regions)
+    data_container.add_brain_regions(brain_regions)
 
 
   def __add_neurons(self, neuron_parameters, data_container, error_messages):
