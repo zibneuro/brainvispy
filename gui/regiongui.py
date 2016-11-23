@@ -87,7 +87,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     layout.addWidget(QtWidgets.QLabel("<b>neuron creation</b>"), 0, QtCore.Qt.AlignLeft)
     # Threshold potential
     threshold_potential_layout = QtWidgets.QGridLayout()
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("threshold potential in range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_potential_layout.addWidget(QtWidgets.QLabel("threshold potential range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
     threshold_potential_layout.addWidget(QtWidgets.QLabel("min:"), 1, 0, 1, 1, QtCore.Qt.AlignRight)
     threshold_potential_layout.addWidget(self.__threshold_potential_min_spin_box, 1, 1, 1, -1, QtCore.Qt.AlignLeft)
     threshold_potential_layout.addWidget(QtWidgets.QLabel("max:"), 2, 0, 1, 1, QtCore.Qt.AlignRight)
