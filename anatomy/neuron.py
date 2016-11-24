@@ -9,6 +9,10 @@ class Neuron(VtkPolyModel):
     self.__id = -1
 
 
+  def set_threshold(self, value):
+    self.__threshold = value
+
+
   @property
   def coordinates(self):
     return self.__coords
