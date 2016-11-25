@@ -3,7 +3,7 @@ import math
 import random
 import numpy as np
 
-class RandomMeshPointsGenerator:
+class RandomPointsGenerator:
   def __init__(self, vtk_mesh):
     if not isinstance(vtk_mesh, vtk.vtkPolyData):
       raise TypeError("input argument 'vtk_mesh' has to be a vtkPolyData")
@@ -72,7 +72,6 @@ class RandomMeshPointsGenerator:
     if u + v > 1:
       u = 1 - u
       v = 1 - v
-
     # Return the point
     return x + u*(y - x) + v*(z - x)
 

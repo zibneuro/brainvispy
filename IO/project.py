@@ -3,9 +3,10 @@ import vtk
 import xml.etree.ElementTree as ET
 from core.progress import ProgressBar
 from core.datacontainer import DataContainer
-from anatomy.region import BrainRegion
-from anatomy.neuron import Neuron
-from anatomy.connection import Connection
+from bio.region import BrainRegion
+from bio.neuron import Neuron
+from bio.connection import Connection
+from generators.neurons import NeuronGenerator
 from gui.vtkwidget import VtkWidget
 from .obj import OBJReader
 from .vtkio import VtkIO
@@ -128,10 +129,10 @@ class ProjectIO:
 
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
-    # Create the neurons
-    self.__add_neurons(neuron_parameters, data_container, error_messages)
-    # Create the connections
-    self.__add_connections(connection_parameters, data_container, error_messages)
+    # Create the neurons (note that they are not loaded as the visual representation is generated on the fly)
+    self.__create_neurons(neuron_parameters, data_container, error_messages)
+    # Create the connections (note that they are not loaded as the visual representation is generated on the fly)
+    self.__create_connections(connection_parameters, data_container, error_messages)
 
     # Make sure we see all models
     vtk_widget.reset_clipping_range()
@@ -231,7 +232,7 @@ class ProjectIO:
     # Let the user know we are doing something    
     self.__progress_bar.init(1, len(brain_region_parameters), "Loading files: ")
     counter = 0
-    
+
     # Load the VTK files from disk and create the brain regions
     for parameters in brain_region_parameters:
       # Update the progress bar
@@ -263,11 +264,11 @@ class ProjectIO:
     data_container.add_brain_regions(brain_regions)
 
 
-  def __add_neurons(self, neuron_parameters, data_container, error_messages):
-    pass
+  def __create_neurons(self, neuron_parameters, data_container, error_messages):
+    neuro_gen = NeuronGenerator()
 
 
-  def __add_connections(self, connection_parameters, data_container, error_messages):
+  def __create_connections(self, connection_parameters, data_container, error_messages):
     pass
 
 
