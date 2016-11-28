@@ -1,10 +1,14 @@
 class Neuron:
   def __init__(self, name, x, y, z, threshold, vis_rep):
     self.__name = name
+    self.__index = -1
     self.__pos = (x, y, z)
     self.__threshold = threshold
-    self.__vis_rep = vis_rep
-    self.__id = -1
+    self.__vis_rep = vis_rep    
+
+
+  def set_index(self, idx):
+    self.__index = idx
 
 
   def set_threshold(self, value):
@@ -14,6 +18,11 @@ class Neuron:
   @property
   def name(self):
     return self.__name
+
+
+  @property
+  def index(self):
+    return self.__index
 
 
   @property

@@ -1,9 +1,9 @@
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
-from .regiongui import BrainRegionGUI
+from .brainregiongui import BrainRegionGUI
 from .volgui import VtkVolumeModelGUI
-from .neuronsgui import NeuronsGUI
+from .neurongui import NeuronGUI
 from PyQt5 import QtCore, QtWidgets
 
 class PropsPanel(QtWidgets.QDockWidget):
@@ -36,7 +36,7 @@ class PropsPanel(QtWidgets.QDockWidget):
     # The GUIs for the volume and poly and models
     dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container))
     dock_layout.addWidget(BrainRegionGUI(self.__data_container, controller))
-    dock_layout.addWidget(NeuronsGUI(self.__data_container))
+    dock_layout.addWidget(NeuronGUI(self.__data_container))
 
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()

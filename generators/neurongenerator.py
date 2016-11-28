@@ -2,7 +2,7 @@ import vtk
 import random
 from .randompoints import RandomPointsGenerator
 from vis.visneuron import VisNeuron
-from bio.region import BrainRegion
+from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
 
 class NeuronGenerator:
@@ -26,9 +26,11 @@ class NeuronGenerator:
     return neurons
 
 
-  def create_neuron(self, name, p, threshold, sphere_radius):
+  def create_neuron(self, name, index, p, threshold, sphere_radius):
     # Create and return the neuron
-    return Neuron(name, p[0], p[1], p[2], threshold, VisNeuron(name, p, sphere_radius))
+    neuron = Neuron(name, p[0], p[1], p[2], threshold, VisNeuron(name, p, sphere_radius))
+    neuron.set_index(index)
+    return neuron
 
 
   def __generate_random_neurons_in_brain_region(self, num_neurons_per_brain_region, brain_region, thresh_min, thresh_max):
@@ -56,13 +58,3 @@ class NeuronGenerator:
 
     print("generated", len(neuron_positions), "neurons in '" + brain_region.name + "'")
     return neurons
-
-
-  def __create_spherical_neuron_representation(self, position, sphere_radius):
-    vtk_sphere_source = vtk.vtkSphereSource()
-    vtk_sphere_source.SetThetaResolution(12)
-    vtk_sphere_source.SetPhiResolution(12)
-    vtk_sphere_source.SetRadius(sphere_radius)
-    vtk_sphere_source.SetCenter(position[0], position[1], position[2])
-    vtk_sphere_source.Update()
-    return vtk_sphere_source.GetOutput()

@@ -39,6 +39,10 @@ class VtkVolumeModel(VtkModel):
     return self.__image_slicer.SetSliceIndex(index)
 
 
+  def set_visibility(self, bool_value):
+    self.actor.SetEnabled(bool_value)
+
+
   def visibility_on(self):
     self.__image_slicer.On()
 

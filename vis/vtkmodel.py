@@ -24,6 +24,10 @@ class VtkModel(metaclass = abc.ABCMeta):
     pass
 
   @abc.abstractmethod
+  def set_visibility(self, bool_value):
+    pass
+
+  @abc.abstractmethod
   def visibility_on(self):
     pass
 

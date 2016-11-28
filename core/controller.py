@@ -1,5 +1,4 @@
-from anatomy.neurogen import NeuronGenerator
-from anatomy.region import BrainRegion
+from generators.neurongenerator import NeuronGenerator
 
 class Controller:
   def __init__(self, data_container):

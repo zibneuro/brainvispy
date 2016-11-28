@@ -33,6 +33,10 @@ class VtkPolyModel(VtkModel):
     renderer.RemoveActor(self.actor)
 
 
+  def set_visibility(self, bool_value):
+    self.actor.SetVisibility(bool_value)
+
+
   def visibility_on(self):
     self.actor.VisibilityOn()
 

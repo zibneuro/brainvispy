@@ -3,10 +3,12 @@ import vtk
 import xml.etree.ElementTree as ET
 from core.progress import ProgressBar
 from core.datacontainer import DataContainer
-from bio.region import BrainRegion
+from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
 from bio.connection import Connection
-from generators.neurons import NeuronGenerator
+from vis.visbrainregion import VisBrainRegion
+from vis.visneuron import VisNeuron
+from generators.neurongenerator import NeuronGenerator
 from gui.vtkwidget import VtkWidget
 from .obj import OBJReader
 from .vtkio import VtkIO
@@ -27,13 +29,22 @@ class BrainRegionParameters:
     self.rgb_color = BrainRegion.generate_random_rgb_color()
     self.transparency = 0
 
+  def __init__(self, name, abs_file_name):
+    self.name = name
+    self.abs_file_name = abs_file_name
+    self.rel_file_name = None
+    self.visibility = 1
+    self.rgb_color = BrainRegion.generate_random_rgb_color()
+    self.transparency = 0
+
 
 class NeuronParameters:
   def __init__(self):
     self.name = "neuron"
     self.index = -1
+    self.position = (0, 0, 0)
+    self.threshold = 0.0
     self.sphere_radius = 0.5
-    self.position = (0, 0, 0)    
     self.rgb_color = (0.8, 0.1, 0.0)
 
 
@@ -84,10 +95,9 @@ class ProjectIO:
       if not vtk_poly_data:
         continue
 
+      # Create and save the brain region
       if isinstance(vtk_poly_data, vtk.vtkPolyData):
-        # Create and save the brain region
-        brain_region_parameters = self.__create_brain_region_parameters(file_name)
-        brain_regions.append(self.__create_brain_region(vtk_poly_data, brain_region_parameters))
+        brain_regions.append(self.__create_brain_region(vtk_poly_data, BrainRegionParameters(self.__extract_name(file_name), file_name)))
 
     # We are done with loading
     self.__progress_bar.done()
@@ -129,9 +139,9 @@ class ProjectIO:
 
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
-    # Create the neurons (note that they are not loaded as the visual representation is generated on the fly)
+    # Create the neurons (note that they are not loaded since the visual representation is generated on the fly)
     self.__create_neurons(neuron_parameters, data_container, error_messages)
-    # Create the connections (note that they are not loaded as the visual representation is generated on the fly)
+    # Create the connections (note that they are not loaded since the visual representation is generated on the fly)
     self.__create_connections(connection_parameters, data_container, error_messages)
 
     # Make sure we see all models
@@ -186,20 +196,21 @@ class ProjectIO:
 
   def __parse_neuron(self, xml_input):
     # Create a new object to store the parsed elements
-    neuron = NeuronParameters()
+    neuron_params = NeuronParameters()
     # Read all the elements of 'xml_input'
     for element in xml_input:
-      if   element.tag == "name": neuron.name = element.text
-      elif element.tag == "index": neuron.index = int(element.text)
-      elif element.tag == "sphere_radius": neuron.sphere_radius = float(element.text)
+      if   element.tag == "name": neuron_params.name = element.text
+      elif element.tag == "index": neuron_params.index = int(element.text)
       elif element.tag == "position":
         pos_string = element.text.split(" ")
-        neuron.position = (float(pos_string[0]), float(pos_string[1]), float(pos_string[2]))
+        neuron_params.position = (float(pos_string[0]), float(pos_string[1]), float(pos_string[2]))
+      elif element.tag == "threshold": neuron_params.threshold = float(element.text)
+      elif element.tag == "sphere_radius": neuron_params.sphere_radius = float(element.text)
       elif element.tag == "rgb_color":
         color_string = element.text.split(" ")
-        neuron.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
+        neuron_params.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
     # Return what we have parsed
-    return neuron
+    return neuron_params
 
 
   def __parse_connection(self, xml_input):
@@ -264,29 +275,29 @@ class ProjectIO:
     data_container.add_brain_regions(brain_regions)
 
 
-  def __create_neurons(self, neuron_parameters, data_container, error_messages):
+  def __create_brain_region(self, vtk_poly_data, parameters):
+    # Create the visual representation of the brain region
+    vis_brain_region = VisBrainRegion(parameters.name, vtk_poly_data, parameters.abs_file_name)
+    vis_brain_region.set_color(parameters.rgb_color[0], parameters.rgb_color[1], parameters.rgb_color[2])
+    vis_brain_region.set_visibility(parameters.visibility)
+    vis_brain_region.set_transparency(parameters.transparency)
+    # Create and return the brain region
+    brain_region = BrainRegion(parameters.name, None, vis_brain_region)
+    return brain_region
+
+
+  def __create_neurons(self, params, data_container, error_messages):
     neuro_gen = NeuronGenerator()
+    neurons = list()
+    # Create the neurons
+    for ps in params:
+      neurons.append(neuro_gen.create_neuron(ps.name, ps.index, ps.positions, ps.threshold, ps.sphere_radius))
+    # Add the neurons to the data container
+    data_container.add_neurons(neurons)
 
 
   def __create_connections(self, connection_parameters, data_container, error_messages):
     pass
-
-
-  def __create_brain_region_parameters(self, abs_file_name):
-    # Initialize an object with default brain region parameters
-    brain_region_parameters = BrainRegionParameters()
-    brain_region_parameters.name = self.__extract_name(abs_file_name)
-    brain_region_parameters.abs_file_name = abs_file_name
-    return brain_region_parameters
-
-
-  def __create_brain_region(self, vtk_poly_data, parameters):
-    brain_region = BrainRegion(vtk_poly_data, parameters.abs_file_name, parameters.name, neurons = None)
-    brain_region.set_color(parameters.rgb_color[0], parameters.rgb_color[1], parameters.rgb_color[2])
-    if parameters.visibility: brain_region.visibility_on()
-    else: brain_region.visibility_off()
-    brain_region.set_transparency(parameters.transparency)
-    return brain_region
 
 
   def __extract_name(self, file_name):
@@ -348,7 +359,15 @@ class ProjectIO:
 
 
   def __save_neuron(self, neuron, xml_element):
-    pass
+    ET.SubElement(xml_element, "name").text = neuron.name
+    ET.SubElement(xml_element, "index").text = neuron.index
+    p = neuron.position
+    ET.SubElement(xml_element, "position").text = str(p[0]) + " " + str(p[1]) + " " + str(p[2])
+    ET.SubElement(xml_element, "threshold").text = neuron.threshold
+    vis_rep = neuron.visual_representation
+    ET.SubElement(xml_element, "sphere_radius").text = vis_rep.sphere_radius
+    c = vis_rep.get_color()
+    ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
 
 
   def __save_connection(self, connection, xml_element):

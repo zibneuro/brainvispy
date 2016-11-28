@@ -1,6 +1,5 @@
 from core.datacontainer import DataContainer
-from core.controller import Controller
-from anatomy.region import BrainRegion
+from bio.brainregion import BrainRegion
 from PyQt5 import QtGui, QtWidgets, QtCore
 
 class BrainRegionGUI(QtWidgets.QGroupBox):
