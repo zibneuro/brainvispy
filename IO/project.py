@@ -34,7 +34,7 @@ class BrainRegionParameters:
     self.abs_file_name = abs_file_name
     self.rel_file_name = None
     self.visibility = 1
-    self.rgb_color = BrainRegion.generate_random_rgb_color()
+    self.rgb_color = VisBrainRegion.generate_random_rgb_color()
     self.transparency = 0
 
 

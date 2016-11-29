@@ -2,6 +2,7 @@ import vtk
 from .vtkmodel import VtkModel
 
 class VtkVolumeModel(VtkModel):
+  """This one is not used right now."""
   def __init__(self, vtk_image_data, name = "VtkVolumeModel"):
     if not isinstance(vtk_image_data, vtk.vtkImageData):
       raise TypeError("input has to be vtkImageData")

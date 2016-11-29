@@ -7,15 +7,10 @@ from .pick3d import ModelPicker
 class VtkWidget(VTKQGLWidget):
   def __init__(self, parent_qt_frame, data_container, progress_bar):
     super().__init__(parent_qt_frame)
-    # Make sure that the data container has the right type
-    if not isinstance(data_container, DataContainer):
-      raise TypeError("the data container has to be of type DataContainer")
     # Register itself as an observer to the data_container
     self.__data_container = data_container
     self.__data_container.add_observer(self)
-
-    if not isinstance(progress_bar, ProgressBar):
-      raise TypeError("the progress bar has to be of type ProgressBar")
+    # This one indicates the progress of computationally heavy tasks
     self.__progress_bar = progress_bar
 
     # The render window
@@ -42,13 +37,6 @@ class VtkWidget(VTKQGLWidget):
     self.__lower_left_axes_widget.SetViewport(0.0, 0.0, 0.2, 0.2)
     self.__lower_left_axes_widget.SetEnabled(1)
     self.__lower_left_axes_widget.InteractiveOff()
-
-
-  def __on_key_released(self, interactor, data):
-    if data == "KeyReleaseEvent":
-      key = interactor.GetKeySym()
-      if key == "Delete":
-        self.__data_container.delete_selected_models()
 
 
   def observable_changed(self, change, data):
@@ -115,6 +103,13 @@ class VtkWidget(VTKQGLWidget):
     self.__reset_view_after_adding_models = value
 
 
+  def __on_key_released(self, interactor, data):
+    if data == "KeyReleaseEvent":
+      key = interactor.GetKeySym()
+      if key == "Delete":
+        self.__model_picker.delete_selected_models()
+
+
   def __add_data_items(self, data_items, reset_view_after_adding_models):
     if not data_items:
       return
@@ -125,13 +120,17 @@ class VtkWidget(VTKQGLWidget):
     # Add all the data to the renderer
     for data_item in data_items:
       counter += 1
-      data_item.add_yourself(self.renderer, self.render_window_interactor)
+      # Add the visual representation of the data item to the renderer
+      try:
+        self.renderer.AddActor(data_item.visual_representation.actor)
+      except AttributeError:
+        pass
       self.__progress_bar.set_progress(counter)
     # Make sure that we see all the new data
     if reset_view_after_adding_models:
       self.reset_view()
     else:
-      self.render()
+      self.reset_clipping_range()
     # We are done
     self.__progress_bar.done()
 
@@ -139,10 +138,16 @@ class VtkWidget(VTKQGLWidget):
   def __highlight_models(self, models):
     # First un-highlight all models
     for model in self.__data_container.get_models():
-      model.highlight_off()
+      try:
+        model.visual_representation.highlight_off()
+      except AttributeError:
+        pass
     # Now highligh the ones we want to highlight
     for model in models:
-      model.highlight_on()
+      try:
+        model.visual_representation.highlight_on()
+      except AttributeError:
+        pass
     # Update the view
     self.render()
 

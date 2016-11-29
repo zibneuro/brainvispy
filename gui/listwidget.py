@@ -12,7 +12,7 @@ class ListWidgetItem(QtWidgets.QListWidgetItem):
     self.model = model
 
     # Shall it be checked (i.e., is the model visible)
-    if self.model.is_visible(): self.setCheckState(QtCore.Qt.Checked)
+    if self.model.visual_representation.is_visible(): self.setCheckState(QtCore.Qt.Checked)
     else: self.setCheckState(QtCore.Qt.Unchecked)
 
     # Per default the item is not hidden and not selected

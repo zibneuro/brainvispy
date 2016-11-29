@@ -15,23 +15,23 @@ class DataContainer(Observable):
 
   def __init__(self):
     Observable.__init__(self)
-    # The models indexed by vtkProperty (we need a unique vtkProperty for each model for the picking in the 3D window)
-    self.__vtk_property_to_models = dict()
+    # All models
+    self.__models = set()
     # This guy keeps the selected models
     self.__selected_models = set()
 
 
   def is_empty(self):
-    return len(self.__vtk_property_to_models) == 0
+    return len(self.__models) == 0
 
 
   def clear(self):
     """Removes everything from the container leaving it empty. The observers get notified."""
     # Notify the observers about the changes
     self.notify_observers_about_change(DataContainer.change_is_new_selection, list())
-    self.notify_observers_about_change(DataContainer.change_is_deleted_models, list(self.__vtk_property_to_models.values()))
+    self.notify_observers_about_change(DataContainer.change_is_deleted_models, list(self.__models))
     # Now, clear everything
-    self.__vtk_property_to_models = dict()
+    self.__models = set()
     self.__selected_models = set()
 
 
@@ -45,10 +45,11 @@ class DataContainer(Observable):
 
   def get_models(self):
     """Returns a list of all models."""
-    return list(self.__vtk_property_to_models.values())
+    return list(self.__models)
 
 
   def get_selected_models(self):
+    """Returns a list of the selected models."""
     return list(self.__selected_models)
 
 
@@ -74,29 +75,23 @@ class DataContainer(Observable):
     self.notify_observers_about_change(DataContainer.change_is_see_inside, list())
 
 
-  def set_model_selection_by_vtk_properties(self, props):
-    self.__selected_models = set()
-    for prop in props:
-      model = self.__get_model_by_vtk_property(prop)
-      if model:
-        self.__selected_models.add(model)
-    # Notify the observers about the new selection
-    self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
-
-
   def set_model_selection(self, models):
     self.__selected_models = set()
-    for model in models:
-      model = self.__get_model_by_vtk_property(model.vtk_property)
-      if model:
-        self.__selected_models.add(model)
+    try:
+      for model in models:
+        if model in self.__models:
+          self.__selected_models.add(model)
+    except TypeError: # seems that 'models' is a single model, (i.e., not iterable)
+      if models in self.__models:
+        self.__selected_models.add(models)
+
     # Notify the observers about the new selection
     self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
 
 
   def invert_model_selection(self):
     # Remove the selected and add the non-selected models to the selection
-    for model in self.__vtk_property_to_models.values():
+    for model in self.__models:
       try:
         self.__selected_models.remove(model)
       except KeyError:
@@ -107,36 +102,19 @@ class DataContainer(Observable):
         
 
   def delete_selected_models(self):
-    if not self.__selected_models:
-      return
-    # Make a copy of the list of selected models since we are going to modify it in the next loop
-    selected_models = list(self.__selected_models)
-    for model in selected_models:
-      self.__delete_model(model)
+    # Delete all selected models from the set of models
+    for model in self.__selected_models:
+      try:
+        self.__models.remove(model)
+      except KeyError:
+        pass
     # Notify the observers about the changes
-    self.notify_observers_about_change(DataContainer.change_is_deleted_models, selected_models)
+    self.notify_observers_about_change(DataContainer.change_is_deleted_models, self.__selected_models)
     self.notify_observers_about_change(DataContainer.change_is_new_selection, list())
 
 
   def __add_models(self, models, what_changed):
-    new_models = list()
     for model in models:
-      # Every model has to have a unique vtkProperty
-      if not self.__get_model_by_vtk_property(model.vtk_property):
-        self.__vtk_property_to_models[model.vtk_property] = model
-        new_models.append(model)
+      self.__models.add(model)
     # Notify the observers about the new models
-    self.notify_observers_about_change(what_changed, new_models);
-
-
-  def __get_model_by_vtk_property(self, vtk_property):
-    """Returns the model which has the provided vtkProperty or None."""
-    return self.__vtk_property_to_models.get(vtk_property)
-
-
-  def __delete_model(self, model):
-    try:
-      del self.__vtk_property_to_models[model.vtk_property]
-      self.__selected_models.remove(model)
-    except KeyError:
-      pass
+    self.notify_observers_about_change(what_changed, models);
