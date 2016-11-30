@@ -105,7 +105,7 @@ class NeuronGUI(QtWidgets.QGroupBox):
     if num_neurons == 0:
       self.hide()
       return
-      
+
     # Set the text of the threshold potential label
     if num_neurons == 1:
       self.__threshold_potential_label.setText("threshold potential:")

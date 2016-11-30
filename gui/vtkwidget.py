@@ -154,5 +154,5 @@ class VtkWidget(VTKQGLWidget):
 
   def __delete_models(self, models):
     for model in models:
-      model.remove_yourself(self.renderer, self.render_window_interactor)
+      self.renderer.RemoveActor(model.visual_representation.prop3d)
     self.reset_clipping_range()

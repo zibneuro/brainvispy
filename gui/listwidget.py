@@ -21,8 +21,8 @@ class ListWidgetItem(QtWidgets.QListWidgetItem):
 
 
   def update_model_visibility(self):
-    if self.__is_checked(): self.model.visibility_on()
-    else: self.model.visibility_off()
+    if self.__is_checked(): self.model.visual_representation.visibility_on()
+    else: self.model.visual_representation.visibility_off()
 
 
   def __is_checked(self):
@@ -31,12 +31,12 @@ class ListWidgetItem(QtWidgets.QListWidgetItem):
 
   def set_checked(self):
     if not self.__is_checked(): self.setCheckState(QtCore.Qt.Checked)
-    self.model.visibility_on()
+    self.model.visual_representation.visibility_on()
 
 
   def set_unchecked(self):
     if self.__is_checked(): self.setCheckState(QtCore.Qt.Unchecked)
-    self.model.visibility_off()
+    self.model.visual_representation.visibility_off()
 
 
   def set_hidden(self, hidden):
@@ -180,7 +180,7 @@ class ListWidget(QtWidgets.QListWidget):
           selected_models.append(sel_item.model)
 
     # Update the selection in the data container
-    self.__data_container.set_model_selection(selected_models)
+    self.__data_container.set_selection(selected_models)
 
 
   def __on_item_changed(self, item):
@@ -247,7 +247,7 @@ class ListWidget(QtWidgets.QListWidget):
     # Get the list item corresponding to the model
     item = self.__model_to_item.get(model)
     
-    # Remove the model from the dictionaries 
+    # Remove the model from the dictionaries
     try:
       del self.__model_to_item[model]
       del self.__model_to_selected_item[model]

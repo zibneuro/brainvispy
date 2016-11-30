@@ -123,7 +123,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
   def __update(self, models):
     self.__brain_regions = list()
 
-    # Get the poly models only
+    # Get the brain regions only
     for model in models:
       if isinstance(model, BrainRegion):
         self.__brain_regions.append(model)
@@ -141,7 +141,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     see_inside_counter = 0
     
     for model in self.__brain_regions:
-      see_inside_counter += model.see_inside
+      see_inside_counter += model.visual_representation.see_inside
 
     if see_inside_counter == 0:
       self.__see_inside_checkbox.setCheckState(QtCore.Qt.Unchecked)
@@ -156,7 +156,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     color_strings = set()
     # Get all colors
     for model in self.__brain_regions:
-      color_strings.add(self.__rgb_tuple_to_hex_string(model.get_color()))
+      color_strings.add(self.__rgb_tuple_to_hex_string(model.visual_representation.get_color()))
     # Update the button depending on whether we have a single or multiple colors
     if len(color_strings) == 1:
       self.__select_color_btn.setStyleSheet("background-color: " + next(iter(color_strings)))
@@ -171,7 +171,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     transparency_sum = 0.0
     # Compute the average transparency of all models and set the slider to this value
     for model in self.__brain_regions:
-      transparency_sum += model.get_transparency()
+      transparency_sum += model.visual_representation.get_transparency()
    
     # The line after the next ones would call the transparency slider callback. We do not want that => that's why the folloling lines
     ignore_transparency_slider_value_changed_callback = self.__ignore_transparency_slider_value_changed_callback
@@ -198,7 +198,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     self.__see_inside_checkbox.setTristate(False)
     # Update the "see inside" property of each model
     for model in self.__brain_regions:
-      model.set_see_inside(see_inside)
+      model.visual_representation.set_see_inside(see_inside)
     # Update the container
     self.__data_container.update_see_inside()
 
@@ -222,7 +222,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
 
     # Loop over the models and assign them the selected color
     for model in self.__brain_regions:
-      model.set_color(r, g, b)
+      model.visual_representation.set_color(r, g, b)
 
     # Notify the data container that some of its data changed (this will call this objects)
     self.__data_container.update_color()
@@ -236,7 +236,7 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
 
     # Loop over the models and assign them the selected color
     for model in self.__brain_regions:
-      model.set_transparency(transparency)
+      model.visual_representation.set_transparency(transparency)
 
     # Notify the data container that some of its data changed (this will call this objects)
     self.__data_container.update_transparency()

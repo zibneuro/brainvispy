@@ -75,15 +75,30 @@ class DataContainer(Observable):
     self.notify_observers_about_change(DataContainer.change_is_see_inside, list())
 
 
-  def set_model_selection(self, models):
+  def add_to_selection(self, item):
+    if item in self.__models:
+      self.__selected_models.add(item)
+      self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
+
+
+  def remove_from_selection(self, item):
+    try:
+      self.__selected_models.remove(item)
+    except ValueError:
+      pass
+    else:
+      self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
+
+
+  def set_selection(self, items):
     self.__selected_models = set()
     try:
-      for model in models:
-        if model in self.__models:
-          self.__selected_models.add(model)
-    except TypeError: # seems that 'models' is a single model, (i.e., not iterable)
-      if models in self.__models:
-        self.__selected_models.add(models)
+      for item in items:
+        if item in self.__models:
+          self.__selected_models.add(item)
+    except TypeError: # it seems that 'items' is not iterable, i.e., it is a single item
+      if items in self.__models:
+        self.__selected_models.add(items)
 
     # Notify the observers about the new selection
     self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
@@ -115,6 +130,6 @@ class DataContainer(Observable):
 
   def __add_models(self, models, what_changed):
     for model in models:
-      self.__models.add(model)
+      if model: self.__models.add(model)
     # Notify the observers about the new models
     self.notify_observers_about_change(what_changed, models);

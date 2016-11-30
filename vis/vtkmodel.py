@@ -49,5 +49,5 @@ class VtkModel(metaclass = abc.ABCMeta):
 
   @property
   @abc.abstractmethod
-  def vtk_property(self):
+  def prop3d(self):
     pass

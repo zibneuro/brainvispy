@@ -72,26 +72,28 @@ class ModelPicker:
         self.__data_container.add_to_selection(self.__prop3d_to_model.get(picked_prop3d))
     # The user doesn't hold the ctrl. key
     else:
-      self.__data_container.set_model_selection(self.__prop3d_to_model.get(picked_prop3d))
+      self.__data_container.set_selection(self.__prop3d_to_model.get(picked_prop3d))
 
 
   def __add_models(self, data):
     for model in data:
       try: # we can handle only data items that are pickable, i.e., that have a prop3d attribute
         prop3d = model.visual_representation.prop3d
-        self.__prop3d_to_model[prop3d] = model
       except AttributeError:
         pass
+      else:
+        self.__prop3d_to_model[prop3d] = model
 
 
   def __delete_models(self, data):
     for model in data:
       try: # we can handle only data items that are pickable, i.e., that have a prop3d attribute
         prop3d = model.visual_representation.prop3d
-        self.__prop3d_to_model.pop(prop3d, None)
-        self.__selected_prop3d_to_model.pop(prop3d, None)
       except AttributeError:
         pass
+      else:
+        self.__prop3d_to_model.pop(prop3d, None)
+        self.__selected_prop3d_to_model.pop(prop3d, None)
 
 
   def __set_selection(self, data):
@@ -99,6 +101,7 @@ class ModelPicker:
     for model in data:
       try: # we can handle only data items that are pickable, i.e., that have a prop3d attribute
         prop3d = model.visual_representation.prop3d
-        self.__selected_prop3d_to_model[prop3d] = model
       except AttributeError:
         pass
+      else:
+        self.__selected_prop3d_to_model[prop3d] = model

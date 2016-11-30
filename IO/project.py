@@ -21,21 +21,14 @@ class CameraParameters:
 
 
 class BrainRegionParameters:
-  def __init__(self):
-    self.name = "brain region"
-    self.abs_file_name = None
-    self.rel_file_name = None
-    self.visibility = 1
-    self.rgb_color = BrainRegion.generate_random_rgb_color()
-    self.transparency = 0
-
-  def __init__(self, name, abs_file_name):
+  def __init__(self, name = "brain region", abs_file_name = None):
     self.name = name
     self.abs_file_name = abs_file_name
     self.rel_file_name = None
     self.visibility = 1
-    self.rgb_color = VisBrainRegion.generate_random_rgb_color()
+    self.see_inside = 0
     self.transparency = 0
+    self.rgb_color = VisBrainRegion.generate_random_rgb_color()
 
 
 class NeuronParameters:
@@ -185,7 +178,8 @@ class ProjectIO:
       if   element.tag == "name": brain_region.name = element.text
       elif element.tag == "abs_file_name": brain_region.abs_file_name = element.text
       elif element.tag == "rel_file_name": brain_region.rel_file_name = element.text
-      elif element.tag == "visibility": brain_region.visibility = float(element.text)
+      elif element.tag == "visibility": brain_region.visibility = int(element.text)
+      elif element.tag == "see_inside": brain_region.see_inside = int(element.text)
       elif element.tag == "transparency": brain_region.transparency = float(element.text)
       elif element.tag == "rgb_color":
         color_string = element.text.split(" ")
@@ -280,6 +274,7 @@ class ProjectIO:
     vis_brain_region = VisBrainRegion(parameters.name, vtk_poly_data, parameters.abs_file_name)
     vis_brain_region.set_color(parameters.rgb_color[0], parameters.rgb_color[1], parameters.rgb_color[2])
     vis_brain_region.set_visibility(parameters.visibility)
+    vis_brain_region.set_see_inside(parameters.see_inside)
     vis_brain_region.set_transparency(parameters.transparency)
     # Create and return the brain region
     brain_region = BrainRegion(parameters.name, None, vis_brain_region)
@@ -291,7 +286,7 @@ class ProjectIO:
     neurons = list()
     # Create the neurons
     for ps in params:
-      neurons.append(neuro_gen.create_neuron(ps.name, ps.index, ps.positions, ps.threshold, ps.sphere_radius))
+      neurons.append(neuro_gen.create_neuron(ps.name, ps.index, ps.position, ps.threshold, ps.sphere_radius))
     # Add the neurons to the data container
     data_container.add_neurons(neurons)
 
@@ -350,22 +345,24 @@ class ProjectIO:
 
   def __save_brain_region(self, brain_region, project_folder, xml_element):
     ET.SubElement(xml_element, "name").text = brain_region.name
-    ET.SubElement(xml_element, "abs_file_name").text = brain_region.file_name
-    ET.SubElement(xml_element, "rel_file_name").text = self.__compute_relative_file_name(brain_region.file_name, project_folder)
-    ET.SubElement(xml_element, "visibility").text = "1" if brain_region.is_visible() else "0"
-    c = brain_region.get_color()
+    vis_rep = brain_region.visual_representation
+    ET.SubElement(xml_element, "abs_file_name").text = vis_rep.file_name
+    ET.SubElement(xml_element, "rel_file_name").text = self.__compute_relative_file_name(vis_rep.file_name, project_folder)
+    ET.SubElement(xml_element, "visibility").text = str(vis_rep.get_visibility())
+    ET.SubElement(xml_element, "transparency").text = str(vis_rep.get_transparency())
+    ET.SubElement(xml_element, "see_inside").text = str(vis_rep.see_inside)
+    c = vis_rep.get_color()
     ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
-    ET.SubElement(xml_element, "transparency").text = str(brain_region.get_transparency())
 
 
   def __save_neuron(self, neuron, xml_element):
     ET.SubElement(xml_element, "name").text = neuron.name
-    ET.SubElement(xml_element, "index").text = neuron.index
+    ET.SubElement(xml_element, "index").text = str(neuron.index)
     p = neuron.position
     ET.SubElement(xml_element, "position").text = str(p[0]) + " " + str(p[1]) + " " + str(p[2])
-    ET.SubElement(xml_element, "threshold").text = neuron.threshold
+    ET.SubElement(xml_element, "threshold").text = str(neuron.threshold)
     vis_rep = neuron.visual_representation
-    ET.SubElement(xml_element, "sphere_radius").text = vis_rep.sphere_radius
+    ET.SubElement(xml_element, "sphere_radius").text = str(vis_rep.sphere_radius)
     c = vis_rep.get_color()
     ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
 

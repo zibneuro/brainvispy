@@ -38,13 +38,13 @@ class NeuronGenerator:
       return list()
 
     # Compute the bounding box of the brain region, in order to compute the radius of the sphere which represents the neurons
-    vtk_poly_data = brain_region.vtk_poly_data
+    vtk_poly_data = brain_region.visual_representation.vtk_poly_data
     vtk_poly_data.ComputeBounds()
     b = vtk_poly_data.GetBounds()
     sphere_radius = 0.02*min(b[1]-b[0], b[3]-b[2], b[5]-b[4])
 
     # Generate the neuron positions in the brain region
-    rand_points_gen = RandomPointsGenerator(brain_region.vtk_poly_data)
+    rand_points_gen = RandomPointsGenerator(vtk_poly_data)
     neuron_positions = rand_points_gen.generate_points_inside_mesh(num_neurons_per_brain_region)
 
     neurons = list()
@@ -54,7 +54,7 @@ class NeuronGenerator:
       # Generate the neuron potential threshold
       potential_threshold = random.uniform(thresh_min, thresh_max)
       # Generate and save the neuron
-      neurons.append(self.create_neuron("neuron", p, potential_threshold, sphere_radius))
+      neurons.append(self.create_neuron("neuron", -1, p, potential_threshold, sphere_radius))
 
     print("generated", len(neuron_positions), "neurons in '" + brain_region.name + "'")
     return neurons

@@ -53,6 +53,10 @@ class VtkPolyModel(VtkModel):
     return self.actor.GetVisibility() == 1
 
 
+  def get_visibility(self):
+    return self.actor.GetVisibility()
+
+
   def highlight_on(self):
     self.__actor.GetProperty().SetAmbient(self.__on_ambient)
 
@@ -102,5 +106,5 @@ class VtkPolyModel(VtkModel):
 
 
   @property
-  def vtk_property(self):
-    return self.actor.GetProperty()
+  def prop3d(self):
+    return self.__actor
