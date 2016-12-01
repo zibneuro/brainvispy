@@ -91,8 +91,8 @@ class DataPanel(QtWidgets.QDockWidget):
 
 
   def __on_delete_selected_models(self):
-    self.__data_container.delete_selected_models()
-    
+    self.__data_container.delete_models(self.__list_widget.get_selected_models())
+
 
   def __on_make_all_visible(self):
     self.__list_widget.update_visibility(1)

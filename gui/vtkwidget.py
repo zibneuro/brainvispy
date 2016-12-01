@@ -19,7 +19,12 @@ class VtkWidget(VTKQGLWidget):
     self.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
 
     # This guy is very important: it handles all the model selection in the 3D view
-    self.__model_picker = ModelPicker(self.__data_container, self.render_window_interactor)
+    self.__model_picker = ModelPicker(self)
+
+    # Here we keep the selected models in a (vtkProp3D, model) dictionary
+    self.__prop3d_to_selected_model = dict()
+    # Here we keep ALL models in a (vtkProp3D, model) dictionary
+    self.__prop3d_to_model = dict()
 
     # We might or might not want to reset the view after new models have been added
     self.__reset_view_after_adding_models = True
@@ -48,11 +53,27 @@ class VtkWidget(VTKQGLWidget):
     elif change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
       self.reset_clipping_range()
     elif change == DataContainer.change_is_new_selection:
-      self.__highlight_models(data)
+      self.__set_selection(data)
     elif change == DataContainer.change_is_deleted_models:
       self.__delete_models(data)
     else:
       self.render()
+
+
+  def on_picked_prop3d(self, prop3d):
+    # Does the user hold the ctrl. key?
+    if self.__model_picker.is_ctrl_key_pressed():
+      # Check if she picked the same model twice
+      twice_picked_model = self.__prop3d_to_selected_model.get(prop3d)
+      if twice_picked_model:
+        # Remove the already picked model from the selection
+        self.__data_container.remove_from_selection(twice_picked_model)
+      else:
+        # Add the newly picked model or None to the selection
+        self.__data_container.add_to_selection(self.__prop3d_to_model.get(prop3d))
+    # The user doesn't hold the ctrl. key
+    else:
+      self.__data_container.set_selection(self.__prop3d_to_model.get(prop3d))
 
 
   def get_camera_position(self):
@@ -107,7 +128,8 @@ class VtkWidget(VTKQGLWidget):
     if data == "KeyReleaseEvent":
       key = interactor.GetKeySym()
       if key == "Delete":
-        self.__model_picker.delete_selected_models()
+        self.__data_container.delete_models(list(self.__prop3d_to_selected_model.values()))
+        self.render()
 
 
   def __add_data_items(self, data_items, reset_view_after_adding_models):
@@ -117,15 +139,22 @@ class VtkWidget(VTKQGLWidget):
     # Tell the user we are busy
     self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
     counter = 0
-    # Add all the data to the renderer
+
+    # Add data to the renderer and to the internal dictionary
     for data_item in data_items:
       counter += 1
-      # Add the visual representation of the data item to the renderer
+      # We need a data item with a prop3d
       try:
-        self.renderer.AddActor(data_item.visual_representation.actor)
+        prop3d = data_item.visual_representation.prop3d
       except AttributeError:
         pass
+      else:
+        self.__prop3d_to_model[prop3d] = data_item
+        self.renderer.AddActor(prop3d)
+
+      # Update the progress bar
       self.__progress_bar.set_progress(counter)
+      
     # Make sure that we see all the new data
     if reset_view_after_adding_models:
       self.reset_view()
@@ -135,24 +164,46 @@ class VtkWidget(VTKQGLWidget):
     self.__progress_bar.done()
 
 
-  def __highlight_models(self, models):
-    # First un-highlight all models
-    for model in self.__data_container.get_models():
-      try:
-        model.visual_representation.highlight_off()
-      except AttributeError:
-        pass
-    # Now highligh the ones we want to highlight
+  def __set_selection(self, models):
+    # First, un-highlight all models
+    for model in self.__prop3d_to_model.values():
+      model.visual_representation.highlight_off()
+
+    # Clear the selection
+    self.__prop3d_to_selected_model = dict()
+
+    # Now, highligh the ones we want to highlight
     for model in models:
+      # Make sure that the current model has a visual representation with a prop3d
       try:
-        model.visual_representation.highlight_on()
+        vis_rep = model.visual_representation
+        prop3d = vis_rep.prop3d
       except AttributeError:
-        pass
+        continue
+
+      # Make sure we have that model
+      if prop3d not in self.__prop3d_to_model:
+        continue
+      
+      # Highlight the model
+      vis_rep.highlight_on()
+      # Save it in the selection dictionary
+      self.__prop3d_to_selected_model[prop3d] = model
+
     # Update the view
     self.render()
 
 
   def __delete_models(self, models):
     for model in models:
-      self.renderer.RemoveActor(model.visual_representation.prop3d)
+      try: # we can handle only data items that are pickable, i.e., that have a visual representation with a prop3d
+        prop3d = model.visual_representation.prop3d
+      except AttributeError:
+        pass
+      else:
+        self.renderer.RemoveActor(prop3d)
+        # silently delete the models (no exception even if they are not in the dictionary)
+        self.__prop3d_to_model.pop(prop3d, None)
+        self.__prop3d_to_selected_model.pop(prop3d, None)
+    # Update the 3d view
     self.reset_clipping_range()

@@ -160,7 +160,11 @@ class ListWidget(QtWidgets.QListWidget):
     # Do the default Qt stuff
     super().keyPressEvent(event)
     if event.key() == QtCore.Qt.Key_Delete:
-      self.__data_container.delete_selected_models()
+      self.__data_container.delete_models(self.get_selected_models())
+
+
+  def get_selected_models(self):
+    return list(self.__model_to_selected_item.keys())
 
 
   def __on_item_selection(self):

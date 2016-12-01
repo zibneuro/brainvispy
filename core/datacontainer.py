@@ -116,16 +116,22 @@ class DataContainer(Observable):
     self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
         
 
-  def delete_selected_models(self):
+  def delete_models(self, models):
     # Delete all selected models from the set of models
-    for model in self.__selected_models:
+    for model in models:
+      # Delete the model from the set of ALL models
       try:
         self.__models.remove(model)
       except KeyError:
         pass
+      # Delete the model from the selection
+      try:
+        self.__selected_models.remove(model)
+      except KeyError:
+        pass
     # Notify the observers about the changes
-    self.notify_observers_about_change(DataContainer.change_is_deleted_models, self.__selected_models)
-    self.notify_observers_about_change(DataContainer.change_is_new_selection, list())
+    self.notify_observers_about_change(DataContainer.change_is_deleted_models, models)
+    self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
 
 
   def __add_models(self, models, what_changed):

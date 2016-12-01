@@ -438,6 +438,10 @@ class VTKQGLWidget(QtOpenGL.QGLWidget):
             self.__Iren.MouseWheelBackwardEvent()
 
     @property
+    def interactor(self):
+        return self.__Iren
+
+    @property
     def render_window_interactor(self):
         return self.__Iren
 

@@ -45,6 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __add_menus(self):
+    # Menu FILE
     # Open project
     open_project_action = QtWidgets.QAction('Open project', self)
     open_project_action.setShortcut('Ctrl+O')
@@ -70,6 +71,11 @@ class MainWindow(QtWidgets.QMainWindow):
     quit_action.setShortcut('Ctrl+Q')
     quit_action.triggered.connect(self.close)
 
+    # Menu NEURONS
+    define_connectivity_action = QtWidgets.QAction('Define Connectivity', self)
+    define_connectivity_action.triggered.connect(self.__on_define_connectivity)
+
+    # Add everything to the menu bar
     file_menu = self.menuBar().addMenu("FILE")
     file_menu.addAction(open_project_action)
     file_menu.addAction(save_project_action)
@@ -79,6 +85,8 @@ class MainWindow(QtWidgets.QMainWindow):
     file_menu.addAction(load_folder_action)
     file_menu.addSeparator()
     file_menu.addAction(quit_action)
+    neurons_menu = self.menuBar().addMenu("NEURONS")
+    neurons_menu.addAction(define_connectivity_action)
 
 
   def __setup_main_frame(self):
@@ -190,6 +198,10 @@ class MainWindow(QtWidgets.QMainWindow):
       self.setWindowTitle(project_name + "  -  BrainVisPy")
     except Exception as err:
       raise err #print(err)
+
+
+  def __on_define_connectivity(self):
+    self.__controller.define_connectivity()
 
 
   def __load_config_file(self):
