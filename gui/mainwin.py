@@ -91,7 +91,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __setup_main_frame(self):
     # Create the OpenGL-based VTK widget
-    self.__vtk_widget = VtkWidget(self, self.__data_container, self.__file_load_progress_bar)
+    self.__vtk_widget = VtkWidget(self, self.__controller, self.__data_container, self.__file_load_progress_bar)
     self.setCentralWidget(self.__vtk_widget)
 
     # Add the dock which shows the list of the loaded data (on the left in the main window)

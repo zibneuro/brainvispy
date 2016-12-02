@@ -5,8 +5,10 @@ from .vtkqgl import VTKQGLWidget
 from .pick3d import ModelPicker
 
 class VtkWidget(VTKQGLWidget):
-  def __init__(self, parent_qt_frame, data_container, progress_bar):
+  def __init__(self, parent_qt_frame, controller, data_container, progress_bar):
     super().__init__(parent_qt_frame)
+    # Save a reference to the controller
+    self.__controller = controller
     # Register itself as an observer to the data_container
     self.__data_container = data_container
     self.__data_container.add_observer(self)
@@ -74,6 +76,31 @@ class VtkWidget(VTKQGLWidget):
     # The user doesn't hold the ctrl. key
     else:
       self.__data_container.set_selection(self.__prop3d_to_model.get(prop3d))
+
+
+  def on_mouse_over_prop3d(self, prop3d):
+    try:
+      model = self.__prop3d_to_model[prop3d]
+    except KeyError:
+      return
+
+    # Let the controller handle the case
+    self.__controller.on_mouse_over_model(model, self)
+
+
+  def show_tooltip(self, text):
+    #vtk_string = vtk.vtkStdString(text)
+    tooltip = vtk.vtkTooltipItem()
+    tooltip.SetText(text)
+    tooltip.SetVisible(1)
+
+
+  def connect_points(self, a, b):
+    print("connecting", a, "to", b)
+
+
+  def get_selected_models(self):
+    return list(self.__prop3d_to_selected_model.values())
 
 
   def get_camera_position(self):
