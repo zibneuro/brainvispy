@@ -71,10 +71,6 @@ class MainWindow(QtWidgets.QMainWindow):
     quit_action.setShortcut('Ctrl+Q')
     quit_action.triggered.connect(self.close)
 
-    # Menu NEURONS
-    define_connectivity_action = QtWidgets.QAction('Define Connectivity', self)
-    define_connectivity_action.triggered.connect(self.__on_define_connectivity)
-
     # Add everything to the menu bar
     file_menu = self.menuBar().addMenu("FILE")
     file_menu.addAction(open_project_action)
@@ -85,14 +81,14 @@ class MainWindow(QtWidgets.QMainWindow):
     file_menu.addAction(load_folder_action)
     file_menu.addSeparator()
     file_menu.addAction(quit_action)
-    neurons_menu = self.menuBar().addMenu("NEURONS")
-    neurons_menu.addAction(define_connectivity_action)
 
 
   def __setup_main_frame(self):
     # Create the OpenGL-based VTK widget
     self.__vtk_widget = VtkWidget(self, self.__controller, self.__data_container, self.__file_load_progress_bar)
     self.setCentralWidget(self.__vtk_widget)
+
+    self.__controller.set_viewer3d(self.__vtk_widget)
 
     # Add the dock which shows the list of the loaded data (on the left in the main window)
     self.__data_panel = DataPanel(self.__data_container)
@@ -198,10 +194,6 @@ class MainWindow(QtWidgets.QMainWindow):
       self.setWindowTitle(project_name + "  -  BrainVisPy")
     except Exception as err:
       raise err #print(err)
-
-
-  def __on_define_connectivity(self):
-    self.__controller.define_connectivity()
 
 
   def __load_config_file(self):

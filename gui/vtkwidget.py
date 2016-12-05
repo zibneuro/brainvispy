@@ -15,18 +15,29 @@ class VtkWidget(VTKQGLWidget):
     # This one indicates the progress of computationally heavy tasks
     self.__progress_bar = progress_bar
 
+    # The observers of this guy
+    self.__observers = list()
+
     # The render window
     self.renderer.SetBackground(0.4, 0.41, 0.42)
     self.enable_depthpeeling()
-    self.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
+    #self.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
+    #self.render_window_interactor.AddObserver("LeftButtonPressEvent", self.__on_left_button_pressed)
+    #self.render_window_interactor.AddObserver("LeftButtonReleaseEvent", self.__on_left_button_released)
+    #self.render_window_interactor.AddObserver("MouseMoveEvent", self.__on_mouse_moved)
+    
+    self.__interactor_style = vtk.vtkInteractorStyleTrackballCamera()
+    self.interactor.SetInteractorStyle(self.__interactor_style)
+    self.__interactor_style.AddObserver("KeyReleaseEvent", self.__on_key_released)
+    self.__interactor_style.AddObserver("LeftButtonPressEvent", self.__on_left_button_pressed)
+    self.__interactor_style.AddObserver("LeftButtonReleaseEvent", self.__on_left_button_released)
+    self.__interactor_style.AddObserver("MouseMoveEvent", self.__on_mouse_moved)
 
     # This guy is very important: it handles all the model selection in the 3D view
-    self.__model_picker = ModelPicker(self)
-
-    # Here we keep the selected models in a (vtkProp3D, model) dictionary
-    self.__prop3d_to_selected_model = dict()
-    # Here we keep ALL models in a (vtkProp3D, model) dictionary
-    self.__prop3d_to_model = dict()
+    #self.__model_picker = ModelPicker(self)
+    self.__prop3d_picker = vtk.vtkPropPicker()
+    self.interactor.SetPicker(self.__prop3d_picker)
+    self.__perform_prop3d_picking = True
 
     # We might or might not want to reset the view after new models have been added
     self.__reset_view_after_adding_models = True
@@ -46,36 +57,72 @@ class VtkWidget(VTKQGLWidget):
     self.__lower_left_axes_widget.InteractiveOff()
 
 
+  def add_observer(self, observer):
+    self.__observers.append(observer)
+
+
+  def __on_key_released(self, interactor, data):
+    if data == "KeyReleaseEvent":
+      key = self.interactor.GetKeySym()
+      for observer in self.__observers:
+        try:
+          observer.on_key_released(self, key)
+        except AttributeError:
+          pass
+
+
+  def __on_left_button_pressed(self, interactor, data):
+    for observer in self.__observers:
+      try:
+        observer.on_left_button_pressed(self)
+      except AttributeError:
+        pass
+    # Forward the event
+    self.__interactor_style.OnLeftButtonDown()
+
+
+  def __on_left_button_released(self, interactor, data):
+    # First, report the left button release event
+    for observer in self.__observers:
+      try:
+        observer.on_left_button_released(self)
+      except AttributeError:
+        pass
+    # Forward the event
+    self.__interactor_style.OnLeftButtonUp()
+
+
+  def __on_mouse_moved(self, interactor, data):
+    for observer in self.__observers:
+      try:
+        observer.on_mouse_moved(self)
+      except AttributeError:
+        pass
+    # Forward the event
+    self.__interactor_style.OnMouseMove()
+
+
+  def pick(self):
+    # Get the first renderer assuming that the event took place there
+    renderer = self.interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
+    # Where did the user click with the mouse
+    xy_pick_pos = self.interactor.GetEventPosition()
+    # Perform the picking
+    self.__prop3d_picker.Pick(xy_pick_pos[0], xy_pick_pos[1], 0, renderer)
+    # Call the user with the picked prop
+    return self.__prop3d_picker.GetProp3D()
+
+
+  def is_ctrl_key_pressed(self):
+    return self.interactor.GetControlKey() != 0
+
+
   def observable_changed(self, change, data):
     # Decide what to do depending on what changed
-    if change == DataContainer.change_is_new_brain_regions:
-      self.__add_data_items(data, self.__reset_view_after_adding_models)
-    elif change == DataContainer.change_is_new_neurons:
-      self.__add_data_items(data, False)
-    elif change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
+    if change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
       self.reset_clipping_range()
-    elif change == DataContainer.change_is_new_selection:
-      self.__set_selection(data)
-    elif change == DataContainer.change_is_deleted_models:
-      self.__delete_models(data)
     else:
       self.render()
-
-
-  def on_picked_prop3d(self, prop3d):
-    # Does the user hold the ctrl. key?
-    if self.__model_picker.is_ctrl_key_pressed():
-      # Check if she picked the same model twice
-      twice_picked_model = self.__prop3d_to_selected_model.get(prop3d)
-      if twice_picked_model:
-        # Remove the already picked model from the selection
-        self.__data_container.remove_from_selection(twice_picked_model)
-      else:
-        # Add the newly picked model or None to the selection
-        self.__data_container.add_to_selection(self.__prop3d_to_model.get(prop3d))
-    # The user doesn't hold the ctrl. key
-    else:
-      self.__data_container.set_selection(self.__prop3d_to_model.get(prop3d))
 
 
   def on_mouse_over_prop3d(self, prop3d):
@@ -88,19 +135,48 @@ class VtkWidget(VTKQGLWidget):
     self.__controller.on_mouse_over_model(model, self)
 
 
-  def show_tooltip(self, text):
-    #vtk_string = vtk.vtkStdString(text)
-    tooltip = vtk.vtkTooltipItem()
-    tooltip.SetText(text)
-    tooltip.SetVisible(1)
-
-
   def connect_points(self, a, b):
     print("connecting", a, "to", b)
 
 
-  def get_selected_models(self):
-    return list(self.__prop3d_to_selected_model.values())
+  def add_models(self, models):
+    if not models:
+      return
+
+    # Tell the user we are busy
+    self.__progress_bar.init(1, len(models), "Adding models to 3D renderer: ")
+    counter = 0
+
+    # Add data to the renderer and to the internal dictionary
+    for model in models:
+      counter += 1
+      # We need a data item with a prop3d
+      try:
+        prop3d = model.visual_representation.prop3d
+      except AttributeError:
+        pass
+      else:
+        self.renderer.AddActor(prop3d)
+
+      # Update the progress bar
+      self.__progress_bar.set_progress(counter)
+      
+    # Make sure that we see all models
+    self.reset_view()
+    # We are done
+    self.__progress_bar.done()
+
+
+  def delete_models(self, models):
+    for model in models:
+      try: # we can handle only data items that are pickable, i.e., that have a visual representation with a prop3d
+        prop3d = model.visual_representation.prop3d
+      except AttributeError:
+        pass
+      else:
+        self.renderer.RemoveActor(prop3d)
+    # Update the 3d view
+    self.reset_clipping_range()
 
 
   def get_camera_position(self):
@@ -140,97 +216,3 @@ class VtkWidget(VTKQGLWidget):
     self.renderer.ResetCamera()
     self.renderer.ResetCameraClippingRange()
     self.render_window_interactor.Render()
-
-
-  @property
-  def reset_view_after_adding_models(self):
-    return self.__reset_view_after_adding_models
-
-
-  def do_reset_view_after_adding_models(self, value):
-    self.__reset_view_after_adding_models = value
-
-
-  def __on_key_released(self, interactor, data):
-    if data == "KeyReleaseEvent":
-      key = interactor.GetKeySym()
-      if key == "Delete":
-        self.__data_container.delete_models(list(self.__prop3d_to_selected_model.values()))
-        self.render()
-
-
-  def __add_data_items(self, data_items, reset_view_after_adding_models):
-    if not data_items:
-      return
-
-    # Tell the user we are busy
-    self.__progress_bar.init(1, len(data_items), "Adding models to 3D renderer: ")
-    counter = 0
-
-    # Add data to the renderer and to the internal dictionary
-    for data_item in data_items:
-      counter += 1
-      # We need a data item with a prop3d
-      try:
-        prop3d = data_item.visual_representation.prop3d
-      except AttributeError:
-        pass
-      else:
-        self.__prop3d_to_model[prop3d] = data_item
-        self.renderer.AddActor(prop3d)
-
-      # Update the progress bar
-      self.__progress_bar.set_progress(counter)
-      
-    # Make sure that we see all the new data
-    if reset_view_after_adding_models:
-      self.reset_view()
-    else:
-      self.reset_clipping_range()
-    # We are done
-    self.__progress_bar.done()
-
-
-  def __set_selection(self, models):
-    # First, un-highlight all models
-    for model in self.__prop3d_to_model.values():
-      model.visual_representation.highlight_off()
-
-    # Clear the selection
-    self.__prop3d_to_selected_model = dict()
-
-    # Now, highligh the ones we want to highlight
-    for model in models:
-      # Make sure that the current model has a visual representation with a prop3d
-      try:
-        vis_rep = model.visual_representation
-        prop3d = vis_rep.prop3d
-      except AttributeError:
-        continue
-
-      # Make sure we have that model
-      if prop3d not in self.__prop3d_to_model:
-        continue
-      
-      # Highlight the model
-      vis_rep.highlight_on()
-      # Save it in the selection dictionary
-      self.__prop3d_to_selected_model[prop3d] = model
-
-    # Update the view
-    self.render()
-
-
-  def __delete_models(self, models):
-    for model in models:
-      try: # we can handle only data items that are pickable, i.e., that have a visual representation with a prop3d
-        prop3d = model.visual_representation.prop3d
-      except AttributeError:
-        pass
-      else:
-        self.renderer.RemoveActor(prop3d)
-        # silently delete the models (no exception even if they are not in the dictionary)
-        self.__prop3d_to_model.pop(prop3d, None)
-        self.__prop3d_to_selected_model.pop(prop3d, None)
-    # Update the 3d view
-    self.reset_clipping_range()
