@@ -5,12 +5,12 @@ from generators.neurongenerator import NeuronGenerator
 class Controller:
   def __init__(self, data_container):
     self.__data_container = data_container
+    self.__data_container.add_observer(self)
+    
     self.__neuron_generator = NeuronGenerator()
     self.__viewer3d = None
 
-    self.__left_button_is_pressed = False
     self.__perform_prop3d_picking = True
-    self.__connect_neurons = True
 
     # Here we keep the models in a (vtkProp3D, model) dictionary
     self.__prop3d_to_model = dict()
@@ -26,18 +26,24 @@ class Controller:
   def on_key_released(self, viewer3d, key):
     if key == "Delete":
       self.__data_container.delete_models(list(self.__prop3d_to_selected_model.values()))
-      viewer3d.reset_clipping_range()
 
 
   def on_left_button_pressed(self, viewer3d):
-    self.__left_button_is_pressed = True
     self.__perform_prop3d_picking = True
 
 
   def on_left_button_released(self, viewer3d):
-    self.__left_button_is_pressed = False
     if self.__perform_prop3d_picking:
       self.__process_picked_prop3d(viewer3d, viewer3d.pick())
+
+
+  def on_right_button_pressed(self, viewer3d):
+    self.__perform_prop3d_picking = True
+
+
+  def on_right_button_released(self, viewer3d):
+    if self.__perform_prop3d_picking:
+      self.__connect_neurons(viewer3d, viewer3d.pick())
 
 
   def __process_picked_prop3d(self, viewer3d, prop3d):
@@ -58,15 +64,13 @@ class Controller:
 
   def on_mouse_moved(self, viewer3d):
     self.__perform_prop3d_picking = False
-    self.__connect_neurons = False
-    if not self.__left_button_is_pressed:
-      self.__indicate_possible_neural_connection(viewer3d, viewer3d.pick())
 
 
-  def __indicate_possible_neural_connection(self, viewer3d, prop3d):
+  def __connect_neurons(self, viewer3d, prop3d):
     # First of all, we have to have exactly one model in the selection
     if len(self.__prop3d_to_selected_model) != 1:
       return
+
     # Is the selected model a neuron
     n1 = list(self.__prop3d_to_selected_model.values())[0]
     if not isinstance(n1, Neuron):
@@ -85,7 +89,7 @@ class Controller:
     if n1 == n2:
       return
 
-    viewer3d.connect_points(n1.position, n2.position)
+    viewer3d.show_edge(n1.position, n2.position)
 
 
   def generate_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
@@ -164,4 +168,4 @@ class Controller:
         self.__prop3d_to_selected_model.pop(prop3d, None)
     # Update the 3d view
     if self.__viewer3d:
-      self.__viewer3d.delete_models()
+      self.__viewer3d.delete_models(models)

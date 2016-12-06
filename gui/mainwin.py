@@ -2,7 +2,7 @@ import os
 import vtk
 from PyQt5 import QtCore, QtWidgets
 import xml.etree.ElementTree as ET
-from gui.vtkwidget import VtkWidget
+from gui.viewer3d import Viewer3d
 from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
 from gui.propspanel import PropsPanel
@@ -85,10 +85,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __setup_main_frame(self):
     # Create the OpenGL-based VTK widget
-    self.__vtk_widget = VtkWidget(self, self.__controller, self.__data_container, self.__file_load_progress_bar)
-    self.setCentralWidget(self.__vtk_widget)
-
-    self.__controller.set_viewer3d(self.__vtk_widget)
+    self.__viewer3d = Viewer3d(self, self.__data_container, self.__file_load_progress_bar)
+    self.setCentralWidget(self.__viewer3d)
+    self.__controller.set_viewer3d(self.__viewer3d)
 
     # Add the dock which shows the list of the loaded data (on the left in the main window)
     self.__data_panel = DataPanel(self.__data_container)
@@ -105,7 +104,7 @@ class MainWindow(QtWidgets.QMainWindow):
       # Get the project folder and the project name
       self.__project_folder, project_name = os.path.split(project_file_name[0])
       # Open the project
-      error_messages = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__vtk_widget)
+      error_messages = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__viewer3d)
       # Update the window title
       self.setWindowTitle(project_name + "  -  BrainVisPy")
       if error_messages:
@@ -189,7 +188,7 @@ class MainWindow(QtWidgets.QMainWindow):
       # Get the project folder and the project name
       self.__project_folder, project_name = os.path.split(self.__project_io.file_name)
       # Save the project
-      self.__project_io.save_project(self.__data_container, self.__vtk_widget)
+      self.__project_io.save_project(self.__data_container, self.__viewer3d)
       # Update the window title
       self.setWindowTitle(project_name + "  -  BrainVisPy")
     except Exception as err:

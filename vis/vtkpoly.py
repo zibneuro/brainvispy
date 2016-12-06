@@ -25,6 +25,10 @@ class VtkPolyModel(VtkModel):
     return vtk.vtkMath.HSVToRGB((random.uniform(0.0, 0.6), 0.8, 1.0))
 
 
+  def set_point(self, point_index, coords):
+    self.vtk_points.SetPoint(point_index, coords)
+
+
   def add_yourself(self, renderer, interactor):
     renderer.AddActor(self.actor)
 
@@ -103,6 +107,11 @@ class VtkPolyModel(VtkModel):
   @property
   def vtk_poly_data(self):
     return self.__mapper.GetInput()
+
+
+  @property
+  def vtk_points(self):
+    return self.__mapper.GetInput().GetPoints()
 
 
   @property

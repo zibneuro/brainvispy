@@ -1,17 +1,10 @@
 import vtk
 from core.progress import ProgressBar
-from core.datacontainer import DataContainer
-from .vtkqgl import VTKQGLWidget
-from .pick3d import ModelPicker
+from gui.vtkqgl import VTKQGLWidget
 
 class VtkWidget(VTKQGLWidget):
-  def __init__(self, parent_qt_frame, controller, data_container, progress_bar):
+  def __init__(self, parent_qt_frame, progress_bar):
     super().__init__(parent_qt_frame)
-    # Save a reference to the controller
-    self.__controller = controller
-    # Register itself as an observer to the data_container
-    self.__data_container = data_container
-    self.__data_container.add_observer(self)
     # This one indicates the progress of computationally heavy tasks
     self.__progress_bar = progress_bar
 
@@ -21,26 +14,20 @@ class VtkWidget(VTKQGLWidget):
     # The render window
     self.renderer.SetBackground(0.4, 0.41, 0.42)
     self.enable_depthpeeling()
-    #self.render_window_interactor.AddObserver("KeyReleaseEvent", self.__on_key_released)
-    #self.render_window_interactor.AddObserver("LeftButtonPressEvent", self.__on_left_button_pressed)
-    #self.render_window_interactor.AddObserver("LeftButtonReleaseEvent", self.__on_left_button_released)
-    #self.render_window_interactor.AddObserver("MouseMoveEvent", self.__on_mouse_moved)
     
     self.__interactor_style = vtk.vtkInteractorStyleTrackballCamera()
-    self.interactor.SetInteractorStyle(self.__interactor_style)
     self.__interactor_style.AddObserver("KeyReleaseEvent", self.__on_key_released)
     self.__interactor_style.AddObserver("LeftButtonPressEvent", self.__on_left_button_pressed)
     self.__interactor_style.AddObserver("LeftButtonReleaseEvent", self.__on_left_button_released)
+    self.__interactor_style.AddObserver("RightButtonPressEvent", self.__on_right_button_pressed)
+    self.__interactor_style.AddObserver("RightButtonReleaseEvent", self.__on_right_button_released)
     self.__interactor_style.AddObserver("MouseMoveEvent", self.__on_mouse_moved)
+    self.interactor.SetInteractorStyle(self.__interactor_style)
 
     # This guy is very important: it handles all the model selection in the 3D view
-    #self.__model_picker = ModelPicker(self)
     self.__prop3d_picker = vtk.vtkPropPicker()
     self.interactor.SetPicker(self.__prop3d_picker)
     self.__perform_prop3d_picking = True
-
-    # We might or might not want to reset the view after new models have been added
-    self.__reset_view_after_adding_models = True
 
     # We want to see xyz axes in the lower left corner of the window
     lower_left_axes_actor = vtk.vtkAxesActor()
@@ -92,6 +79,27 @@ class VtkWidget(VTKQGLWidget):
     self.__interactor_style.OnLeftButtonUp()
 
 
+  def __on_right_button_pressed(self, interactor, data):
+    for observer in self.__observers:
+      try:
+        observer.on_right_button_pressed(self)
+      except AttributeError:
+        pass
+    # Forward the event
+    self.__interactor_style.OnRightButtonDown()
+
+
+  def __on_right_button_released(self, interactor, data):
+    # First, report the left button release event
+    for observer in self.__observers:
+      try:
+        observer.on_right_button_released(self)
+      except AttributeError:
+        pass
+    # Forward the event
+    self.__interactor_style.OnRightButtonUp()
+
+
   def __on_mouse_moved(self, interactor, data):
     for observer in self.__observers:
       try:
@@ -115,28 +123,6 @@ class VtkWidget(VTKQGLWidget):
 
   def is_ctrl_key_pressed(self):
     return self.interactor.GetControlKey() != 0
-
-
-  def observable_changed(self, change, data):
-    # Decide what to do depending on what changed
-    if change == DataContainer.change_is_data_visibility or change == DataContainer.change_is_slice_index:
-      self.reset_clipping_range()
-    else:
-      self.render()
-
-
-  def on_mouse_over_prop3d(self, prop3d):
-    try:
-      model = self.__prop3d_to_model[prop3d]
-    except KeyError:
-      return
-
-    # Let the controller handle the case
-    self.__controller.on_mouse_over_model(model, self)
-
-
-  def connect_points(self, a, b):
-    print("connecting", a, "to", b)
 
 
   def add_models(self, models):
@@ -179,25 +165,8 @@ class VtkWidget(VTKQGLWidget):
     self.reset_clipping_range()
 
 
-  def get_camera_position(self):
-    return self.renderer.GetActiveCamera().GetPosition()
-
-  def set_camera_position(self, position):
-    return self.renderer.GetActiveCamera().SetPosition(position)
-
-
-  def get_camera_look_at(self):
-    return self.renderer.GetActiveCamera().GetFocalPoint()
-
-  def set_camera_look_at(self, look_at):
-    return self.renderer.GetActiveCamera().SetFocalPoint(look_at)
-
-
-  def get_camera_view_up(self):
-    return self.renderer.GetActiveCamera().GetViewUp()
-
-  def set_camera_view_up(self, view_up):
-    return self.renderer.GetActiveCamera().SetViewUp(view_up)
+  def add_actor(self, actor):
+    self.renderer.AddActor(actor)
 
 
   def render(self):
@@ -216,3 +185,27 @@ class VtkWidget(VTKQGLWidget):
     self.renderer.ResetCamera()
     self.renderer.ResetCameraClippingRange()
     self.render_window_interactor.Render()
+
+
+  def get_camera_position(self):
+    return self.renderer.GetActiveCamera().GetPosition()
+
+
+  def set_camera_position(self, position):
+    return self.renderer.GetActiveCamera().SetPosition(position)
+
+
+  def get_camera_look_at(self):
+    return self.renderer.GetActiveCamera().GetFocalPoint()
+
+
+  def set_camera_look_at(self, look_at):
+    return self.renderer.GetActiveCamera().SetFocalPoint(look_at)
+
+
+  def get_camera_view_up(self):
+    return self.renderer.GetActiveCamera().GetViewUp()
+
+
+  def set_camera_view_up(self, view_up):
+    return self.renderer.GetActiveCamera().SetViewUp(view_up)

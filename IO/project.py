@@ -5,7 +5,7 @@ from core.progress import ProgressBar
 from core.datacontainer import DataContainer
 from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
-from bio.connection import Connection
+from bio.neuralconnection import NeuralConnection
 from vis.visbrainregion import VisBrainRegion
 from vis.visneuron import VisNeuron
 from generators.neurongenerator import NeuronGenerator
@@ -120,16 +120,6 @@ class ProjectIO:
       error_messages.append(str(error))
       return error_messages
 
-    # Setup the VTK widget based on what we parsed
-    vtk_widget.reset_view()
-    vtk_widget.set_camera_position(camera_parameters.position)
-    vtk_widget.set_camera_look_at(camera_parameters.look_at)
-    vtk_widget.set_camera_view_up(camera_parameters.view_up)
-
-    # Make sure that the VTK widget doesn't reset the view after the models are loaded below (since this would mess up the camera parameters we just set)
-    reset_view = vtk_widget.reset_view_after_adding_models
-    vtk_widget.do_reset_view_after_adding_models(False)
-
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
     # Create the neurons (note that they are not loaded since the visual representation is generated on the fly)
@@ -137,10 +127,11 @@ class ProjectIO:
     # Create the connections (note that they are not loaded since the visual representation is generated on the fly)
     self.__create_connections(connection_parameters, data_container, error_messages)
 
-    # Make sure we see all models
+    # Setup the VTK widget based on what we parsed
+    vtk_widget.set_camera_position(camera_parameters.position)
+    vtk_widget.set_camera_look_at(camera_parameters.look_at)
+    vtk_widget.set_camera_view_up(camera_parameters.view_up)
     vtk_widget.reset_clipping_range()
-    # Restore the state of the VTK widget
-    vtk_widget.do_reset_view_after_adding_models(reset_view)
 
     return error_messages
 
@@ -326,7 +317,7 @@ class ProjectIO:
         self.__save_brain_region(model, project_folder, ET.SubElement(xml_project, "brain_region"))
       elif isinstance(model, Neuron):
         self.__save_neuron(model, ET.SubElement(xml_project, "neuron"))
-      elif isinstance(model, Connection):
+      elif isinstance(model, NeuralConnection):
         self.__save_connection(model, ET.SubElement(xml_project, "connection"))
 
     # Write the whole XML tree to file

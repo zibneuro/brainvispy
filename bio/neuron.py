@@ -1,10 +1,10 @@
 class Neuron:
-  def __init__(self, name, x, y, z, threshold, vis_rep):
+  def __init__(self, name, x, y, z, threshold, visual_representation):
     self.__name = name
     self.__index = -1
     self.__pos = (x, y, z)
     self.__threshold = threshold
-    self.__vis_rep = vis_rep    
+    self.__vis_rep = visual_representation
 
 
   def set_index(self, idx):
