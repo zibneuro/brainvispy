@@ -2,15 +2,15 @@ from .modelview import Observable
 
 class DataContainer(Observable):
   # These are the possible changes that can happen to an Observable
-  change_is_new_brain_regions = 1
-  change_is_new_neurons = 2
-  change_is_new_selection = 10
-  change_is_data_visibility = 11
-  change_is_color = 12
-  change_is_transparency = 13
-  change_is_slice_index = 14
-  change_is_deleted_models = 15
-  change_is_see_inside = 16
+  change_is_new_data = 1
+  change_is_modified_neural_connections = 10
+  change_is_new_selection = 20
+  change_is_data_visibility = 21
+  change_is_color = 22
+  change_is_transparency = 23
+  change_is_slice_index = 24
+  change_is_deleted_models = 25
+  change_is_see_inside = 26
 
 
   def __init__(self):
@@ -35,12 +35,11 @@ class DataContainer(Observable):
     self.__selected_models = set()
 
 
-  def add_neurons(self, neurons):
-    self.__add_models(neurons, DataContainer.change_is_new_neurons)
-
-
-  def add_brain_regions(self, brain_regions):
-    self.__add_models(brain_regions, DataContainer.change_is_new_brain_regions)
+  def add_data(self, data_items):
+    for data_item in data_items:
+      if data_item: self.__models.add(data_item)
+    # Notify the observers about the new models
+    self.notify_observers_about_change(DataContainer.change_is_new_data, data_items)
 
 
   def get_models(self):
@@ -51,6 +50,10 @@ class DataContainer(Observable):
   def get_selected_models(self):
     """Returns a list of the selected models."""
     return list(self.__selected_models)
+
+  
+  def neural_connections_changed(self, neural_connections):
+    self.notify_observers_about_change(DataContainer.change_is_modified_neural_connections, neural_connections)
 
 
   def update_visibility(self):
@@ -132,10 +135,3 @@ class DataContainer(Observable):
     # Notify the observers about the changes
     self.notify_observers_about_change(DataContainer.change_is_deleted_models, models)
     self.notify_observers_about_change(DataContainer.change_is_new_selection, self.__selected_models)
-
-
-  def __add_models(self, models, what_changed):
-    for model in models:
-      if model: self.__models.add(model)
-    # Notify the observers about the new models
-    self.notify_observers_about_change(what_changed, models);

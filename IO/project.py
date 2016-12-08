@@ -70,7 +70,7 @@ class ProjectIO:
     return self.__project_file_name
 
 
-  def load_files(self, file_names, data_container):
+  def load_files(self, file_names, data_container, vtk_widget):
     vtk_io = VtkIO()
     brain_regions = list()
 
@@ -95,7 +95,9 @@ class ProjectIO:
     # We are done with loading
     self.__progress_bar.done()
     # Now, add the brain regions to the data container
-    data_container.add_brain_regions(brain_regions)
+    data_container.add_data(brain_regions)
+    # Make sure all models are visible
+    vtk_widget.reset_view()
 
 
   def open_project(self, project_file_name, data_container, vtk_widget):
@@ -122,9 +124,9 @@ class ProjectIO:
 
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
-    # Create the neurons (note that they are not loaded since the visual representation is generated on the fly)
+    # Create the neurons (note that they are not loaded but the visual representation is generated on the fly)
     self.__create_neurons(neuron_parameters, data_container, error_messages)
-    # Create the connections (note that they are not loaded since the visual representation is generated on the fly)
+    # Create the connections (note that they are not loaded but the visual representation is generated on the fly)
     self.__create_connections(connection_parameters, data_container, error_messages)
 
     # Setup the VTK widget based on what we parsed
@@ -257,7 +259,7 @@ class ProjectIO:
     # We are done with loading
     self.__progress_bar.done()
     # Add the new data to the container
-    data_container.add_brain_regions(brain_regions)
+    data_container.add_data(brain_regions)
 
 
   def __create_brain_region(self, vtk_poly_data, parameters):
@@ -279,7 +281,7 @@ class ProjectIO:
     for ps in params:
       neurons.append(neuro_gen.create_neuron(ps.name, ps.index, ps.position, ps.threshold, ps.sphere_radius))
     # Add the neurons to the data container
-    data_container.add_neurons(neurons)
+    data_container.add_data(neurons)
 
 
   def __create_connections(self, connection_parameters, data_container, error_messages):

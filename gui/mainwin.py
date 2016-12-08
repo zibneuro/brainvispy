@@ -2,7 +2,7 @@ import os
 import vtk
 from PyQt5 import QtCore, QtWidgets
 import xml.etree.ElementTree as ET
-from gui.viewer3d import Viewer3d
+from gui.vtkwidget import VtkWidget
 from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
 from gui.propspanel import PropsPanel
@@ -17,7 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
     QtWidgets.QMainWindow.__init__(self)
 
     # This guy is used by several classes to indicate the progress of the heavy work
-    self.__file_load_progress_bar = ProgressBarFrame(self, qt_app)
+    self.__progress_bar = ProgressBarFrame(self, qt_app)
 
     # This is the main guy. Almost all GUI elements are observers of this guy. It stores the data
     # and triggers events (e.g., when new data is loaded/deleted and much more). The observers react
@@ -26,7 +26,7 @@ class MainWindow(QtWidgets.QMainWindow):
     self.__controller = controller
 
     # This guy handles the file/project IO
-    self.__project_io = ProjectIO(self.__file_load_progress_bar)
+    self.__project_io = ProjectIO(self.__progress_bar)
 
     self.__add_menus()
     self.__setup_main_frame()
@@ -85,7 +85,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
   def __setup_main_frame(self):
     # Create the OpenGL-based VTK widget
-    self.__viewer3d = Viewer3d(self, self.__data_container, self.__file_load_progress_bar)
+    self.__viewer3d = VtkWidget(self, self.__progress_bar)
     self.setCentralWidget(self.__viewer3d)
     self.__controller.set_viewer3d(self.__viewer3d)
 
@@ -145,7 +145,7 @@ class MainWindow(QtWidgets.QMainWindow):
       # Take the first file name and extract the folder from it
       self.__load_files_folder = os.path.split(file_names[0][0])[0]
       # Load the files
-      self.__project_io.load_files(file_names[0], self.__data_container)
+      self.__project_io.load_files(file_names[0], self.__data_container, self.__viewer3d)
 
 
   def __on_import_folder(self):
@@ -158,7 +158,7 @@ class MainWindow(QtWidgets.QMainWindow):
       for file_name in os.listdir(folder_name):
         full_file_names.append(folder_name + "/" + file_name) # works on Windows too
       # Load the files. The data_container will notify its observers that new data was loaded.
-      self.__project_io.load_files(full_file_names, self.__data_container)
+      self.__project_io.load_files(full_file_names, self.__data_container, self.__viewer3d)
 
 
   def __on_save_project(self):

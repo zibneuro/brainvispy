@@ -1,3 +1,4 @@
+from bio.brainregion import BrainRegion
 from vis.vtkvol import VtkVolumeModel
 from core.datacontainer import DataContainer
 from PyQt5 import QtCore, QtWidgets
@@ -78,7 +79,7 @@ class ListWidget(QtWidgets.QListWidget):
 
   def observable_changed(self, change, data):
     # Decide what to do depending on the change
-    if change == DataContainer.change_is_new_brain_regions:
+    if change == DataContainer.change_is_new_data:
       self.__add_data_items(data)
     elif change == DataContainer.change_is_new_selection:
       self.__update_selection(data)
@@ -197,6 +198,8 @@ class ListWidget(QtWidgets.QListWidget):
   def __add_data_items(self, models):
     # Add one checkable list item per model
     for model in models:
+      if not isinstance(model, BrainRegion):
+        continue
       # Create our own data item
       item = ListWidgetItem(model)
       item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)

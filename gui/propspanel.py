@@ -1,9 +1,10 @@
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from vis.vtkvol import VtkVolumeModel
-from .brainregiongui import BrainRegionGUI
-from .volgui import VtkVolumeModelGUI
-from .neurongui import NeuronGUI
+from gui.brainregiongui import BrainRegionGUI
+from gui.volgui import VtkVolumeModelGUI
+from gui.neurongui import NeuronGUI
+from gui.neuralconnectiongui import NeuralConnectionGUI
 from PyQt5 import QtCore, QtWidgets
 
 class PropsPanel(QtWidgets.QDockWidget):
@@ -37,6 +38,7 @@ class PropsPanel(QtWidgets.QDockWidget):
     dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container))
     dock_layout.addWidget(BrainRegionGUI(self.__data_container, controller))
     dock_layout.addWidget(NeuronGUI(self.__data_container))
+    dock_layout.addWidget(NeuralConnectionGUI(self.__data_container))
 
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()
@@ -60,9 +62,5 @@ class PropsPanel(QtWidgets.QDockWidget):
 
     self.__qt_list_widget.clear()
 
-    # Insert the volume models on top and the poly models at the bottom of the list
     for model in models:
-      if isinstance(model, VtkVolumeModel):
-        self.__qt_list_widget.insertItem(0, QtWidgets.QListWidgetItem(model.name))  
-      elif isinstance(model, VtkPolyModel):
-        self.__qt_list_widget.insertItem(self.__qt_list_widget.count(), QtWidgets.QListWidgetItem(model.name))
+      self.__qt_list_widget.insertItem(0, QtWidgets.QListWidgetItem(model.name))  

@@ -69,8 +69,8 @@ class DataPanel(QtWidgets.QDockWidget):
   def observable_changed(self, change, data):
     if change == DataContainer.change_is_new_selection:
       self.__update_buttons_according_to_selection(data)
-    elif change == DataContainer.change_is_new_brain_regions:
-      self.__data_search.clear()
+    #elif change == DataContainer.change_is_new_data:
+    #  self.__data_search.clear()
 
 
   def __update_buttons_according_to_selection(self, data):

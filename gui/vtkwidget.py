@@ -125,6 +125,10 @@ class VtkWidget(VTKQGLWidget):
     return self.interactor.GetControlKey() != 0
 
 
+  def is_shift_key_pressed(self):
+    return self.interactor.GetShiftKey() != 0
+
+
   def add_models(self, models):
     if not models:
       return
@@ -146,9 +150,9 @@ class VtkWidget(VTKQGLWidget):
 
       # Update the progress bar
       self.__progress_bar.set_progress(counter)
-      
-    # Make sure that we see all models
-    self.reset_view()
+
+    # Update the 3d view
+    self.reset_clipping_range()
     # We are done
     self.__progress_bar.done()
 
@@ -163,10 +167,6 @@ class VtkWidget(VTKQGLWidget):
         self.renderer.RemoveActor(prop3d)
     # Update the 3d view
     self.reset_clipping_range()
-
-
-  def add_actor(self, actor):
-    self.renderer.AddActor(actor)
 
 
   def render(self):

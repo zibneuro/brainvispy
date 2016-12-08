@@ -1,13 +1,12 @@
 from core.datacontainer import DataContainer
 from bio.neuron import Neuron
 from generators.neurongenerator import NeuronGenerator
+from generators.neuralconnectiongenerator import NeuralConnectionGenerator
 
 class Controller:
   def __init__(self, data_container):
     self.__data_container = data_container
     self.__data_container.add_observer(self)
-    
-    self.__neuron_generator = NeuronGenerator()
     self.__viewer3d = None
 
     self.__perform_prop3d_picking = True
@@ -20,7 +19,7 @@ class Controller:
 
   def set_viewer3d(self, viewer3d):
     self.__viewer3d = viewer3d
-    viewer3d.add_observer(self)
+    self.__viewer3d.add_observer(self)
 
 
   def on_key_released(self, viewer3d, key):
@@ -37,18 +36,14 @@ class Controller:
       self.__process_picked_prop3d(viewer3d, viewer3d.pick())
 
 
-  def on_right_button_pressed(self, viewer3d):
-    self.__perform_prop3d_picking = True
-
-
-  def on_right_button_released(self, viewer3d):
-    if self.__perform_prop3d_picking:
-      self.__connect_neurons(viewer3d, viewer3d.pick())
+  def on_mouse_moved(self, viewer3d):
+    self.__perform_prop3d_picking = False
 
 
   def __process_picked_prop3d(self, viewer3d, prop3d):
-    # Does the user hold the ctrl. key?
-    if viewer3d.is_ctrl_key_pressed():
+    if viewer3d.is_shift_key_pressed():
+      self.__create_neural_connection(viewer3d, prop3d)
+    elif viewer3d.is_ctrl_key_pressed():
       # Check if she picked the same model twice
       twice_picked_model = self.__prop3d_to_selected_model.get(prop3d)
       if twice_picked_model:
@@ -62,11 +57,7 @@ class Controller:
       self.__data_container.set_selection(self.__prop3d_to_model.get(prop3d))
 
 
-  def on_mouse_moved(self, viewer3d):
-    self.__perform_prop3d_picking = False
-
-
-  def __connect_neurons(self, viewer3d, prop3d):
+  def __create_neural_connection(self, viewer3d, prop3d):
     # First of all, we have to have exactly one model in the selection
     if len(self.__prop3d_to_selected_model) != 1:
       return
@@ -89,22 +80,32 @@ class Controller:
     if n1 == n2:
       return
 
-    viewer3d.show_edge(n1.position, n2.position)
+    # Now, connect the neurons
+    self.connect_neurons(n1, n2)
+
+
+  def connect_neurons(self, n1, n2):
+    con_gen = NeuralConnectionGenerator()
+    neural_connection = con_gen.create_neural_connection("neural connection", n1, n2)
+    self.__data_container.add_data([neural_connection])
 
 
   def generate_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
-    neurons = self.__neuron_generator.generate_random_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
-    self.__data_container.add_neurons(neurons)
+    neuro_gen = NeuronGenerator()
+    neurons = neuro_gen.generate_random_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
+    self.__data_container.add_data(neurons)
 
 
   def observable_changed(self, change, data):
     # Decide what to do depending on what changed
-    if change == DataContainer.change_is_new_brain_regions or change == DataContainer.change_is_new_neurons:
+    if change == DataContainer.change_is_new_data:
       self.__add_data_items(data)
     elif change == DataContainer.change_is_new_selection:
       self.__set_selection(data)
     elif change == DataContainer.change_is_deleted_models:
       self.__delete_models(data)
+    elif self.__viewer3d:
+      self.__viewer3d.reset_clipping_range()
 
 
   def __add_data_items(self, data_items):
@@ -146,7 +147,7 @@ class Controller:
       # Make sure we have that model
       if prop3d not in self.__prop3d_to_model:
         continue
-      
+
       # Highlight the model
       vis_rep.highlight_on()
       # Save it in the selection dictionary
