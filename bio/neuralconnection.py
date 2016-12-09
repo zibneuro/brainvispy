@@ -16,6 +16,16 @@ class NeuralConnection:
 
 
   @property
+  def neuron1(self):
+    return self.__neuron1
+
+
+  @property
+  def neuron2(self):
+    return self.__neuron2
+
+
+  @property
   def name(self):
     return self.__name
 

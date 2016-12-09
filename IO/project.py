@@ -44,8 +44,9 @@ class NeuronParameters:
 class ConnectionParameters:
   def __init__(self):
     self.name = "connection"
-    self.cylinder_radius = 0.5
     self.neuron_indices = (-1, -1)
+    self.weight = -1
+    self.cylinder_radius = 0.5    
     self.rgb_color = (0.1, 0.8, 0.0)
 
 
@@ -166,7 +167,7 @@ class ProjectIO:
   def __parse_brain_region(self, xml_input):
     # Create a new object to store the parsed elements
     brain_region = BrainRegionParameters()
-    # Read all the elements of 'xml_input'
+    # Read all elements of 'xml_input'
     for element in xml_input:
       if   element.tag == "name": brain_region.name = element.text
       elif element.tag == "abs_file_name": brain_region.abs_file_name = element.text
@@ -184,7 +185,7 @@ class ProjectIO:
   def __parse_neuron(self, xml_input):
     # Create a new object to store the parsed elements
     neuron_params = NeuronParameters()
-    # Read all the elements of 'xml_input'
+    # Read all elements of 'xml_input'
     for element in xml_input:
       if   element.tag == "name": neuron_params.name = element.text
       elif element.tag == "index": neuron_params.index = int(element.text)
@@ -203,13 +204,14 @@ class ProjectIO:
   def __parse_connection(self, xml_input):
     # Create a new object to store the parsed elements
     connection = ConnectionParameters()
-    # Read all the elements of 'xml_input'
+    # Read all elements of 'xml_input'
     for element in xml_input:
       if   element.tag == "name": connection.name = element.text
-      elif element.tag == "cylinder_radius": connection.cylinder_radius = float(element.text)
       elif element.tag == "neuron_indices":
         indices_string = element.text.split(" ")
         connection.neuron_indices = (int(indices_string[0]), int(indices_string[1]))
+      elif element.tag == "weight": connection.weight = float(element.text)
+      elif element.tag == "cylinder_radius": connection.cylinder_radius = float(element.text)
       elif element.tag == "rgb_color":
         color_string = element.text.split(" ")
         connection.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
@@ -320,7 +322,7 @@ class ProjectIO:
       elif isinstance(model, Neuron):
         self.__save_neuron(model, ET.SubElement(xml_project, "neuron"))
       elif isinstance(model, NeuralConnection):
-        self.__save_connection(model, ET.SubElement(xml_project, "connection"))
+        self.__save_neural_connection(model, ET.SubElement(xml_project, "neural_connection"))
 
     # Write the whole XML tree to file
     ET.ElementTree(xml_project).write(self.__project_file_name)
@@ -360,8 +362,14 @@ class ProjectIO:
     ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
 
 
-  def __save_connection(self, connection, xml_element):
-    pass
+  def __save_neural_connection(self, connection, xml_element):
+    ET.SubElement(xml_element, "name").text = connection.name
+    ET.SubElement(xml_element, "neuron_indices").text = str(connection.neuron1.index) + " " + str(connection.neuron2.index)
+    ET.SubElement(xml_element, "weight").text = str(connection.weight)
+    vis_rep = connection.visual_representation
+    ET.SubElement(xml_element, "cylinder_radius").text = str(vis_rep.cylinder_radius)
+    c = vis_rep.get_color()
+    ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
 
 
   def __compute_relative_file_name(self, abs_file_name, project_folder):

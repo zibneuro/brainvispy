@@ -1,7 +1,5 @@
 class Brain:
-  def __init__(self, x, y, z, threshold):
-    self.__coords = (x, y, z)
-    self.__threshold = threshold
+  def __init__(self):
 
 
   @property
