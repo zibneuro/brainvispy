@@ -7,11 +7,8 @@ from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
 from bio.neuralconnection import NeuralConnection
 from vis.visbrainregion import VisBrainRegion
-from vis.visneuron import VisNeuron
-from generators.neurongenerator import NeuronGenerator
 from gui.vtkwidget import VtkWidget
-from .obj import OBJReader
-from .vtkio import VtkIO
+from IO.vtkio import VtkIO
 
 class CameraParameters:
   def __init__(self):
@@ -101,7 +98,7 @@ class ProjectIO:
     vtk_widget.reset_view()
 
 
-  def open_project(self, project_file_name, data_container, vtk_widget):
+  def open_project(self, project_file_name, data_container, brain, vtk_widget):
     if not isinstance(data_container, DataContainer):
       raise TypeError("input has to be of type DataContainer")
     # This is the new project file name
@@ -126,9 +123,9 @@ class ProjectIO:
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
     # Create the neurons (note that they are not loaded but the visual representation is generated on the fly)
-    self.__create_neurons(neuron_parameters, data_container, error_messages)
+    self.__create_neurons(neuron_parameters, data_container, brain)
     # Create the connections (note that they are not loaded but the visual representation is generated on the fly)
-    self.__create_connections(connection_parameters, data_container, error_messages)
+    self.__create_neural_connections(connection_parameters, data_container, brain)
 
     # Setup the VTK widget based on what we parsed
     vtk_widget.set_camera_position(camera_parameters.position)
@@ -147,7 +144,7 @@ class ProjectIO:
       if   element.tag == "camera_parameters": self.__parse_camera(element, camera_parameters)
       elif element.tag == "brain_region": brain_region_parameters.append(self.__parse_brain_region(element))
       elif element.tag == "neuron": neuron_parameters.append(self.__parse_neuron(element))
-      elif element.tag == "connection": connection_parameters.append(self.__parse_connection(element))
+      elif element.tag == "neural_connection": connection_parameters.append(self.__parse_neural_connection(element))
 
 
   def __parse_camera(self, xml_input, camera_parameters):
@@ -201,7 +198,7 @@ class ProjectIO:
     return neuron_params
 
 
-  def __parse_connection(self, xml_input):
+  def __parse_neural_connection(self, xml_input):
     # Create a new object to store the parsed elements
     connection = ConnectionParameters()
     # Read all elements of 'xml_input'
@@ -276,18 +273,26 @@ class ProjectIO:
     return brain_region
 
 
-  def __create_neurons(self, params, data_container, error_messages):
-    neuro_gen = NeuronGenerator()
+  def __create_neurons(self, neuron_parameters, data_container, brain):
     neurons = list()
     # Create the neurons
-    for ps in params:
-      neurons.append(neuro_gen.create_neuron(ps.name, ps.index, ps.position, ps.threshold, ps.sphere_radius))
+    for ps in neuron_parameters:
+      neuron = brain.create_neuron(ps.name, ps.index, ps.position, ps.threshold, ps.sphere_radius)
+      if neuron:
+        neurons.append(neuron)
     # Add the neurons to the data container
     data_container.add_data(neurons)
 
 
-  def __create_connections(self, connection_parameters, data_container, error_messages):
-    pass
+  def __create_neural_connections(self, connection_parameters, data_container, brain):
+    connections = list()
+    # Create the neurons
+    for ps in connection_parameters:
+      connection = brain.create_neural_connection(ps.name, ps.neuron_indices, ps.weight, ps.cylinder_radius, ps.rgb_color)
+      if connection:
+        connections.append(connection)
+    # Add the connections to the data container
+    data_container.add_data(connections)
 
 
   def __extract_name(self, file_name):

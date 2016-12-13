@@ -1,12 +1,12 @@
 from core.datacontainer import DataContainer
 from bio.neuron import Neuron
-from generators.neurongenerator import NeuronGenerator
-from generators.neuralconnectiongenerator import NeuralConnectionGenerator
+from bio.brain import Brain
 
 class Controller:
-  def __init__(self, data_container):
+  def __init__(self, data_container, brain):
     self.__data_container = data_container
     self.__data_container.add_observer(self)
+    self.__brain = brain
     self.__viewer3d = None
 
     self.__perform_prop3d_picking = True
@@ -15,6 +15,16 @@ class Controller:
     self.__prop3d_to_model = dict()
     # Here we keep the selected models in a (vtkProp3D, model) dictionary
     self.__prop3d_to_selected_model = dict()
+
+  
+  @property
+  def data_container(self):
+    return self.__data_container
+
+
+  @property
+  def brain(self):
+    return self.__brain
 
 
   def set_viewer3d(self, viewer3d):
@@ -80,20 +90,16 @@ class Controller:
     if n1 == n2:
       return
 
-    # Now, connect the neurons
-    self.connect_neurons(n1, n2)
-
-
-  def connect_neurons(self, n1, n2):
-    con_gen = NeuralConnectionGenerator()
-    neural_connection = con_gen.create_neural_connection("neural connection", n1, n2)
-    self.__data_container.add_data([neural_connection])
+    # Now, create a new connection between the neurons
+    neural_connection = self.__brain.connect_neurons(n1, n2)
+    if neural_connection:
+      self.__data_container.add_data([neural_connection])
 
 
   def generate_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
-    neuro_gen = NeuronGenerator()
-    neurons = neuro_gen.generate_random_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
-    self.__data_container.add_data(neurons)
+    neurons = self.__brain.create_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
+    if neurons:
+      self.__data_container.add_data(neurons)
 
 
   def observable_changed(self, change, data):
