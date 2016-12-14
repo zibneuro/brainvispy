@@ -25,7 +25,6 @@ class Brain:
         pass
 
 
-
   def create_neuron(self, name, index, position, threshold, sphere_radius):
     # Make sure that the neuron indices are uniue
     if index in self.__id_to_neuron:
@@ -46,7 +45,9 @@ class Brain:
 
     # Set the indices of the new neurons and save them
     for neuron in new_neurons:
-      neuron.set_index(self.__generate_valid_neuron_id())
+      neuron_id = self.__generate_valid_neuron_id()
+      neuron.set_index(neuron_id)
+      neuron.set_name("neuron " + str(neuron_id))
       self.__id_to_neuron[neuron.index] = neuron
 
     return new_neurons

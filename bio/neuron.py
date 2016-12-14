@@ -5,14 +5,24 @@ class Neuron:
     self.__pos = (x, y, z)
     self.__threshold = threshold
     self.__vis_rep = visual_representation
+    # This is just to update the visual representation
+    self.set_threshold(threshold)
+
+
+  def set_name(self, name):
+    self.__name = name
 
 
   def set_index(self, idx):
     self.__index = idx
 
 
-  def set_threshold(self, value):
-    self.__threshold = value
+  def set_threshold(self, threshold):
+    self.__threshold = threshold
+    try:
+      self.__vis_rep.on_threshold_changed(self)
+    except AttributeError:
+      pass
 
 
   @property

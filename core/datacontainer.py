@@ -4,6 +4,7 @@ class DataContainer(Observable):
   # These are the possible changes that can happen to an Observable
   change_is_new_data = 1
   change_is_modified_neural_connections = 10
+  change_is_modified_neurons = 11
   change_is_new_selection = 20
   change_is_data_visibility = 21
   change_is_color = 22
@@ -54,6 +55,10 @@ class DataContainer(Observable):
   
   def neural_connections_changed(self, neural_connections):
     self.notify_observers_about_change(DataContainer.change_is_modified_neural_connections, neural_connections)
+
+
+  def neurons_changed(self, neurons):
+    self.notify_observers_about_change(DataContainer.change_is_modified_neurons, neurons)
 
 
   def update_visibility(self):

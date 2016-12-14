@@ -69,6 +69,14 @@ class VtkPolyModel(VtkModel):
     self.__actor.GetProperty().SetAmbient(self.__off_ambient)
 
 
+  def set_off_ambient(self, value):
+    self.__off_ambient = value
+
+
+  def set_on_ambient(self, value):
+    self.__on_ambient = value
+
+
   def set_transparency(self, value):
     """Sets the transparency of the model (0: non-transparent, i.e, not see-through,
     1: full transparent, i.e., invisible)."""

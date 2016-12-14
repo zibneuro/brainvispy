@@ -5,6 +5,8 @@ class NeuralConnection:
     self.__neuron2 = neuron2
     self.__weight = weight
     self.__vis_rep = visual_representation
+    # This is just to update the visual representation
+    self.set_weight(weight)
 
 
   def set_weight(self, weight):
@@ -16,6 +18,11 @@ class NeuralConnection:
 
 
   @property
+  def name(self):
+    return self.__name
+
+
+  @property
   def neuron1(self):
     return self.__neuron1
 
@@ -23,11 +30,6 @@ class NeuralConnection:
   @property
   def neuron2(self):
     return self.__neuron2
-
-
-  @property
-  def name(self):
-    return self.__name
 
 
   @property

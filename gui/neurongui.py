@@ -17,66 +17,63 @@ class NeuronGUI(QtWidgets.QGroupBox):
 
     # These are the neurons whose properties we are going to display
     self.__neurons = list()
-    self.__spin_box_precision = 3
+    self.__spin_box_precision = 2
+    
+    self.__ignore_on_threshold_changed_callback = False
 
     # CREATE THE GUI ELEMENTS
-    # The threshold potential label
-    self.__threshold_potential_label = QtWidgets.QLabel("threshold potential:")
-    # The threshold potential spin box
-    self.__threshold_potential_spin_box = QtWidgets.QDoubleSpinBox()
-    self.__threshold_potential_spin_box.setMinimum(-10000)
-    self.__threshold_potential_spin_box.setMaximum(10000)
-    self.__threshold_potential_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
-    self.__threshold_potential_spin_box.setDecimals(self.__spin_box_precision)
-    self.__threshold_potential_spin_box.valueChanged.connect(self.__update_set_potential_threshold_btn)
-    # The button which the user have to select in order to modify the threshold
-    self.__set_potential_threshold_btn = QtWidgets.QPushButton("set")
-    self.__set_potential_threshold_btn.setEnabled(False)
-    self.__set_potential_threshold_btn.clicked.connect(self.__on_set_potential_threshold_btn_clicked)
+    # The threshold label
+    self.__threshold_label = QtWidgets.QLabel("threshold:")
+    # The threshold spin box
+    self.__threshold_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__threshold_spin_box.setMinimum(-10000)
+    self.__threshold_spin_box.setMaximum(10000)
+    self.__threshold_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
+    self.__threshold_spin_box.setDecimals(self.__spin_box_precision)
+    self.__threshold_spin_box.valueChanged.connect(self.__on_threshold_spin_box_changed)
 
-    # The [min, max] range for the threshold potential
+    # The [min, max] range for the threshold
     # min
-    self.__threshold_potential_min_spin_box = QtWidgets.QDoubleSpinBox()
-    self.__threshold_potential_min_spin_box.setMinimum(-10000)
-    self.__threshold_potential_min_spin_box.setMaximum(10000)
-    self.__threshold_potential_min_spin_box.setValue(-1)
-    self.__threshold_potential_min_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
-    self.__threshold_potential_min_spin_box.setDecimals(self.__spin_box_precision)
-    self.__threshold_potential_min_spin_box.valueChanged.connect(self.__on_threshold_potential_min_spin_box_changed)
+    self.__min_threshold_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__min_threshold_spin_box.setMinimum(-10000)
+    self.__min_threshold_spin_box.setMaximum(10000)
+    self.__min_threshold_spin_box.setValue(-1)
+    self.__min_threshold_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
+    self.__min_threshold_spin_box.setDecimals(self.__spin_box_precision)
+    self.__min_threshold_spin_box.valueChanged.connect(self.__on_min_threshold_spin_box_changed)
     # max
-    self.__threshold_potential_max_spin_box = QtWidgets.QDoubleSpinBox()
-    self.__threshold_potential_max_spin_box.setMinimum(-10000)
-    self.__threshold_potential_max_spin_box.setMaximum(10000)
-    self.__threshold_potential_max_spin_box.setValue(1)
-    self.__threshold_potential_max_spin_box.setDecimals(self.__spin_box_precision)
-    self.__threshold_potential_max_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
-    self.__threshold_potential_max_spin_box.valueChanged.connect(self.__on_threshold_potential_max_spin_box_changed)
-    # The button to create the threshold potentials at random
-    self.__select_random_threshold_potential_btn = QtWidgets.QPushButton("select randomly from range")
-    self.__select_random_threshold_potential_btn.clicked.connect(self.__on_select_random_threshold_potential_btn_clicked)
+    self.__max_threshold_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__max_threshold_spin_box.setMinimum(-10000)
+    self.__max_threshold_spin_box.setMaximum(10000)
+    self.__max_threshold_spin_box.setValue(1)
+    self.__max_threshold_spin_box.setDecimals(self.__spin_box_precision)
+    self.__max_threshold_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
+    self.__max_threshold_spin_box.valueChanged.connect(self.__on_max_threshold_spin_box_changed)
+    # The button to create the thresholds at random
+    self.__set_random_threshold_btn = QtWidgets.QPushButton("set randomly from range")
+    self.__set_random_threshold_btn.clicked.connect(self.__on_set_random_threshold_btn_clicked)
 
     # ADD THE GUI ELEMENTS TO A LAYOUT
     layout = QtWidgets.QVBoxLayout()
-    # The threshold potential
-    threshold_potential_layout = QtWidgets.QGridLayout()
-    threshold_potential_layout.addWidget(self.__threshold_potential_label, 0, 0, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(self.__threshold_potential_spin_box, 1, 0)
-    threshold_potential_layout.addWidget(self.__set_potential_threshold_btn, 1, 1)
-    threshold_potential_frame = QtWidgets.QFrame()
-    threshold_potential_frame.setLayout(threshold_potential_layout)
-    layout.addWidget(threshold_potential_frame)
-    # Threshold potential range
-    threshold_potential_layout = QtWidgets.QGridLayout()
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("threshold potential range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("min:"), 1, 0, 1, 1, QtCore.Qt.AlignRight)
-    threshold_potential_layout.addWidget(self.__threshold_potential_min_spin_box, 1, 1, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(QtWidgets.QLabel("max:"), 2, 0, 1, 1, QtCore.Qt.AlignRight)
-    threshold_potential_layout.addWidget(self.__threshold_potential_max_spin_box, 2, 1, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_potential_frame = QtWidgets.QFrame()
-    threshold_potential_frame.setLayout(threshold_potential_layout)
-    layout.addWidget(threshold_potential_frame)
-    # Select random threshold potential button
-    layout.addWidget(self.__select_random_threshold_potential_btn)
+    # The threshold
+    threshold_layout = QtWidgets.QGridLayout()
+    threshold_layout.addWidget(self.__threshold_label, 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_layout.addWidget(self.__threshold_spin_box, 1, 0)
+    threshold_frame = QtWidgets.QFrame()
+    threshold_frame.setLayout(threshold_layout)
+    layout.addWidget(threshold_frame)
+    # Threshold range
+    threshold_range_layout = QtWidgets.QGridLayout()
+    threshold_range_layout.addWidget(QtWidgets.QLabel("threshold range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_range_layout.addWidget(QtWidgets.QLabel("min:"), 1, 0, 1, 1, QtCore.Qt.AlignRight)
+    threshold_range_layout.addWidget(self.__min_threshold_spin_box, 1, 1, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_range_layout.addWidget(QtWidgets.QLabel("max:"), 2, 0, 1, 1, QtCore.Qt.AlignRight)
+    threshold_range_layout.addWidget(self.__max_threshold_spin_box, 2, 1, 1, -1, QtCore.Qt.AlignLeft)
+    threshold_range_frame = QtWidgets.QFrame()
+    threshold_range_frame.setLayout(threshold_range_layout)
+    layout.addWidget(threshold_range_frame)
+    # Select random threshold button
+    layout.addWidget(self.__set_random_threshold_btn)
     # Group the GUI elements together
     layout.setSpacing(1)
     self.setLayout(layout)
@@ -86,86 +83,88 @@ class NeuronGUI(QtWidgets.QGroupBox):
   def observable_changed(self, change, data):
     # Decide what to do depending on the change
     if change == DataContainer.change_is_new_selection:
-      self.__get_neurons(data)
-      self.__update()
+      self.__neurons = self.__get_neurons(data)
+      self.__update(self.__neurons)
+    elif change == DataContainer.change_is_modified_neurons:
+      self.__update(self.__neurons)
 
 
   def __get_neurons(self, models):
-    self.__neurons = list()
-    # Get the neurons only
+    neurons = list()
     for model in models:
       if isinstance(model, Neuron):
-        self.__neurons.append(model)
+        neurons.append(model)
+    return neurons
 
 
-  def __update(self):
-    num_neurons = len(self.__neurons)
+  def __update(self, neurons):
+    num_neurons = len(neurons)
 
     # Make sure there are neurons to show
     if num_neurons == 0:
       self.hide()
       return
 
-    # Set the text of the threshold potential label
+    # Set the text of the threshold label
     if num_neurons == 1:
-      self.__threshold_potential_label.setText("threshold potential:")
+      self.__threshold_label.setText("threshold:")
     else:
-      self.__threshold_potential_label.setText("average threshold potential:")
+      self.__threshold_label.setText("average threshold:")
 
-    # Compute the average threshold potential
-    avg_threshold = 0
-    for neuron in self.__neurons:
-      avg_threshold += neuron.threshold
-    avg_threshold /= num_neurons
-
-    # Show it to the user
-    self.__threshold_potential_spin_box.setValue(avg_threshold)
-    # Update the threshold potential set button
-    self.__update_set_potential_threshold_btn()
+    ignore_callback = self.__ignore_on_threshold_changed_callback
+    self.__ignore_on_threshold_changed_callback = True
+    # Show the average neuron threshold to the user
+    self.__threshold_spin_box.setValue(self.__compute_average_threshold(neurons))
+    self.__ignore_on_threshold_changed_callback = ignore_callback
 
     # Show this GUI element to the user
     self.show()
 
 
-  def __update_set_potential_threshold_btn(self):
-    threshold_potential_value = self.__threshold_potential_spin_box.value()
-    eps = 5/(10**(self.__spin_box_precision + 1))
+  def __compute_average_threshold(self, neurons):
+    threshold_sum = 0
+    for neuron in neurons:
+      threshold_sum += neuron.threshold
+    return threshold_sum / len(neurons)
+
+
+  def __on_threshold_spin_box_changed(self):
+    if self.__ignore_on_threshold_changed_callback:
+      return
+
+    if not self.__neurons:
+      return
+
+    avg_threshold = self.__compute_average_threshold(self.__neurons)
+    difference = self.__threshold_spin_box.value() - avg_threshold
 
     for neuron in self.__neurons:
-      if abs(neuron.threshold - threshold_potential_value) > eps:
-        self.__set_potential_threshold_btn.setEnabled(True)
-        break
-    else:
-      self.__set_potential_threshold_btn.setEnabled(False)
+      neuron.set_threshold(neuron.threshold + difference)
+
+    self.__data_container.neurons_changed(list(self.__neurons))
 
 
-  def __on_set_potential_threshold_btn_clicked(self):
-    # Set the threshold of each neuron
-    for neuron in self.__neurons:
-      neuron.set_threshold(self.__threshold_potential_spin_box.value())
-    # Update the GUI
-    self.__update()
-
-
-  def __on_threshold_potential_min_spin_box_changed(self):
-    min_value = self.__threshold_potential_min_spin_box.value()
-    max_value = self.__threshold_potential_max_spin_box.value()
+  def __on_min_threshold_spin_box_changed(self):
+    min_value = self.__min_threshold_spin_box.value()
+    max_value = self.__max_threshold_spin_box.value()
     if min_value > max_value:
-      self.__threshold_potential_max_spin_box.setValue(min_value)
+      self.__max_threshold_spin_box.setValue(min_value)
 
 
-  def __on_threshold_potential_max_spin_box_changed(self):
-    min_value = self.__threshold_potential_min_spin_box.value()
-    max_value = self.__threshold_potential_max_spin_box.value()
+  def __on_max_threshold_spin_box_changed(self):
+    min_value = self.__min_threshold_spin_box.value()
+    max_value = self.__max_threshold_spin_box.value()
     if max_value < min_value:
-      self.__threshold_potential_min_spin_box.setValue(max_value)
+      self.__min_threshold_spin_box.setValue(max_value)
 
 
-  def __on_select_random_threshold_potential_btn_clicked(self):
-    min_value = self.__threshold_potential_min_spin_box.value()
-    max_value = self.__threshold_potential_max_spin_box.value()
-    # Loop over the neurons and assign random potential thresholds
+  def __on_set_random_threshold_btn_clicked(self):
+    if not self.__neurons:
+      return
+    min_value = self.__min_threshold_spin_box.value()
+    max_value = self.__max_threshold_spin_box.value()
+    # Loop over the neurons and assign random thresholds
     for neuron in self.__neurons:
       neuron.set_threshold(random.uniform(min_value, max_value))
-    # Update the GUI
-    self.__update()
+    # Update the data container
+    self.__data_container.neurons_changed(list(self.__neurons))

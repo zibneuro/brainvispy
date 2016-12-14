@@ -17,14 +17,14 @@ class NeuralConnectionGUI(QtWidgets.QGroupBox):
 
     # These are the neural connections whose properties we are going to display
     self.__neural_connections = list()
-    self.__spin_box_precision = 3
+    self.__spin_box_precision = 2
 
     self.__ignore_on_weight_changed_callback = False
 
     # CREATE THE GUI ELEMENTS
     # The weight label
-    self.__weight_label = QtWidgets.QLabel("threshold potential:")
-    # The threshold potential spin box
+    self.__weight_label = QtWidgets.QLabel("weight:")
+    # The weight spin box
     self.__weight_spin_box = QtWidgets.QDoubleSpinBox()
     self.__weight_spin_box.setMinimum(-10000)
     self.__weight_spin_box.setMaximum(10000)
@@ -32,15 +32,48 @@ class NeuralConnectionGUI(QtWidgets.QGroupBox):
     self.__weight_spin_box.setDecimals(self.__spin_box_precision)
     self.__weight_spin_box.valueChanged.connect(self.__on_weight_spin_box_changed)
 
+    # The [min, max] range for the weight
+    # min
+    self.__min_weight_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__min_weight_spin_box.setMinimum(-10000)
+    self.__min_weight_spin_box.setMaximum(10000)
+    self.__min_weight_spin_box.setValue(-1)
+    self.__min_weight_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
+    self.__min_weight_spin_box.setDecimals(self.__spin_box_precision)
+    self.__min_weight_spin_box.valueChanged.connect(self.__on_min_weight_spin_box_changed)
+    # max
+    self.__max_weight_spin_box = QtWidgets.QDoubleSpinBox()
+    self.__max_weight_spin_box.setMinimum(-10000)
+    self.__max_weight_spin_box.setMaximum(10000)
+    self.__max_weight_spin_box.setValue(1)
+    self.__max_weight_spin_box.setDecimals(self.__spin_box_precision)
+    self.__max_weight_spin_box.setSingleStep(1/(10**self.__spin_box_precision))
+    self.__max_weight_spin_box.valueChanged.connect(self.__on_max_weight_spin_box_changed)
+    # The button to create the weights at random
+    self.__set_random_weight_btn = QtWidgets.QPushButton("set randomly from range")
+    self.__set_random_weight_btn.clicked.connect(self.__on_set_random_weight_btn_clicked)
+    
     # ADD THE GUI ELEMENTS TO A LAYOUT
     layout = QtWidgets.QVBoxLayout()
-    # The threshold potential
-    threshold_potential_layout = QtWidgets.QGridLayout()
-    threshold_potential_layout.addWidget(self.__weight_label, 0, 0, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_potential_layout.addWidget(self.__weight_spin_box, 1, 0)
-    threshold_potential_frame = QtWidgets.QFrame()
-    threshold_potential_frame.setLayout(threshold_potential_layout)
-    layout.addWidget(threshold_potential_frame)
+    # The weight
+    weight_layout = QtWidgets.QGridLayout()
+    weight_layout.addWidget(self.__weight_label, 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    weight_layout.addWidget(self.__weight_spin_box, 1, 0)
+    weight_frame = QtWidgets.QFrame()
+    weight_frame.setLayout(weight_layout)
+    layout.addWidget(weight_frame)
+    # Weight range
+    weight_range_layout = QtWidgets.QGridLayout()
+    weight_range_layout.addWidget(QtWidgets.QLabel("weight range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
+    weight_range_layout.addWidget(QtWidgets.QLabel("min:"), 1, 0, 1, 1, QtCore.Qt.AlignRight)
+    weight_range_layout.addWidget(self.__min_weight_spin_box, 1, 1, 1, -1, QtCore.Qt.AlignLeft)
+    weight_range_layout.addWidget(QtWidgets.QLabel("max:"), 2, 0, 1, 1, QtCore.Qt.AlignRight)
+    weight_range_layout.addWidget(self.__max_weight_spin_box, 2, 1, 1, -1, QtCore.Qt.AlignLeft)
+    weight_range_frame = QtWidgets.QFrame()
+    weight_range_frame.setLayout(weight_range_layout)
+    layout.addWidget(weight_range_frame)
+    # Select random weight button
+    layout.addWidget(self.__set_random_weight_btn)
     # Group the GUI elements together
     layout.setSpacing(1)
     self.setLayout(layout)
@@ -73,7 +106,7 @@ class NeuralConnectionGUI(QtWidgets.QGroupBox):
       self.hide()
       return
 
-    # Set the text of the threshold potential label
+    # Set the text of the weight label
     if num_neural_connections == 1:
       self.__weight_label.setText("weight:")
     else:
@@ -81,7 +114,7 @@ class NeuralConnectionGUI(QtWidgets.QGroupBox):
 
     ignore_callback = self.__ignore_on_weight_changed_callback
     self.__ignore_on_weight_changed_callback = True
-    # Show it to the user
+    # Show the average weight to the user
     self.__weight_spin_box.setValue(self.__compute_average_weight(neural_connections))
     self.__ignore_on_weight_changed_callback = ignore_callback
 
@@ -90,10 +123,10 @@ class NeuralConnectionGUI(QtWidgets.QGroupBox):
 
 
   def __compute_average_weight(self, neural_connections):
-    avg_weight = 0
+    weight_sum = 0
     for nc in neural_connections:
-      avg_weight += nc.weight
-    return avg_weight / len(neural_connections)
+      weight_sum += nc.weight
+    return weight_sum / len(neural_connections)
 
 
   def __on_weight_spin_box_changed(self):
@@ -110,3 +143,30 @@ class NeuralConnectionGUI(QtWidgets.QGroupBox):
       nc.set_weight(nc.weight + difference)
 
     self.__data_container.neural_connections_changed(list(self.__neural_connections))
+
+
+  def __on_min_weight_spin_box_changed(self):
+    min_value = self.__min_weight_spin_box.value()
+    max_value = self.__max_weight_spin_box.value()
+    if min_value > max_value:
+      self.__max_weight_spin_box.setValue(min_value)
+
+
+  def __on_max_weight_spin_box_changed(self):
+    min_value = self.__min_weight_spin_box.value()
+    max_value = self.__max_weight_spin_box.value()
+    if max_value < min_value:
+      self.__min_weight_spin_box.setValue(max_value)
+
+
+  def __on_set_random_weight_btn_clicked(self):
+    if not self.__neural_connections:
+      return
+    min_value = self.__min_weight_spin_box.value()
+    max_value = self.__max_weight_spin_box.value()
+    # Loop over the neural connections and assign random weights
+    for nc in self.__neural_connections:
+      nc.set_weight(random.uniform(min_value, max_value))
+    # Update the data container
+    self.__data_container.neural_connections_changed(list(self.__neural_connections))
+
