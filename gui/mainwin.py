@@ -71,6 +71,9 @@ class MainWindow(QtWidgets.QMainWindow):
     quit_action.triggered.connect(self.close)
 
     # HOW TO
+    # Get started
+    howto_get_started = QtWidgets.QAction('Get started', self)
+    howto_get_started.triggered.connect(self.__on_howto_get_started)
     # Create neurons
     howto_create_neurons = QtWidgets.QAction('Create neurons', self)
     howto_create_neurons.triggered.connect(self.__on_howto_create_neurons)
@@ -97,6 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
     file_menu.addAction(quit_action)
     # HOWTO
     howto_menu = self.menuBar().addMenu("HOW TO")
+    howto_menu.addAction(howto_get_started)
     howto_menu.addAction(howto_create_neurons)
     howto_menu.addAction(howto_adjust_neuron_parameters)
     howto_menu.addAction(howto_connect_neurons)
@@ -229,6 +233,11 @@ class MainWindow(QtWidgets.QMainWindow):
           self.__load_files_folder = element.text
     except Exception as exception:
       print("Could not load config stuff: " + str(exception))
+
+  
+  def __on_howto_get_started(self):
+    dialog = gui.howto.HowtoGetStarted(self)
+    dialog.show()
 
 
   def __on_howto_create_neurons(self):
