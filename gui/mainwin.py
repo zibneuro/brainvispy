@@ -2,6 +2,7 @@ import os
 import vtk
 from PyQt5 import QtCore, QtWidgets
 import xml.etree.ElementTree as ET
+import gui.howto
 from gui.vtkwidget import VtkWidget
 from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
@@ -69,7 +70,22 @@ class MainWindow(QtWidgets.QMainWindow):
     quit_action.setShortcut('Ctrl+Q')
     quit_action.triggered.connect(self.close)
 
+    # HOW TO
+    # Create neurons
+    howto_create_neurons = QtWidgets.QAction('Create neurons', self)
+    howto_create_neurons.triggered.connect(self.__on_howto_create_neurons)
+    # Adjust neuron parameters
+    howto_adjust_neuron_parameters = QtWidgets.QAction('Adjust neuron parameters', self)
+    howto_adjust_neuron_parameters.triggered.connect(self.__on_howto_adjust_neuron_parameters)
+    # Connect neurons
+    howto_connect_neurons = QtWidgets.QAction('Connect neurons', self)
+    howto_connect_neurons.triggered.connect(self.__on_howto_connect_neurons)
+    # Adjust connection parameters
+    howto_adjust_connection_parameters = QtWidgets.QAction('Adjust connection parameters', self)
+    howto_adjust_connection_parameters.triggered.connect(self.__on_howto_adjust_connection_parameters)
+
     # Add everything to the menu bar
+    # FILE
     file_menu = self.menuBar().addMenu("FILE")
     file_menu.addAction(open_project_action)
     file_menu.addAction(save_project_action)
@@ -79,6 +95,12 @@ class MainWindow(QtWidgets.QMainWindow):
     file_menu.addAction(load_folder_action)
     file_menu.addSeparator()
     file_menu.addAction(quit_action)
+    # HOWTO
+    howto_menu = self.menuBar().addMenu("HOW TO")
+    howto_menu.addAction(howto_create_neurons)
+    howto_menu.addAction(howto_adjust_neuron_parameters)
+    howto_menu.addAction(howto_connect_neurons)
+    howto_menu.addAction(howto_adjust_connection_parameters)
 
 
   def __setup_main_frame(self):
@@ -207,6 +229,26 @@ class MainWindow(QtWidgets.QMainWindow):
           self.__load_files_folder = element.text
     except Exception as exception:
       print("Could not load config stuff: " + str(exception))
+
+
+  def __on_howto_create_neurons(self):
+    dialog = gui.howto.HowtoCreateNeurons(self)
+    dialog.show()
+
+
+  def __on_howto_adjust_neuron_parameters(self):
+    dialog = gui.howto.HowtoAdjustNeuronParameters(self)
+    dialog.show()
+
+
+  def __on_howto_connect_neurons(self):
+    dialog = gui.howto.HowtoConnectNeurons(self)
+    dialog.show()
+
+
+  def __on_howto_adjust_connection_parameters(self):
+    dialog = gui.howto.HowtoAdjustConnectionParameters(self)
+    dialog.show()
 
 
   def __update_config_file(self):
