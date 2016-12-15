@@ -25,4 +25,7 @@ class VisNeuron(VtkPolyModel):
     vtk_sphere_source.SetRadius(sphere_radius)
     vtk_sphere_source.SetCenter(p[0], p[1], p[2])
     vtk_sphere_source.Update()
-    return vtk_sphere_source.GetOutput()
+    normals_filter = vtk.vtkPolyDataNormals()
+    normals_filter.SetInputData(vtk_sphere_source.GetOutput())
+    normals_filter.Update()
+    return normals_filter.GetOutput()
