@@ -1,4 +1,4 @@
-BrainVisPy is written in **Python3** and uses **PyQt5**,  **python-qt5-gl** and **VTK**.
+BrainVisPy is written in **Python3** and uses **PyQt5**,  **python-qt5-gl**, **numpy** and **VTK**.
 
 # Install and Run
 
@@ -8,7 +8,7 @@ In the following, we describe how to install and run BrainVisPy on Windows, Linu
 
 We use 64bit Windows 8.
 
-* **Install PyQt5 and python-qt5-gl.** Check on google.
+* **Install PyQt5, python-qt5-gl and numpy.** Check on google.
 
 * **Install VTK.** Follow [these](doc/install_vtk_win.md) instructions.
 
@@ -25,7 +25,7 @@ We use 64bit Windows 8.
 
 We use 64bit Ubuntu 14.
 
-* **Install PyQt5 and python-qt5-gl.** Check on google.
+* **Install PyQt5, python-qt5-gl and numpy.** Check on google.
 
 * **Install VTK.** Follow [these](doc/install_vtk_linux.md) instructions.
 
@@ -41,7 +41,7 @@ We use 64bit Ubuntu 14.
 
 We use OS X El Capitan (Version 10.11.6).
 
-* **Install PyQt5.** Check on google.
+* **Install PyQt5, python-qt5-gl and numpy.** Check on google.
 
 * **Install VTK.** Follow [these](doc/install_vtk_osx.md) instructions.
 
