@@ -1,17 +1,13 @@
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
-from vis.vtkvol import VtkVolumeModel
 from gui.brainregiongui import BrainRegionGUI
-from gui.volgui import VtkVolumeModelGUI
-from gui.neurongui import NeuronGUI
-from gui.neuralconnectiongui import NeuralConnectionGUI
 from PyQt5 import QtCore, QtWidgets
 
 class PropsPanel(QtWidgets.QDockWidget):
   """This is the dock widget for the properties of a selected models(s). It has a list showing the
   selected models and specialized GUI elements which show the properties of polygonal and volume
   models."""
-  def __init__(self, data_container, controller):
+  def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
 
@@ -19,7 +15,7 @@ class PropsPanel(QtWidgets.QDockWidget):
     self.setFeatures(QtWidgets.QDockWidget.DockWidgetFloatable | QtWidgets.QDockWidget.DockWidgetMovable)
 
     # Register yourself as an observer
-    self.__data_container = data_container;
+    self.__data_container = data_container
     self.__data_container.add_observer(self)
 
     # The selection list with its label
@@ -35,10 +31,7 @@ class PropsPanel(QtWidgets.QDockWidget):
     dock_layout.setAlignment(QtCore.Qt.AlignTop)
 
     # The GUIs for the volume and poly and models
-    dock_layout.addWidget(VtkVolumeModelGUI(self.__data_container))
-    dock_layout.addWidget(BrainRegionGUI(self.__data_container, controller))
-    dock_layout.addWidget(NeuronGUI(self.__data_container))
-    dock_layout.addWidget(NeuralConnectionGUI(self.__data_container))
+    dock_layout.addWidget(BrainRegionGUI(self.__data_container))
 
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()
@@ -63,4 +56,4 @@ class PropsPanel(QtWidgets.QDockWidget):
     self.__qt_list_widget.clear()
 
     for model in models:
-      self.__qt_list_widget.insertItem(0, QtWidgets.QListWidgetItem(model.name))  
+      self.__qt_list_widget.insertItem(0, QtWidgets.QListWidgetItem(model.name))

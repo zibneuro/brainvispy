@@ -4,7 +4,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 
 class BrainRegionGUI(QtWidgets.QGroupBox):
   """This is the dock widget for the properties of a selected data item(s)"""
-  def __init__(self, data_container, controller):
+  def __init__(self, data_container):
     if not isinstance(data_container, DataContainer):
       raise TypeError("the data container has the wrong type")
 
@@ -13,8 +13,6 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     # Register yourself as an observer
     self.__data_container = data_container
     self.__data_container.add_observer(self)
-    # Save the controller - we need this guy
-    self.__controller = controller
 
     # This list keeps the models (objects) we have
     self.__brain_regions = list()
@@ -41,34 +39,6 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     self.__transparency_slider.setSingleStep(1)
     self.__transparency_slider.valueChanged.connect(self.__on_transparency_slider_value_changed)
     
-    # NEURON GENERATION GUI elements
-    # The [min, max] range for the threshold
-    # min
-    self.__min_threshold_spin_box = QtWidgets.QDoubleSpinBox()
-    self.__min_threshold_spin_box.setMinimum(-10000)
-    self.__min_threshold_spin_box.setMaximum(10000)
-    self.__min_threshold_spin_box.setValue(-1)
-    self.__min_threshold_spin_box.setSingleStep(0.01)
-    self.__min_threshold_spin_box.setDecimals(2)
-    self.__min_threshold_spin_box.valueChanged.connect(self.__on_min_threshold_spin_box_changed)
-    # max
-    self.__max_threshold_spin_box = QtWidgets.QDoubleSpinBox()
-    self.__max_threshold_spin_box.setMinimum(-10000)
-    self.__max_threshold_spin_box.setMaximum(10000)
-    self.__max_threshold_spin_box.setValue(1)
-    self.__max_threshold_spin_box.setDecimals(2)
-    self.__max_threshold_spin_box.setSingleStep(0.01)
-    self.__max_threshold_spin_box.valueChanged.connect(self.__on_max_threshold_spin_box_changed)
-    # The box where the user enters the number of neurons to create
-    self.__num_neurons_spin_box = QtWidgets.QSpinBox()
-    self.__num_neurons_spin_box.setMinimum(1)
-    self.__num_neurons_spin_box.setMaximum(100)
-    self.__num_neurons_spin_box.setValue(10)
-    self.__num_neurons_spin_box.setSingleStep(1)
-    # The create neurons button
-    self.__create_neurons_btn = QtWidgets.QPushButton("create neuron(s)")
-    self.__create_neurons_btn.clicked.connect(self.__on_create_neurons_button_clicked)
-    
     # Add the GUI elements to a layout
     layout = QtWidgets.QVBoxLayout()
     # SURFACE APPEARANCE
@@ -82,28 +52,6 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
     appearance_frame = QtWidgets.QFrame()
     appearance_frame.setLayout(appearance_layout)
     layout.addWidget(appearance_frame)
-    # NEURONS
-    layout.addWidget(QtWidgets.QLabel("<b>neuron creation</b>"), 0, QtCore.Qt.AlignLeft)
-    # Threshold
-    threshold_layout = QtWidgets.QGridLayout()
-    threshold_layout.addWidget(QtWidgets.QLabel("threshold range:"), 0, 0, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_layout.addWidget(QtWidgets.QLabel("min:"), 1, 0, 1, 1, QtCore.Qt.AlignRight)
-    threshold_layout.addWidget(self.__min_threshold_spin_box, 1, 1, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_layout.addWidget(QtWidgets.QLabel("max:"), 2, 0, 1, 1, QtCore.Qt.AlignRight)
-    threshold_layout.addWidget(self.__max_threshold_spin_box, 2, 1, 1, -1, QtCore.Qt.AlignLeft)
-    threshold_frame = QtWidgets.QFrame()
-    threshold_frame.setLayout(threshold_layout)
-    layout.addWidget(threshold_frame)
-    # Number of neurons
-    create_neurons_layout = QtWidgets.QHBoxLayout()
-    create_neurons_layout.addWidget(QtWidgets.QLabel("num. neurons:"), 0, QtCore.Qt.AlignLeft)
-    create_neurons_layout.addWidget(self.__num_neurons_spin_box)
-    create_neurons_frame = QtWidgets.QFrame()
-    create_neurons_frame.setLayout(create_neurons_layout)
-    layout.addWidget(create_neurons_frame)
-    layout.setSpacing(1)
-    # Create neurons button
-    layout.addWidget(self.__create_neurons_btn)
 
     # Group the GUI elements together
     self.setLayout(layout)
@@ -240,22 +188,3 @@ class BrainRegionGUI(QtWidgets.QGroupBox):
 
     # Notify the data container that some of its data changed (this will call this objects)
     self.__data_container.update_transparency()
-
-
-  def __on_min_threshold_spin_box_changed(self):
-    min_value = self.__min_threshold_spin_box.value()
-    max_value = self.__max_threshold_spin_box.value()
-    if min_value > max_value:
-      self.__max_threshold_spin_box.setValue(min_value)
-
-
-  def __on_max_threshold_spin_box_changed(self):
-    min_value = self.__min_threshold_spin_box.value()
-    max_value = self.__max_threshold_spin_box.value()
-    if max_value < min_value:
-      self.__min_threshold_spin_box.setValue(max_value)
-
-
-  def __on_create_neurons_button_clicked(self):
-    threshold_range = (self.__min_threshold_spin_box.value(), self.__max_threshold_spin_box.value())
-    self.__controller.generate_neurons(self.__num_neurons_spin_box.value(), self.__brain_regions, threshold_range)

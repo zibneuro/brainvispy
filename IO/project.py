@@ -288,7 +288,7 @@ class ProjectIO:
     connections = list()
     # Create the neurons
     for ps in connection_parameters:
-      connection = brain.create_neural_connection(ps.name, ps.neuron_indices, ps.weight, ps.cylinder_radius, ps.rgb_color)
+      connection = brain.create_neural_connection(ps.name, ps.neuron_indices, ps.weight, ps.cylinder_radius)
       if connection:
         connections.append(connection)
     # Add the connections to the data container

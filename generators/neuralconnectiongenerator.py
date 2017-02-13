@@ -13,6 +13,6 @@ class NeuralConnectionGenerator:
     return NeuralConnection(name, n1, n2, random.uniform(-1.0, 1.0), vis_rep)
 
 
-  def create_neural_connection(self, name, n1, n2, weight, cylinder_radius, color):
+  def create_neural_connection(self, name, n1, n2, weight, cylinder_radius):
     vis_rep = VisNeuralConnection(name, n1.position, n2.position, cylinder_radius)
     return NeuralConnection(name, n1, n2, weight, vis_rep)

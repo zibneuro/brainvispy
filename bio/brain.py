@@ -53,19 +53,19 @@ class Brain:
     return new_neurons
 
 
-  def create_neural_connection(self, name, neuron_indices, weight, cylinder_radius, color):
+  def create_neural_connection(self, name, neuron_indices, weight, cylinder_radius):
     n1 = self.get_neuron(neuron_indices[0])
     n2 = self.get_neuron(neuron_indices[1])
     if (not n1) or (not n2) or (n1 == n2):
       return None
 
     con_gen = NeuralConnectionGenerator()
-    return con_gen.create_neural_connection(name, n1, n2, weight, cylinder_radius, color)
+    return con_gen.create_neural_connection(name, n1, n2, weight, cylinder_radius)
 
 
   def connect_neurons(self, n1, n2):
     con_gen = NeuralConnectionGenerator()
-    return con_gen.connect_neurons(str(n1.index) + " -> " + str(n2.index), n1, n2)
+    return con_gen.connect_neurons(n1.name + " -> " + n2.name, n1, n2)
 
 
   def get_neuron(self, neuron_id):

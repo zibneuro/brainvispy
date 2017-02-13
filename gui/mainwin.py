@@ -8,6 +8,7 @@ from gui.progress import ProgressBarFrame
 from gui.datapanel import DataPanel
 from gui.propspanel import PropsPanel
 from IO.project import ProjectIO
+from IO.conmat import ConnectivityMatrixIO
 
 
 #==================================================================================================
@@ -65,6 +66,10 @@ class MainWindow(QtWidgets.QMainWindow):
     save_project_as_action = QtWidgets.QAction('Save project as', self)
     save_project_as_action.setShortcut('Ctrl+Shift+S')
     save_project_as_action.triggered.connect(self.__on_save_project_as)
+    # Import connectivity matrix
+    import_connectivity_matrix_action = QtWidgets.QAction('Import connectivity matrix', self)
+    import_connectivity_matrix_action.triggered.connect(self.__on_import_connectivity_matrix)
+    import_connectivity_matrix_action.setShortcut('Ctrl+M')
     # Quit
     quit_action = QtWidgets.QAction('Quit', self)
     quit_action.setShortcut('Ctrl+Q')
@@ -93,9 +98,11 @@ class MainWindow(QtWidgets.QMainWindow):
     file_menu.addAction(open_project_action)
     file_menu.addAction(save_project_action)
     file_menu.addAction(save_project_as_action)
-    file_menu.addSeparator()    
+    file_menu.addSeparator()
     file_menu.addAction(load_files_action)
     file_menu.addAction(load_folder_action)
+    file_menu.addSeparator()
+    file_menu.addAction(import_connectivity_matrix_action)
     file_menu.addSeparator()
     file_menu.addAction(quit_action)
     # HOWTO
@@ -118,7 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
     self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.__data_panel)
 
     # Add the dock which shows the properties of the selected object (on the right in the main window)
-    self.__props_panel = PropsPanel(self.__data_container, self.__controller)
+    self.__props_panel = PropsPanel(self.__data_container)
     self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.__props_panel)
 
 
@@ -219,10 +226,24 @@ class MainWindow(QtWidgets.QMainWindow):
       raise err #print(err)
 
 
+  def __on_import_connectivity_matrix(self):
+    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Import a connectivity matrix", self.__project_folder, r"CSV Files (*.csv)")
+    if project_file_name[0]:
+      # Get the project folder and the project name
+      self.__project_folder, project_name = os.path.split(project_file_name[0])
+      # Open the project
+      error_messages = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__brain, self.__viewer3d)
+      # Update the window title
+      self.setWindowTitle(project_name + "  -  BrainVisPy")
+      if error_messages:
+        self.__show_messages(error_messages, "Errors while loading project:")
+
+
   def __load_config_file(self):
     # First set these default names (in case we fail to open the config file)
     self.__project_folder = "./"
     self.__load_files_folder = "./"
+    self.__connectivity_matrix_folder = "./"
     # Now try to open the file and read the true folder names
     try:
       config = ET.parse(self.__config_file_name).getroot()
@@ -231,10 +252,12 @@ class MainWindow(QtWidgets.QMainWindow):
           self.__project_folder = element.text
         elif element.tag == "load_files_folder":
           self.__load_files_folder = element.text
+        elif element.tag == "connectivity_matrix_folder":
+          self.__connectivity_matrix_folder = element.text
     except Exception as exception:
       print("Could not load config stuff: " + str(exception))
 
-  
+
   def __on_howto_get_started(self):
     dialog = gui.howto.HowtoGetStarted(self)
     dialog.show()
@@ -267,6 +290,7 @@ class MainWindow(QtWidgets.QMainWindow):
       # Save the current config stuff
       ET.SubElement(xml_config, "project_folder").text = self.__project_folder
       ET.SubElement(xml_config, "load_files_folder").text = self.__load_files_folder
+      ET.SubElement(xml_config, "connectivity_matrix_folder").text = self.__connectivity_matrix_folder
       # Write the whole XML tree to file
       ET.ElementTree(xml_config).write(self.__config_file_name)
     except Exception as exception:

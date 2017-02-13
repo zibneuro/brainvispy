@@ -12,6 +12,7 @@ class DataContainer(Observable):
   change_is_slice_index = 24
   change_is_deleted_models = 25
   change_is_see_inside = 26
+  change_is_update = 26
 
 
   def __init__(self):
@@ -81,6 +82,10 @@ class DataContainer(Observable):
 
   def update_see_inside(self):
     self.notify_observers_about_change(DataContainer.change_is_see_inside, list())
+
+
+  def update(self):
+    self.notify_observers_about_change(DataContainer.change_is_update, list())
 
 
   def add_to_selection(self, item):

@@ -51,9 +51,7 @@ class Controller:
 
 
   def __process_picked_prop3d(self, viewer3d, prop3d):
-    if viewer3d.is_shift_key_pressed():
-      self.__create_neural_connection(viewer3d, prop3d)
-    elif viewer3d.is_ctrl_key_pressed():
+    if viewer3d.is_ctrl_key_pressed():
       # Check if she picked the same model twice
       twice_picked_model = self.__prop3d_to_selected_model.get(prop3d)
       if twice_picked_model:
@@ -65,35 +63,6 @@ class Controller:
     # The user doesn't hold the ctrl. key
     else:
       self.__data_container.set_selection(self.__prop3d_to_model.get(prop3d))
-
-
-  def __create_neural_connection(self, viewer3d, prop3d):
-    # First of all, we have to have exactly one model in the selection
-    if len(self.__prop3d_to_selected_model) != 1:
-      return
-
-    # Is the selected model a neuron
-    n1 = list(self.__prop3d_to_selected_model.values())[0]
-    if not isinstance(n1, Neuron):
-      return
-
-    # Now check the model the user is pointing to
-    try:
-      n2 = self.__prop3d_to_model[prop3d]
-    except KeyError:
-      return
-
-    if not isinstance(n2, Neuron):
-      return
-
-    # Make sure we do not have the same neuron twice
-    if n1 == n2:
-      return
-
-    # Now, create a new connection between the neurons
-    neural_connection = self.__brain.connect_neurons(n1, n2)
-    if neural_connection:
-      self.__data_container.add_data([neural_connection])
 
 
   def generate_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
