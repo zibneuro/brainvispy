@@ -227,16 +227,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
   def __on_import_connectivity_matrix(self):
-    project_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Import a connectivity matrix", self.__project_folder, r"CSV Files (*.csv)")
-    if project_file_name[0]:
-      # Get the project folder and the project name
-      self.__project_folder, project_name = os.path.split(project_file_name[0])
-      # Open the project
-      error_messages = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__brain, self.__viewer3d)
-      # Update the window title
-      self.setWindowTitle(project_name + "  -  BrainVisPy")
-      if error_messages:
-        self.__show_messages(error_messages, "Errors while loading project:")
+    conn_mat_file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Import a connectivity matrix", self.__connectivity_matrix_folder, r"CSV Files (*.csv)")[0]
+    if conn_mat_file_name:
+      self.__connectivity_matrix_folder = os.path.split(conn_mat_file_name)[0]
+      # Load the connectivity matrix
+      conn_mat_io = ConnectivityMatrixIO()
+      error_messages = conn_mat_io.load_neurons(conn_mat_file_name, self.__brain)
+      for err_msg in error_messages:
+        print(err_msg)
+        #self.__show_messages(error_messages, "Errors while loading project:")
 
 
   def __load_config_file(self):
