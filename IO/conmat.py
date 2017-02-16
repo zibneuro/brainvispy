@@ -12,17 +12,18 @@ from IO.vtkio import VtkIO
 
 
 class NeuronParameters:
-  def __init__(self, name):
+  def __init__(self, name, index, brain_region_name, threshold):
     self.name = name
-    self.index = -1
-    self.threshold = 0.0
+    self.index = index
+    self.brain_region_name = brain_region_name
+    self.threshold = threshold
 
 
-class ConnectionParameters:
-  def __init__(self):
-    self.n1_name = "n1"
-    self.n2_name = "n2"
-    self.weight = -1
+class NeuralConnectionParameters:
+  def __init__(self, src_neuron_name, tar_neuron_name, weight):
+    self.src_neuron_name = src_neuron_name
+    self.tar_neuron_name = tar_neuron_name
+    self.weight = weight
 
 
 class ConnectivityMatrixIO:
@@ -46,61 +47,101 @@ class ConnectivityMatrixIO:
     file_lines = f.readlines()
 
     # Make sure we got enough lines
-    if len(file_lines) < 2:
+    if len(file_lines) < 1:
       return None
+
+    # These two lists will be filled below and returned
+    neurons = list()
+    neural_connections = list()
 
     # First, get rid of all white spaces
     neuron_names = "".join(file_lines[0].split())
-    print("first line: '" + neuron_names + "'")
 
     # These is a (column id, neuron name) dictionary
     col_id_to_neuron_name = dict()
 
-    # Get the column id of each neuron
+    # Populate the (column id, neuron name) dictionary
     col_id = 0
     for neuron_name in neuron_names.split(","):
       if neuron_name == "":
         continue
       col_id_to_neuron_name[col_id] = neuron_name
       col_id += 1
-
+ 
     # How many neurons are there
     num_neurons = len(col_id_to_neuron_name)
+    neuron_id = -1
 
     # Now, loop over the other table lines and create the neurons and neural connections
     for file_line in file_lines[1:]:
+      neuron_id += 1
       # The current line contains the cells separated by a ","
       cells = file_line.split(",")
-      # We need at least two cells per line
-      if len(cells) < 2:
+
+      if len(cells) < 1:
+        continue
+        
+      # Get the name of the current neuron
+      neuron_name = cells[0]
+
+      # Create the connections using the cells 1 to #neurons + 1
+      connections = self.__create_neural_connections(neuron_name, cells[1:num_neurons+1], col_id_to_neuron_name)
+      # Save the connections
+      if connections:
+        neural_connections.extend(connections)
+
+      # Create a new neuron
+      neuron = self.__create_neuron(neuron_name, neuron_id, cells[num_neurons+1:])
+      # Save the neuron
+      if neuron:
+        neurons.append(neuron)
+
+    print("neurons:")
+    for n in neurons:
+      print("neuron " + n.name + " (@" + str(n.threshold) + ") in " + n.brain_region_name)
+
+    print("neural connections:")
+    for c in neural_connections:
+      print(c.src_neuron_name + " -> " + c.tar_neuron_name + ": " + str(c.weight))
+
+    return (neurons, neural_connections)
+
+
+  def __create_neural_connections(self, src_neuron_name, cells, col_id_to_neuron_name):
+    neural_connections = list()
+    col_id = -1
+
+    # Loop over the cells. Each one contains the weight of the neural connection
+    for cell in cells:
+      col_id += 1
+      try:
+        tar_neuron_name = col_id_to_neuron_name[col_id]
+      except KeyError:
         continue
 
-      neuron_name_1 = cells[0]
-      col_id = -1
-      
-      # Loop over the cells. Each one contains the weight of the neural connection
-      for cell in cells[1:num_neurons+1]:
-        col_id += 1
-        try:
-          neuron_name_2 = col_id_to_neuron_name[col_id]
-        except KeyError:
-          continue
+      if cell == "":
+        continue
 
-        if cell == "":
-          continue
+      try:
+        weight = float(cell)
+      except ValueError:
+        continue
 
-        try:
-          weight = float(cell)
-        except ValueError:
-          continue
+      if weight == 0:
+        continue
 
-        if weight == 0:
-          continue
-          
-        # Get the second neuron
-        print(neuron_name_1 + " -> " + neuron_name_2 + ": " + str(weight))
-        
+      neural_connections.append(NeuralConnectionParameters(src_neuron_name, tar_neuron_name, weight))
 
-    # Get the neuron parameters
-    #for file_line in file_lines:
-    #  for neuron_name in split()
+    return neural_connections
+
+
+  def __create_neuron(self, neuron_name, neuron_id, cells):
+    if len(cells) < 2:
+      return None
+
+    try:
+      threshold = float(cells[1])
+    except ValueError:
+      return None
+
+    return NeuronParameters(neuron_name, neuron_id, cells[0], threshold)
