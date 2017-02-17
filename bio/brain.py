@@ -7,6 +7,8 @@ class Brain:
   def __init__(self, data_container):
     self.__id_to_neuron = dict()
     data_container.add_observer(self)
+    self.__name_to_neuron = dict()
+    self.__name_to_brain_region = dict()
 
 
   def observable_changed(self, change, data):
@@ -25,6 +27,44 @@ class Brain:
         pass
 
 
+  def create_neurons(self, neuron_parameters):
+    neurons = list()
+    neuro_gen = NeuronGenerator()
+    brain_region_to_neurons = dict()
+
+    for n in neuron_parameters:
+      # If we already have that neuron, just update it
+      if n.name in self.__name_to_neuron:
+        self.__name_to_neuron[n.name].set_threshold(n.threshold)
+      else:
+        # We have to create a new neuron
+        try: # to get its position
+          p = n.position
+        except AttributeError:
+          # No position is provided
+          try: # to get a brain region name
+            brain_region_name = n.brain_region_name
+          except AttributeError:
+            # Neither position no brain region => cannot create the neuron
+            pass
+          else:
+            # We have the brain region that should contain the neuron. Save it for later generation
+            if brain_region_name not in brain_region_to_neurons:
+              brain_region_to_neurons[brain_region_name] = list()
+            brain_region_to_neurons[brain_region_name].apend(n)
+        else:
+          # We can create the neuron
+          neurons.append(neuron_gen.create_neuron(n.name, p[0], p[1], p[2], n.threshold))
+
+    # Now generate the guys inside the provided brain regions
+  
+    # Setup the ids of the new neurons
+    num_neurons = len(self.__name_to_neuron)
+    for n in neurons:
+      n.set_index(num_neurons)
+      num_neurons += 1
+    
+
   def create_neuron(self, name, index, position, threshold, sphere_radius):
     # Make sure that the neuron indices are uniue
     if index in self.__id_to_neuron:
@@ -32,7 +72,7 @@ class Brain:
 
     # Generate the neuron
     neuro_gen = NeuronGenerator()
-    neuron = neuro_gen.create_neuron(name, index, position, threshold, sphere_radius);
+    neuron = neuro_gen.create_neuron(name, index, position, threshold, sphere_radius)
     # Save it in the (index, neuron) dictionary
     self.__id_to_neuron[index] = neuron
     return neuron

@@ -54,10 +54,10 @@ class ConnectivityMatrixIO:
     neurons = list()
     neural_connections = list()
 
-    # First, get rid of all white spaces
+    # Process the first line (it contains the neuron names). First, get rid of all white spaces.
     neuron_names = "".join(file_lines[0].split())
 
-    # These is a (column id, neuron name) dictionary
+    # This is a (column id, neuron name) dictionary
     col_id_to_neuron_name = dict()
 
     # Populate the (column id, neuron name) dictionary
@@ -139,6 +139,11 @@ class ConnectivityMatrixIO:
     if len(cells) < 2:
       return None
 
+    # Make sure there is a brain region name
+    if cells[0] == "":
+      return None
+
+    # Get the threshold for this neuron
     try:
       threshold = float(cells[1])
     except ValueError:
