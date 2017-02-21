@@ -25,12 +25,19 @@ class NeuronGenerator:
     # Return the generated neurons
     return neurons
 
-
-  def create_neuron(self, name, index, p, threshold, sphere_radius):
+  def create_neuron(self, name, index, p, threshold):
     # Create and return the neuron
-    neuron = Neuron(name, p[0], p[1], p[2], threshold, VisNeuron(name, p, sphere_radius))
+    vis_neuron = VisNeuron(name, p, 3.0)
+    neuron = Neuron(name, p[0], p[1], p[2], threshold, vis_neuron)
     neuron.set_index(index)
     return neuron
+
+
+#  def create_neuron(self, name, index, p, threshold, sphere_radius):
+#    # Create and return the neuron
+#    neuron = Neuron(name, p[0], p[1], p[2], threshold, VisNeuron(name, p, sphere_radius))
+#    neuron.set_index(index)
+#    return neuron
 
 
   def __generate_random_neurons_in_brain_region(self, num_neurons_per_brain_region, brain_region, thresh_min, thresh_max):

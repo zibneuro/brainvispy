@@ -31,8 +31,11 @@ class ConnectivityMatrixIO:
     pass
 
 
-  def load_neurons(self, connectivity_matrix_file_name, brain):
-    res = self.__load_csv_file(connectivity_matrix_file_name)
+  def load_neurons(self, connectivity_matrix_file_name, data_container, brain):
+    neuron_params, conn_params = self.__load_csv_file(connectivity_matrix_file_name)
+    neurons = brain.create_neurons(neuron_params)
+    print(str(len(neurons)) + " new neuron(s)")
+    data_container.add_data(neurons)
     return list()
 
 

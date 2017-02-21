@@ -12,7 +12,8 @@ class VtkWidget(VTKQGLWidget):
     self.__observers = list()
 
     # The render window
-    self.renderer.SetBackground(0.4, 0.41, 0.42)
+    #self.renderer.SetBackground(0.4, 0.41, 0.42)
+    self.renderer.SetBackground(1.0, 1.0, 1.0)
     self.enable_depthpeeling()
     
     self.__interactor_style = vtk.vtkInteractorStyleTrackballCamera()

@@ -6,7 +6,11 @@ import numpy as np
 class RandomPointsGenerator:
   def __init__(self, vtk_mesh):
     if not isinstance(vtk_mesh, vtk.vtkPolyData):
-      raise TypeError("input argument 'vtk_mesh' has to be a vtkPolyData")
+      # Maybe 'vtk_mesh' has a VtkPolyModel as a visual representation that has a vtkPolyData
+      try:
+        vtk_mesh = vtk_mesh.visual_representation.vtk_poly_data
+      except AttributeError:
+        raise
 
     if not vtk_mesh.GetPolys():
       raise ValueError("input argument 'vtk_mesh' has no triangles")

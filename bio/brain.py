@@ -28,9 +28,10 @@ class Brain:
 
 
   def create_neurons(self, neuron_parameters):
-    neurons = list()
+    brain_region_name_to_neurons = dict()
     neuro_gen = NeuronGenerator()
-    brain_region_to_neurons = dict()
+    neuron_index = len(self.__name_to_neuron)
+    new_neurons = list()
 
     for n in neuron_parameters:
       # If we already have that neuron, just update it
@@ -49,63 +50,46 @@ class Brain:
             pass
           else:
             # We have the brain region that should contain the neuron. Save it for later generation
-            if brain_region_name not in brain_region_to_neurons:
-              brain_region_to_neurons[brain_region_name] = list()
-            brain_region_to_neurons[brain_region_name].apend(n)
+            if brain_region_name not in brain_region_name_to_neurons:
+              brain_region_name_to_neurons[brain_region_name] = list()
+            brain_region_name_to_neurons[brain_region_name].append(n)
         else:
-          # We can create the neuron
-          neurons.append(neuron_gen.create_neuron(n.name, p[0], p[1], p[2], n.threshold))
+          # We got position -> create the neuron
+          neuron = neuro_gen.create_neuron(n.name, neuron_index, p, n.threshold)
+          neuron_index += 1
+          self.__name_to_neuron[neuron.name] = neuron
+          new_neurons.append(neuron)
 
-    # Now generate the guys inside the provided brain regions
-  
-    # Setup the ids of the new neurons
-    num_neurons = len(self.__name_to_neuron)
-    for n in neurons:
-      n.set_index(num_neurons)
-      num_neurons += 1
-    
+    # Now generate the neurons inside the provided brain regions
+    for brain_region_name in brain_region_name_to_neurons:
+      try: # to get a brain region
+        brain_region = self.__name_to_brain_region[brain_region_name]
+      except KeyError:
+        continue
 
-  def create_neuron(self, name, index, position, threshold, sphere_radius):
-    # Make sure that the neuron indices are uniue
-    if index in self.__id_to_neuron:
-      return None
+      # Get the neuron parameters
+      neuron_parameters = brain_region_name_to_neurons[brain_region_name]
+      # Generate the neuron positions
+      rnd_pts_gen = RandomPointsGenerator(brain_region)
+      neuron_positions = rnd_pts_gen.generate_points_inside_mesh(len(neuron_parameters))
 
-    # Generate the neuron
-    neuro_gen = NeuronGenerator()
-    neuron = neuro_gen.create_neuron(name, index, position, threshold, sphere_radius)
-    # Save it in the (index, neuron) dictionary
-    self.__id_to_neuron[index] = neuron
-    return neuron
-
-
-  def create_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
-    neuro_gen = NeuronGenerator()
-    # Generate new neurons in the provided brain region
-    new_neurons = neuro_gen.generate_random_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
-
-    # Set the indices of the new neurons and save them
-    for neuron in new_neurons:
-      neuron_id = self.__generate_valid_neuron_id()
-      neuron.set_index(neuron_id)
-      neuron.set_name("neuron " + str(neuron_id))
-      self.__id_to_neuron[neuron.index] = neuron
+      for i in range(len(neuron_parameters)):
+        np = neuron_parameters[i]
+        neuron = neuro_gen.create_neuron(np.name, neuron_index, neuron_positions[i], np.threshold)
+        neuron_index += 1
+        self.__name_to_neuron[neuron.name] = neuron
+        new_neurons.append(neuron)
 
     return new_neurons
 
+#  def create_neural_connection(self, name, neuron_indices, weight, cylinder_radius):
+#    n1 = self.get_neuron(neuron_indices[0])
+#    n2 = self.get_neuron(neuron_indices[1])
+#    if (not n1) or (not n2) or (n1 == n2):
+#      return None
 
-  def create_neural_connection(self, name, neuron_indices, weight, cylinder_radius):
-    n1 = self.get_neuron(neuron_indices[0])
-    n2 = self.get_neuron(neuron_indices[1])
-    if (not n1) or (not n2) or (n1 == n2):
-      return None
-
-    con_gen = NeuralConnectionGenerator()
-    return con_gen.create_neural_connection(name, n1, n2, weight, cylinder_radius)
-
-
-  def connect_neurons(self, n1, n2):
-    con_gen = NeuralConnectionGenerator()
-    return con_gen.connect_neurons(n1.name + " -> " + n2.name, n1, n2)
+#    con_gen = NeuralConnectionGenerator()
+#    return con_gen.create_neural_connection(name, n1, n2, weight, cylinder_radius)
 
 
   def get_neuron(self, neuron_id):
@@ -117,13 +101,3 @@ class Brain:
     while neuron_id in self.__id_to_neuron:
       neuron_id += 1
     return neuron_id    
-
-
-  @property
-  def coordinates(self):
-    return self.__coords
-
-
-  @property
-  def threshold(self):
-    return self.__threshold

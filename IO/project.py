@@ -123,7 +123,7 @@ class ProjectIO:
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
     # Create the neurons (note that they are not loaded but the visual representation is generated on the fly)
-    self.__create_neurons(neuron_parameters, data_container, brain)
+    data_container.add_data(brain.create_neurons(neuron_parameters))
     # Create the connections (note that they are not loaded but the visual representation is generated on the fly)
     self.__create_neural_connections(connection_parameters, data_container, brain)
 
@@ -273,18 +273,8 @@ class ProjectIO:
     return brain_region
 
 
-  def __create_neurons(self, neuron_parameters, data_container, brain):
-    neurons = list()
-    # Create the neurons
-    for ps in neuron_parameters:
-      neuron = brain.create_neuron(ps.name, ps.index, ps.position, ps.threshold, ps.sphere_radius)
-      if neuron:
-        neurons.append(neuron)
-    # Add the neurons to the data container
-    data_container.add_data(neurons)
-
-
   def __create_neural_connections(self, connection_parameters, data_container, brain):
+    return
     connections = list()
     # Create the neurons
     for ps in connection_parameters:
