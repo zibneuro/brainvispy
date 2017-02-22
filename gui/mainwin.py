@@ -232,7 +232,7 @@ class MainWindow(QtWidgets.QMainWindow):
       self.__connectivity_matrix_folder = os.path.split(conn_mat_file_name)[0]
       # Load the connectivity matrix
       conn_mat_io = ConnectivityMatrixIO()
-      error_messages = conn_mat_io.load_neurons(conn_mat_file_name, self.__data_container, self.__brain)
+      error_messages = conn_mat_io.load_matrix(conn_mat_file_name, self.__data_container, self.__brain)
       for err_msg in error_messages:
         print(err_msg)
         #self.__show_messages(error_messages, "Errors while loading project:")

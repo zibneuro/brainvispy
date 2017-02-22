@@ -27,16 +27,13 @@ class NeuralConnectionParameters:
 
 
 class ConnectivityMatrixIO:
-  def __init__(self):
-    pass
-
-
-  def load_neurons(self, connectivity_matrix_file_name, data_container, brain):
+  def load_matrix(self, connectivity_matrix_file_name, data_container, brain):
     neuron_params, conn_params = self.__load_csv_file(connectivity_matrix_file_name)
     neurons = brain.create_neurons(neuron_params)
-    print(str(len(neurons)) + " new neuron(s)")
+    neural_connections = brain.create_neural_connections(conn_params)
     data_container.add_data(neurons)
-    return list()
+    data_container.add_data(neural_connections)
+    return list() # no error messages are returned
 
 
   def __load_csv_file(self, file_name):
@@ -73,11 +70,11 @@ class ConnectivityMatrixIO:
  
     # How many neurons are there
     num_neurons = len(col_id_to_neuron_name)
-    neuron_id = -1
+    neuron_idx = -1
 
     # Now, loop over the other table lines and create the neurons and neural connections
     for file_line in file_lines[1:]:
-      neuron_id += 1
+      neuron_idx += 1
       # The current line contains the cells separated by a ","
       cells = file_line.split(",")
 
@@ -94,18 +91,10 @@ class ConnectivityMatrixIO:
         neural_connections.extend(connections)
 
       # Create a new neuron
-      neuron = self.__create_neuron(neuron_name, neuron_id, cells[num_neurons+1:])
+      neuron = self.__create_neuron(neuron_name, neuron_idx, cells[num_neurons+1:])
       # Save the neuron
       if neuron:
         neurons.append(neuron)
-
-    print("neurons:")
-    for n in neurons:
-      print("neuron " + n.name + " (@" + str(n.threshold) + ") in " + n.brain_region_name)
-
-    print("neural connections:")
-    for c in neural_connections:
-      print(c.src_neuron_name + " -> " + c.tar_neuron_name + ": " + str(c.weight))
 
     return (neurons, neural_connections)
 
@@ -138,7 +127,7 @@ class ConnectivityMatrixIO:
     return neural_connections
 
 
-  def __create_neuron(self, neuron_name, neuron_id, cells):
+  def __create_neuron(self, neuron_name, neuron_idx, cells):
     if len(cells) < 2:
       return None
 
@@ -152,4 +141,4 @@ class ConnectivityMatrixIO:
     except ValueError:
       return None
 
-    return NeuronParameters(neuron_name, neuron_id, cells[0], threshold)
+    return NeuronParameters(neuron_name, neuron_idx, cells[0], threshold)

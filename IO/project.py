@@ -34,8 +34,6 @@ class NeuronParameters:
     self.index = -1
     self.position = (0, 0, 0)
     self.threshold = 0.0
-    self.sphere_radius = 0.5
-    self.rgb_color = (0.8, 0.1, 0.0)
 
 
 class ConnectionParameters:
@@ -43,8 +41,6 @@ class ConnectionParameters:
     self.name = "connection"
     self.neuron_indices = (-1, -1)
     self.weight = -1
-    self.cylinder_radius = 0.5    
-    self.rgb_color = (0.1, 0.8, 0.0)
 
 
 class ProjectIO:
@@ -190,10 +186,6 @@ class ProjectIO:
         pos_string = element.text.split(" ")
         neuron_params.position = (float(pos_string[0]), float(pos_string[1]), float(pos_string[2]))
       elif element.tag == "threshold": neuron_params.threshold = float(element.text)
-      elif element.tag == "sphere_radius": neuron_params.sphere_radius = float(element.text)
-      elif element.tag == "rgb_color":
-        color_string = element.text.split(" ")
-        neuron_params.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
     # Return what we have parsed
     return neuron_params
 
@@ -208,10 +200,6 @@ class ProjectIO:
         indices_string = element.text.split(" ")
         connection.neuron_indices = (int(indices_string[0]), int(indices_string[1]))
       elif element.tag == "weight": connection.weight = float(element.text)
-      elif element.tag == "cylinder_radius": connection.cylinder_radius = float(element.text)
-      elif element.tag == "rgb_color":
-        color_string = element.text.split(" ")
-        connection.rgb_color = (float(color_string[0]), float(color_string[1]), float(color_string[2]))
     # Return what we have parsed
     return connection
 
@@ -278,7 +266,7 @@ class ProjectIO:
     connections = list()
     # Create the neurons
     for ps in connection_parameters:
-      connection = brain.create_neural_connection(ps.name, ps.neuron_indices, ps.weight, ps.cylinder_radius)
+      connection = brain.create_neural_connection(ps.name, ps.neuron_indices, ps.weight)
       if connection:
         connections.append(connection)
     # Add the connections to the data container
@@ -351,20 +339,12 @@ class ProjectIO:
     p = neuron.position
     ET.SubElement(xml_element, "position").text = str(p[0]) + " " + str(p[1]) + " " + str(p[2])
     ET.SubElement(xml_element, "threshold").text = str(neuron.threshold)
-    vis_rep = neuron.visual_representation
-    ET.SubElement(xml_element, "sphere_radius").text = str(vis_rep.sphere_radius)
-    c = vis_rep.get_color()
-    ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
 
 
   def __save_neural_connection(self, connection, xml_element):
     ET.SubElement(xml_element, "name").text = connection.name
     ET.SubElement(xml_element, "neuron_indices").text = str(connection.neuron1.index) + " " + str(connection.neuron2.index)
     ET.SubElement(xml_element, "weight").text = str(connection.weight)
-    vis_rep = connection.visual_representation
-    ET.SubElement(xml_element, "cylinder_radius").text = str(vis_rep.cylinder_radius)
-    c = vis_rep.get_color()
-    ET.SubElement(xml_element, "rgb_color").text = str(c[0]) + " " + str(c[1]) + " " + str(c[2])
 
 
   def __compute_relative_file_name(self, abs_file_name, project_folder):

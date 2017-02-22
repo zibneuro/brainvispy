@@ -1,19 +1,24 @@
 from generators.neurongenerator import NeuronGenerator
 from generators.neuralconnectiongenerator import NeuralConnectionGenerator
+from generators.randompoints import RandomPointsGenerator
 from core.datacontainer import DataContainer
+from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
 
 class Brain:
   def __init__(self, data_container):
-    self.__id_to_neuron = dict()
-    data_container.add_observer(self)
+    self.__idx_to_neuron = dict()
     self.__name_to_neuron = dict()
+    self.__name_to_neural_connection = dict()
     self.__name_to_brain_region = dict()
+    data_container.add_observer(self)
 
 
   def observable_changed(self, change, data):
     # Decide what to do depending on what changed
-    if change == DataContainer.change_is_deleted_models:
+    if change == DataContainer.change_is_new_data:
+      self.__add_brain_regions(data)
+    elif change == DataContainer.change_is_deleted_models:
       self.__delete_neurons(data)
 
 
@@ -22,7 +27,12 @@ class Brain:
       if not isinstance(neuron, Neuron):
         continue
       try:
-        del self.__id_to_neuron[neuron.index]
+        del self.__idx_to_neuron[neuron.index]
+      except KeyError:
+        pass
+
+      try:
+        del self.__name_to_neuron[neuron.name]
       except KeyError:
         pass
 
@@ -30,13 +40,12 @@ class Brain:
   def create_neurons(self, neuron_parameters):
     brain_region_name_to_neurons = dict()
     neuro_gen = NeuronGenerator()
-    neuron_index = len(self.__name_to_neuron)
     new_neurons = list()
 
     for n in neuron_parameters:
       # If we already have that neuron, just update it
-      if n.name in self.__name_to_neuron:
-        self.__name_to_neuron[n.name].set_threshold(n.threshold)
+      if n.name in self.__name_to_neuron or n.index in self.__idx_to_neuron:
+        self.__update_neuron(n)
       else:
         # We have to create a new neuron
         try: # to get its position
@@ -55,9 +64,8 @@ class Brain:
             brain_region_name_to_neurons[brain_region_name].append(n)
         else:
           # We got position -> create the neuron
-          neuron = neuro_gen.create_neuron(n.name, neuron_index, p, n.threshold)
-          neuron_index += 1
-          self.__name_to_neuron[neuron.name] = neuron
+          neuron = neuro_gen.create_neuron(n.name, n.index, p, n.threshold)
+          self.__add_neuron(neuron)
           new_neurons.append(neuron)
 
     # Now generate the neurons inside the provided brain regions
@@ -75,29 +83,91 @@ class Brain:
 
       for i in range(len(neuron_parameters)):
         np = neuron_parameters[i]
-        neuron = neuro_gen.create_neuron(np.name, neuron_index, neuron_positions[i], np.threshold)
-        neuron_index += 1
-        self.__name_to_neuron[neuron.name] = neuron
+        neuron = neuro_gen.create_neuron(np.name, np.index, neuron_positions[i], np.threshold)
+        self.__add_neuron(neuron)
         new_neurons.append(neuron)
 
     return new_neurons
 
-#  def create_neural_connection(self, name, neuron_indices, weight, cylinder_radius):
-#    n1 = self.get_neuron(neuron_indices[0])
-#    n2 = self.get_neuron(neuron_indices[1])
-#    if (not n1) or (not n2) or (n1 == n2):
-#      return None
 
-#    con_gen = NeuralConnectionGenerator()
-#    return con_gen.create_neural_connection(name, n1, n2, weight, cylinder_radius)
+  def create_neural_connections(self, connection_parameters):
+    nc_gen = NeuralConnectionGenerator()
+    neural_connections = list()
+    
+    for cp in connection_parameters:
+      # No connections from a neuron to itself
+      if cp.src_neuron_name == cp.tar_neuron_name:
+        continue
+      # Get the neurons we are supposed to connect
+      src_neuron = self.__get_neuron_by_name(cp.src_neuron_name)
+      tar_neuron = self.__get_neuron_by_name(cp.tar_neuron_name)
+      if not src_neuron or not tar_neuron:
+        continue
+      # Create the name of the neural connection
+      nc_name = self.__compute_neural_connection_name(src_neuron.name, tar_neuron.name)
+      # If there already is a neural connection with this name - delete it
+      try:
+        del self.__name_to_neural_connection[nc_name]
+      except KeyError:
+        pass
+      # Create a new neural connection and save it
+      nc = nc_gen.create_neural_connection(nc_name, src_neuron.name, tar_neuron.name, src_neuron.p, tar_neuron.p, cp.weight)
+      self.__name_to_neural_connection[nc_name] = nc
+      neural_connections.append(nc)
+
+    # Return the neural connections
+    return neural_connections
 
 
-  def get_neuron(self, neuron_id):
-    return self.__id_to_neuron.get(neuron_id)
+  def __compute_neural_connection_name(self, src_neuron_name, tar_neuron_name):
+    return src_neuron_name + " -> " + tar_neuron_name
 
 
-  def __generate_valid_neuron_id(self):
-    neuron_id = 0
-    while neuron_id in self.__id_to_neuron:
-      neuron_id += 1
-    return neuron_id    
+  def __add_neuron(self, neuron):
+    self.__idx_to_neuron[neuron.index] = neuron
+    self.__name_to_neuron[neuron.name] = neuron
+
+
+  def __update_neuron(self, neuron_parameters):
+    neuron = self.__get_neuron(neuron_parameters.index, neuron_parameters.name)
+    if not neuron:
+      return
+
+    self.__delete_neuron(neuron_parameters.index, neuron_parameters.name)
+    
+    neuron.set_index(neuron_parameters.index)
+    neuron.set_name(neuron_parameters.name)
+
+    self.__idx_to_neuron[neuron.index] = neuron
+    self.__name_to_neuron[neuron.name] = neuron
+    
+    print("updated " + neuron.name + " " + str(neuron.index))
+
+
+  def __get_neuron(self, index, name):
+    neuron = self.__idx_to_neuron.get(index)
+    if not neuron:
+      neuron = self.__name_to_neuron.get(name)
+    return neuron
+
+
+  def __get_neuron_by_name(self, name):
+    return self.__name_to_neuron.get(name)
+
+
+  def __delete_neuron(self, index, name):
+    try:
+      del self.__idx_to_neuron[index]
+    except KeyError:
+      pass
+
+    try:
+      del self.__name_to_neuron[name]
+    except KeyError:
+      pass
+
+
+  def __add_brain_regions(self, data):
+    for model in data:
+      if isinstance(model, BrainRegion):
+        self.__name_to_brain_region[model.name] = model

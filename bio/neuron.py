@@ -39,6 +39,9 @@ class Neuron:
   def position(self):
     return self.__pos
 
+  @property
+  def p(self):
+    return self.__pos
 
   @property
   def threshold(self):

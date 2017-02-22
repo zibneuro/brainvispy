@@ -1,8 +1,8 @@
 class NeuralConnection:
-  def __init__(self, name, neuron1, neuron2, weight, visual_representation):
+  def __init__(self, name, src_neuron_name, tar_neuron_name, weight, visual_representation):
     self.__name = name
-    self.__neuron1 = neuron1
-    self.__neuron2 = neuron2
+    self.__src_neuron_name = src_neuron_name
+    self.__tar_neuron_name = tar_neuron_name
     self.__weight = weight
     self.__vis_rep = visual_representation
     # This is just to update the visual representation
@@ -23,13 +23,13 @@ class NeuralConnection:
 
 
   @property
-  def neuron1(self):
-    return self.__neuron1
+  def src_neuron_name(self):
+    return self.__src_neuron_name
 
 
   @property
-  def neuron2(self):
-    return self.__neuron2
+  def tar_neuron_name(self):
+    return self.__tar_neuron_name
 
 
   @property
