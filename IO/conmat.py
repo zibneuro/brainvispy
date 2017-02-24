@@ -1,16 +1,3 @@
-import os
-import vtk
-import xml.etree.ElementTree as ET
-from core.progress import ProgressBar
-from core.datacontainer import DataContainer
-from bio.brainregion import BrainRegion
-from bio.neuron import Neuron
-from bio.neuralconnection import NeuralConnection
-from vis.visbrainregion import VisBrainRegion
-from gui.vtkwidget import VtkWidget
-from IO.vtkio import VtkIO
-
-
 class NeuronParameters:
   def __init__(self, name, index, brain_region_name, threshold):
     self.name = name
@@ -27,13 +14,14 @@ class NeuralConnectionParameters:
 
 
 class ConnectivityMatrixIO:
-  def load_matrix(self, connectivity_matrix_file_name, data_container, brain):
+  def load_matrix(self, connectivity_matrix_file_name, brain):
+    # Load the neuron and neural connection parameters from file
     neuron_params, conn_params = self.__load_csv_file(connectivity_matrix_file_name)
-    neurons = brain.create_neurons(neuron_params)
-    neural_connections = brain.create_neural_connections(conn_params)
-    data_container.add_data(neurons)
-    data_container.add_data(neural_connections)
-    return list() # no error messages are returned
+    # Add them to the brain and the data container
+    brain.create_neurons(neuron_params)
+    brain.create_neural_connections(conn_params)
+    # The current version returns no error messages
+    return list()
 
 
   def __load_csv_file(self, file_name):

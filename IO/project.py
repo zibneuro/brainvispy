@@ -38,8 +38,9 @@ class NeuronParameters:
 
 class ConnectionParameters:
   def __init__(self):
-    self.name = "connection"
-    self.neuron_indices = (-1, -1)
+    self.name = ""
+    self.src_neuron_name = ""
+    self.tar_neuron_name = ""
     self.weight = -1
 
 
@@ -118,10 +119,10 @@ class ProjectIO:
 
     # Load the brain regions (i.e., the meshes from disk)
     self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
-    # Create the neurons (note that they are not loaded but the visual representation is generated on the fly)
-    data_container.add_data(brain.create_neurons(neuron_parameters))
-    # Create the connections (note that they are not loaded but the visual representation is generated on the fly)
-    self.__create_neural_connections(connection_parameters, data_container, brain)
+    # Create the neurons (note that the visual representation is not loaded but generated on the fly)
+    brain.create_neurons(neuron_parameters)
+    # Create the connections (note that the visual representation is not loaded but generated on the fly)
+    brain.create_neural_connections(connection_parameters)
 
     # Setup the VTK widget based on what we parsed
     vtk_widget.set_camera_position(camera_parameters.position)
@@ -196,9 +197,8 @@ class ProjectIO:
     # Read all elements of 'xml_input'
     for element in xml_input:
       if   element.tag == "name": connection.name = element.text
-      elif element.tag == "neuron_indices":
-        indices_string = element.text.split(" ")
-        connection.neuron_indices = (int(indices_string[0]), int(indices_string[1]))
+      elif element.tag == "src_neuron_name": connection.src_neuron_name = element.text
+      elif element.tag == "tar_neuron_name": connection.tar_neuron_name = element.text
       elif element.tag == "weight": connection.weight = float(element.text)
     # Return what we have parsed
     return connection
@@ -257,20 +257,8 @@ class ProjectIO:
     vis_brain_region.set_see_inside(parameters.see_inside)
     vis_brain_region.set_transparency(parameters.transparency)
     # Create and return the brain region
-    brain_region = BrainRegion(parameters.name, None, vis_brain_region)
+    brain_region = BrainRegion(parameters.name, vis_brain_region)
     return brain_region
-
-
-  def __create_neural_connections(self, connection_parameters, data_container, brain):
-    return
-    connections = list()
-    # Create the neurons
-    for ps in connection_parameters:
-      connection = brain.create_neural_connection(ps.name, ps.neuron_indices, ps.weight)
-      if connection:
-        connections.append(connection)
-    # Add the connections to the data container
-    data_container.add_data(connections)
 
 
   def __extract_name(self, file_name):
@@ -343,7 +331,8 @@ class ProjectIO:
 
   def __save_neural_connection(self, connection, xml_element):
     ET.SubElement(xml_element, "name").text = connection.name
-    ET.SubElement(xml_element, "neuron_indices").text = str(connection.neuron1.index) + " " + str(connection.neuron2.index)
+    ET.SubElement(xml_element, "src_neuron_name").text = connection.src_neuron_name
+    ET.SubElement(xml_element, "tar_neuron_name").text = connection.tar_neuron_name
     ET.SubElement(xml_element, "weight").text = str(connection.weight)
 
 
