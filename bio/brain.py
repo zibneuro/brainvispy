@@ -130,9 +130,6 @@ class Brain:
     new_neural_connections = list()
     
     for cp in connection_parameters:
-      # No connections from a neuron to itself
-      if cp.src_neuron_name == cp.tar_neuron_name:
-        continue
       # Get the neurons we are supposed to connect
       src_neuron = self.__name_to_neuron.get(cp.src_neuron_name)
       tar_neuron = self.__name_to_neuron.get(cp.tar_neuron_name)
