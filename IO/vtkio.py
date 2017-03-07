@@ -34,3 +34,18 @@ class VtkIO:
     data_reader.SetFileName(file_name)
     data_reader.Update()
     return data_reader.GetOutput()
+
+
+  def compute_connected_components(self, poly_data):
+    con = vtk.vtkPolyDataConnectivityFilter()
+    con.SetInputData(poly_data)
+    #con.SetExtractionModeToAllRegions()
+    con.SetExtractionModeToSpecifiedRegions()
+    con.AddSpecifiedRegion(0)
+    con.Update()
+    print(con.GetOutput().GetNumberOfCells(), "vs", poly_data.GetNumberOfCells())
+    con.DeleteSpecifiedRegion(0)
+    con.AddSpecifiedRegion(1)
+    con.Update()
+    print(con.GetOutput().GetNumberOfCells(), "vs", poly_data.GetNumberOfCells())
+    print("done")

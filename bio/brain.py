@@ -62,7 +62,7 @@ class Brain:
   def create_neurons(self, neuron_parameters):
     self.__delete_existing_neurons(neuron_parameters)
 
-    brain_region_name_to_neuron_parameters_list = dict()
+    brain_region_to_neurons = dict()
     neuro_gen = NeuronGenerator()
     new_neurons = list()
 
@@ -75,13 +75,20 @@ class Brain:
         try: # to get a brain region name
           brain_region_name = np.brain_region_name
         except AttributeError:
-          # Neither position no brain region => cannot create the neuron
+          # Neither position nor brain region => cannot create the neuron
           continue
         else:
+          # Get the brain side (left or right)
+          try:
+            brain_side = np.brain_side
+          except AttributeError:
+            brain_side = None
+            
           # We have the brain region that should contain the neuron. Save it for later generation
-          if brain_region_name not in brain_region_name_to_neuron_parameters_list:
-            brain_region_name_to_neuron_parameters_list[brain_region_name] = list()
-          brain_region_name_to_neuron_parameters_list[brain_region_name].append(np)
+          brain_region_descriptor = (brain_region_name,brain_side)
+          if brain_region_descriptor not in brain_region_to_neurons:
+            brain_region_to_neurons[brain_region_descriptor] = list()
+          brain_region_to_neurons[brain_region_descriptor].append(np)
       else:
         # We got position -> create the neuron
         neuron = neuro_gen.create_neuron(np.name, np.index, p, np.threshold)
@@ -89,14 +96,20 @@ class Brain:
         new_neurons.append(neuron)
 
     # Now generate the neurons inside the provided brain regions
-    for brain_region_name in brain_region_name_to_neuron_parameters_list:
+    for brain_region_descriptor in brain_region_to_neurons:
       try: # to get a brain region
-        brain_region = self.__name_to_brain_region[brain_region_name]
+        brain_region = self.__name_to_brain_region[brain_region_descriptor[0]]
       except KeyError:
         continue
 
+      # Get the left/right part of the brain region
+      if brain_region_descriptor[1]:
+        brain_region = brain_region # todo: extract the left/right brain region
+      else:
+        print("No brain side for '" + brain_region_descriptor[0] + "' provided")
+
       # Get the neuron parameters
-      neuron_parameters = brain_region_name_to_neuron_parameters_list[brain_region_name]
+      neuron_parameters = brain_region_to_neurons[brain_region_descriptor]
       # Generate the neuron positions
       rnd_pts_gen = RandomPointsGenerator(brain_region)
       neuron_positions = rnd_pts_gen.generate_points_inside_mesh(len(neuron_parameters))
