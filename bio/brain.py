@@ -5,6 +5,7 @@ from core.datacontainer import DataContainer
 from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
 from bio.neuralconnection import NeuralConnection
+from geom.connectedcomponents import ConnectedComponents
 
 class Brain:
   def __init__(self, data_container):
@@ -60,8 +61,12 @@ class Brain:
 
 
   def create_neurons(self, neuron_parameters):
+    if not neuron_parameters:
+      return
+
     self.__delete_existing_neurons(neuron_parameters)
 
+    split_brain_regions = dict()
     brain_region_to_neurons = dict()
     neuro_gen = NeuronGenerator()
     new_neurons = list()
@@ -78,17 +83,25 @@ class Brain:
           # Neither position nor brain region => cannot create the neuron
           continue
         else:
-          # Get the brain side (left or right)
+          # Make sure we have the desired brain region
           try:
-            brain_side = np.brain_side
-          except AttributeError:
-            brain_side = None
-            
-          # We have the brain region that should contain the neuron. Save it for later generation
-          brain_region_descriptor = (brain_region_name,brain_side)
-          if brain_region_descriptor not in brain_region_to_neurons:
-            brain_region_to_neurons[brain_region_descriptor] = list()
-          brain_region_to_neurons[brain_region_descriptor].append(np)
+            brain_region = self.__name_to_brain_region[brain_region_name]
+          except KeyError:
+            continue
+
+          # Shall we split the brain region?
+          if np.brain_side:
+            brain_side = np.brain_side[0].lower()
+            if brain_side == "l" or brain_side == "r":
+              if brain_region_name not in split_brain_regions:
+                split_brain_regions[brain_region_name] = self.__split_brain_region(brain_region)
+              brain_region = split_brain_regions[brain_region_name][brain_side]
+
+          # Save the brain region for latter neuron generation
+          if brain_region not in brain_region_to_neurons:
+            brain_region_to_neurons[brain_region] = list()
+          # Save the neuron parameters
+          brain_region_to_neurons[brain_region].append(np)
       else:
         # We got position -> create the neuron
         neuron = neuro_gen.create_neuron(np.name, np.index, p, np.threshold)
@@ -96,20 +109,9 @@ class Brain:
         new_neurons.append(neuron)
 
     # Now generate the neurons inside the provided brain regions
-    for brain_region_descriptor in brain_region_to_neurons:
-      try: # to get a brain region
-        brain_region = self.__name_to_brain_region[brain_region_descriptor[0]]
-      except KeyError:
-        continue
-
-      # Get the left/right part of the brain region
-      if brain_region_descriptor[1]:
-        brain_region = brain_region # todo: extract the left/right brain region
-      else:
-        print("No brain side for '" + brain_region_descriptor[0] + "' provided")
-
+    for brain_region in brain_region_to_neurons:
       # Get the neuron parameters
-      neuron_parameters = brain_region_to_neurons[brain_region_descriptor]
+      neuron_parameters = brain_region_to_neurons[brain_region]
       # Generate the neuron positions
       rnd_pts_gen = RandomPointsGenerator(brain_region)
       neuron_positions = rnd_pts_gen.generate_points_inside_mesh(len(neuron_parameters))
@@ -122,6 +124,16 @@ class Brain:
 
     # Add the new neurons to the data container
     self.__data_container.add_data(new_neurons)
+
+
+  def __split_brain_region(self, brain_region):
+    cc = ConnectedComponents()
+    components = cc.extract_connected_components(brain_region)
+    if len(components) == 1:
+      return {"l": components[0], "r": components[0]}
+    # Sort the components according to their center of mass' projection along the x axis
+    sorted_meshes = cc.sort_meshes(0, components[0], components[1])
+    return {"l": sorted_meshes[1], "r": sorted_meshes[0]}
 
 
   def __delete_existing_neurons(self, neuron_parameters):
@@ -137,11 +149,14 @@ class Brain:
 
 
   def create_neural_connections(self, connection_parameters):
+    if not connection_parameters:
+      return
+
     self.__delete_existing_neural_connections(connection_parameters)
 
     nc_gen = NeuralConnectionGenerator()
     new_neural_connections = list()
-    
+
     for cp in connection_parameters:
       # Get the neurons we are supposed to connect
       src_neuron = self.__name_to_neuron.get(cp.src_neuron_name)

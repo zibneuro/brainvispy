@@ -1,8 +1,9 @@
 class NeuronParameters:
-  def __init__(self, name, index, brain_region_name, threshold):
+  def __init__(self, name, index, brain_region_name, brain_side, threshold):
     self.name = name
     self.index = index
     self.brain_region_name = brain_region_name
+    self.brain_side = brain_side
     self.threshold = threshold
 
 
@@ -16,7 +17,7 @@ class NeuralConnectionParameters:
 class ConnectivityMatrixIO:
   def load_matrix(self, connectivity_matrix_file_name, brain):
     # Load the neuron and neural connection parameters from file
-    neuron_params, conn_params = self.__load_csv_file(connectivity_matrix_file_name)
+    neuron_params, conn_params = self.__load_from_csv_file(connectivity_matrix_file_name)
     # Add them to the brain and the data container
     brain.create_neurons(neuron_params)
     brain.create_neural_connections(conn_params)
@@ -24,19 +25,19 @@ class ConnectivityMatrixIO:
     return list()
 
 
-  def __load_csv_file(self, file_name):
+  def __load_from_csv_file(self, file_name):
     file_lines = list()
 
     # Open the file and read in the lines    
     try:
       f = open(file_name, "r")
     except:
-      return None
+      return (None, None)
     file_lines = f.readlines()
 
     # Make sure we got enough lines
     if len(file_lines) < 1:
-      return None
+      return (None, None)
 
     # These two lists will be filled below and returned
     neurons = list()
@@ -68,21 +69,22 @@ class ConnectivityMatrixIO:
 
       if len(cells) < 1:
         continue
-        
+
       # Get the name of the current neuron
       neuron_name = cells[0]
 
-      # Create the connections using the cells 1 to #neurons + 1
+      # Create a new neuron using the cells which contain the neuron parameters
+      neuron = self.__create_neuron(neuron_name, neuron_idx, cells[num_neurons+1:])
+      if neuron: # save the neuron
+        neurons.append(neuron)
+      else:
+        continue # we couldn't create the neuron => we cannot create neural connections from/to it
+
+      # Create the connections using the cells which contain the connection weights
       connections = self.__create_neural_connections(neuron_name, cells[1:num_neurons+1], col_id_to_neuron_name)
       # Save the connections
       if connections:
         neural_connections.extend(connections)
-
-      # Create a new neuron
-      neuron = self.__create_neuron(neuron_name, neuron_idx, cells[num_neurons+1:])
-      # Save the neuron
-      if neuron:
-        neurons.append(neuron)
 
     return (neurons, neural_connections)
 
@@ -119,14 +121,21 @@ class ConnectivityMatrixIO:
     if len(cells) < 2:
       return None
 
+    brain_region_name = cells[0]
     # Make sure there is a brain region name
-    if cells[0] == "":
+    if brain_region_name == "":
       return None
+
+    # Get the side of the brain (left or right) which contains the neuron
+    if cells[1] != "":
+      brain_side = cells[1]
+    else:
+      brain_side = None
 
     # Get the threshold for this neuron
     try:
-      threshold = float(cells[1])
+      threshold = float(cells[2])
     except ValueError:
       return None
 
-    return NeuronParameters(neuron_name, neuron_idx, cells[0], threshold)
+    return NeuronParameters(neuron_name, neuron_idx, brain_region_name, brain_side, threshold)

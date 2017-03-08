@@ -102,9 +102,6 @@ class RandomPointsGenerator:
     p = np.array([p[0], p[1], p[2]])
     q = intersection_points.GetPoint(1)
     q = np.array([q[0], q[1], q[2]])
-    t = random.uniform(0.1, 0.9)
+    t = random.uniform(0.2, 0.8)
     
     return p + t*(q - p)
-
-
-
