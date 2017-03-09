@@ -108,7 +108,7 @@ class Brain:
         self.__add_neuron(neuron)
         new_neurons.append(neuron)
 
-    # Now generate the neurons inside the provided brain regions
+    # Now generate the neurons inside the brain regions
     for brain_region in brain_region_to_neurons:
       # Get the neuron parameters
       neuron_parameters = brain_region_to_neurons[brain_region]
