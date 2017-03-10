@@ -1,5 +1,6 @@
 from core.datacontainer import DataContainer
 from bio.neuron import Neuron
+from bio.neuralconnection import NeuralConnection
 from bio.brain import Brain
 
 class Controller:
@@ -34,7 +35,13 @@ class Controller:
 
   def on_key_released(self, viewer3d, key):
     if key == "Delete":
-      self.__data_container.delete_models(list(self.__prop3d_to_selected_model.values()))
+      models_to_delete = list()
+      # Collect all models except neurons and neural connections
+      for model in self.__prop3d_to_selected_model.values():
+        if not isinstance(model, Neuron) and not isinstance(model, NeuralConnection):
+          models_to_delete.append(model)
+      # Delete the collected models
+      self.__data_container.delete_models(models_to_delete)
 
 
   def on_left_button_pressed(self, viewer3d):
@@ -63,12 +70,6 @@ class Controller:
     # The user doesn't hold the ctrl. key
     else:
       self.__data_container.set_selection(self.__prop3d_to_model.get(prop3d))
-
-
-  def generate_neurons(self, number_of_neurons_per_region, brain_regions, threshold_potential_range):
-    neurons = self.__brain.create_neurons(number_of_neurons_per_region, brain_regions, threshold_potential_range)
-    if neurons:
-      self.__data_container.add_data(neurons)
 
 
   def observable_changed(self, change, data):

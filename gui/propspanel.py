@@ -1,6 +1,8 @@
 from core.datacontainer import DataContainer
 from vis.vtkpoly import VtkPolyModel
 from gui.brainregiongui import BrainRegionGUI
+from gui.neurongui import NeuronGUI
+from gui.neuralconnectiongui import NeuralConnectionGUI
 from PyQt5 import QtCore, QtWidgets
 
 class PropsPanel(QtWidgets.QDockWidget):
@@ -30,9 +32,11 @@ class PropsPanel(QtWidgets.QDockWidget):
     dock_layout.setAlignment(self.__qt_list_widget, QtCore.Qt.AlignTop)
     dock_layout.setAlignment(QtCore.Qt.AlignTop)
 
-    # The GUIs for the volume and poly and models
+    # The GUIs for the brain regions, neurons, neural connections, ...
+    dock_layout.addWidget(NeuronGUI(self.__data_container))
     dock_layout.addWidget(BrainRegionGUI(self.__data_container))
-
+    dock_layout.addWidget(NeuralConnectionGUI(self.__data_container))
+    
     # Group everything in a frame
     dock_frame = QtWidgets.QFrame()
     dock_frame.setLayout(dock_layout)

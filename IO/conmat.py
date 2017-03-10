@@ -118,7 +118,7 @@ class ConnectivityMatrixIO:
 
 
   def __create_neuron(self, neuron_name, neuron_idx, cells):
-    if len(cells) < 2:
+    if len(cells) < 3:
       return None
 
     brain_region_name = cells[0]

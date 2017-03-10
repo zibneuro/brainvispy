@@ -64,7 +64,8 @@ class Brain:
     if not neuron_parameters:
       return
 
-    self.__delete_existing_neurons(neuron_parameters)
+    # Delete the existing neurons
+    self.__data_container.delete_models(list(self.__idx_to_neuron.values()))
 
     split_brain_regions = dict()
     brain_region_to_neurons = dict()
@@ -136,23 +137,12 @@ class Brain:
     return {"l": sorted_meshes[1], "r": sorted_meshes[0]}
 
 
-  def __delete_existing_neurons(self, neuron_parameters):
-    neurons_to_delete = list()
-    # Collect the existing neurons
-    for np in neuron_parameters:
-      neuron = self.__name_to_neuron.get(np.name)
-      if neuron:
-        neurons_to_delete.append(neuron)
-    # Delete the existing neurons
-    if neurons_to_delete:
-      self.__data_container.delete_models(neurons_to_delete)
-
-
   def create_neural_connections(self, connection_parameters):
     if not connection_parameters:
       return
 
-    self.__delete_existing_neural_connections(connection_parameters)
+    # Delete existing neural connections
+    self.__data_container.delete_models(list(self.__name_to_neural_connection.values()))
 
     nc_gen = NeuralConnectionGenerator()
     new_neural_connections = list()
