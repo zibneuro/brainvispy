@@ -17,12 +17,12 @@ class NeuralConnectionParameters:
 class ConnectivityMatrixIO:
   def load_matrix(self, connectivity_matrix_file_name, brain):
     # Load the neuron and neural connection parameters from file
-    neuron_params, conn_params = self.__load_from_csv_file(connectivity_matrix_file_name)
+    neuron_params, conn_params, load_errors = self.__load_from_csv_file(connectivity_matrix_file_name)
     # Add them to the brain and the data container
-    brain.create_neurons(neuron_params)
-    brain.create_neural_connections(conn_params)
+    neuron_errors = brain.create_neurons(neuron_params)
+    nc_errors = brain.create_neural_connections(conn_params)
     # The current version returns no error messages
-    return list()
+    return load_errors + neuron_errors + nc_errors
 
 
   def __load_from_csv_file(self, file_name):
@@ -32,12 +32,12 @@ class ConnectivityMatrixIO:
     try:
       f = open(file_name, "r")
     except:
-      return (None, None)
+      return (None, None, ["Could not open '" + file_name + "'"])
     file_lines = f.readlines()
 
     # Make sure we got enough lines
-    if len(file_lines) < 1:
-      return (None, None)
+    if len(file_lines) <= 1:
+      return (None, None, ["Too few lines in the matrix file"])
 
     # These two lists will be filled below and returned
     neurons = list()
@@ -86,7 +86,7 @@ class ConnectivityMatrixIO:
       if connections:
         neural_connections.extend(connections)
 
-    return (neurons, neural_connections)
+    return (neurons, neural_connections, [])
 
 
   def __create_neural_connections(self, src_neuron_name, cells, col_id_to_neuron_name):

@@ -62,7 +62,7 @@ class Brain:
 
   def create_neurons(self, neuron_parameters):
     if not neuron_parameters:
-      return
+      return []
 
     # Delete the existing neurons
     self.__data_container.delete_models(list(self.__idx_to_neuron.values()))
@@ -71,6 +71,8 @@ class Brain:
     brain_region_to_neurons = dict()
     neuro_gen = NeuronGenerator()
     new_neurons = list()
+
+    missing_brain_regions = set()
 
     for np in neuron_parameters:
       # Create a new neuron
@@ -88,6 +90,7 @@ class Brain:
           try:
             brain_region = self.__name_to_brain_region[brain_region_name]
           except KeyError:
+            missing_brain_regions.add(brain_region_name)
             continue
 
           # Shall we split the brain region?
@@ -125,7 +128,17 @@ class Brain:
 
     # Add the new neurons to the data container
     self.__data_container.add_data(new_neurons)
+    
+    # Inform the user about missing brain regions
+    if missing_brain_regions:
+      error_message = "Missing brain region(s):\n"
+      for name in missing_brain_regions:
+        error_message += "  " + name + "\n"
+      return [error_message]
 
+    # everything is fine
+    return []
+    
 
   def __split_brain_region(self, brain_region):
     cc = ConnectedComponents()
@@ -139,7 +152,7 @@ class Brain:
 
   def create_neural_connections(self, connection_parameters):
     if not connection_parameters:
-      return
+      return []
 
     # Delete existing neural connections
     self.__data_container.delete_models(list(self.__name_to_neural_connection.values()))
@@ -162,6 +175,8 @@ class Brain:
 
     # Add the new connections to the data container
     self.__data_container.add_data(new_neural_connections)
+    # No error messages
+    return []
 
 
   def __delete_existing_neural_connections(self, connection_parameters):

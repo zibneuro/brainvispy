@@ -80,17 +80,8 @@ class MainWindow(QtWidgets.QMainWindow):
     howto_get_started = QtWidgets.QAction('Get started', self)
     howto_get_started.triggered.connect(self.__on_howto_get_started)
     # Create neurons
-    howto_create_neurons = QtWidgets.QAction('Create neurons', self)
-    howto_create_neurons.triggered.connect(self.__on_howto_create_neurons)
-    # Adjust neuron parameters
-    howto_adjust_neuron_parameters = QtWidgets.QAction('Adjust neuron parameters', self)
-    howto_adjust_neuron_parameters.triggered.connect(self.__on_howto_adjust_neuron_parameters)
-    # Connect neurons
-    howto_connect_neurons = QtWidgets.QAction('Connect neurons', self)
-    howto_connect_neurons.triggered.connect(self.__on_howto_connect_neurons)
-    # Adjust connection parameters
-    howto_adjust_connection_parameters = QtWidgets.QAction('Adjust connection parameters', self)
-    howto_adjust_connection_parameters.triggered.connect(self.__on_howto_adjust_connection_parameters)
+    howto_create_neural_network = QtWidgets.QAction('Create neural network', self)
+    howto_create_neural_network.triggered.connect(self.__on_howto_create_neural_network)
 
     # Add everything to the menu bar
     # FILE
@@ -108,10 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # HOWTO
     howto_menu = self.menuBar().addMenu("HOW TO")
     howto_menu.addAction(howto_get_started)
-    howto_menu.addAction(howto_create_neurons)
-    howto_menu.addAction(howto_adjust_neuron_parameters)
-    howto_menu.addAction(howto_connect_neurons)
-    howto_menu.addAction(howto_adjust_connection_parameters)
+    howto_menu.addAction(howto_create_neural_network)
 
 
   def __setup_main_frame(self):
@@ -233,9 +221,8 @@ class MainWindow(QtWidgets.QMainWindow):
       # Load the connectivity matrix
       conn_mat_io = ConnectivityMatrixIO()
       error_messages = conn_mat_io.load_matrix(conn_mat_file_name, self.__brain)
-      for err_msg in error_messages:
-        print(err_msg)
-        #self.__show_messages(error_messages, "Errors while loading project:")
+      if error_messages:
+        self.__show_messages(error_messages, "Error(s) while creating the neural network:")
 
 
   def __load_config_file(self):
@@ -262,23 +249,8 @@ class MainWindow(QtWidgets.QMainWindow):
     dialog.show()
 
 
-  def __on_howto_create_neurons(self):
-    dialog = gui.howto.HowtoCreateNeurons(self)
-    dialog.show()
-
-
-  def __on_howto_adjust_neuron_parameters(self):
-    dialog = gui.howto.HowtoAdjustNeuronParameters(self)
-    dialog.show()
-
-
-  def __on_howto_connect_neurons(self):
-    dialog = gui.howto.HowtoConnectNeurons(self)
-    dialog.show()
-
-
-  def __on_howto_adjust_connection_parameters(self):
-    dialog = gui.howto.HowtoAdjustConnectionParameters(self)
+  def __on_howto_create_neural_network(self):
+    dialog = gui.howto.HowtoCreateNeuralNetwork(self)
     dialog.show()
 
 

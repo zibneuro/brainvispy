@@ -16,12 +16,13 @@ class VisNeuralConnection(VtkPolyModel):
     # Init the rest
     VtkPolyModel.__init__(self, vtk_rep, name)
     self.__cylinder_radius = cylinder_radius
-    self.actor.GetProperty().SetLineWidth(3)
+    self.actor.GetProperty().SetLineWidth(2)
 
 
   def on_weight_changed(self, neural_connection):
-    rgb = vis.visutils.map_to_blue_red_rgb(neural_connection.weight)
-    self.set_color(rgb[0], rgb[1], rgb[2])
+    #rgb = vis.visutils.map_to_blue_red_rgb(neural_connection.weight)
+    #self.set_color(rgb[0], rgb[1], rgb[2])
+    self.set_color(0, 0, 0.1)
 
 
   @property

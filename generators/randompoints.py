@@ -32,7 +32,11 @@ class RandomPointsGenerator:
     points = list()
     for i in range(num_points):
       # Randomly pick a triangle from the mesh and randomly pick a point on it
-      (x, y, z) = self.__get_random_mesh_triangle()
+      try:
+        (x, y, z) = self.__get_random_mesh_triangle()
+      except ValueError as err:
+        print(err)
+        continue
       p_on = self.__sample_point_on_triangle(x, y, z)
       # Based on this, generate a point inside the mesh
       p_in = self.__generate_random_point_in_mesh(x, y, z, p_on)
@@ -42,9 +46,8 @@ class RandomPointsGenerator:
 
   def __get_random_mesh_triangle(self):
     """Returns a point on the mesh surface."""
-    if self.__vtk_mesh.GetNumberOfCells() != self.__vtk_mesh.GetNumberOfPolys():
-      print("RandomMeshPointsGenerator.sample_mesh_surface: #cells != #polys")
-    
+    #if self.__vtk_mesh.GetNumberOfCells() != self.__vtk_mesh.GetNumberOfPolys():
+    #  print("RandomMeshPointsGenerator.sample_mesh_surface: #cells != #polys")
     vtk_points = self.__vtk_mesh.GetPoints()
     
     # Make 100 attempts to get a triangle. If all fail, throw an exception
@@ -65,7 +68,7 @@ class RandomPointsGenerator:
         return (a, b, c)
 
     # We couldn't get a single triangle in 100 attempts => throw an exception
-    raise ValueError("input argument 'vtk_mesh' seems to have no triangles")
+    raise ValueError("the mesh seems to have no triangles")
 
 
   def __sample_point_on_triangle(self, x, y, z):
