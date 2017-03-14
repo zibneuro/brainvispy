@@ -95,7 +95,7 @@ class ProjectIO:
     vtk_widget.reset_view()
 
 
-  def open_project(self, project_file_name, data_container, brain, vtk_widget):
+  def open_project(self, default_brain_region_folder, project_file_name, data_container, brain, vtk_widget):
     if not isinstance(data_container, DataContainer):
       raise TypeError("input has to be of type DataContainer")
     # This is the new project file name
@@ -118,7 +118,7 @@ class ProjectIO:
       return error_messages
 
     # Load the brain regions (i.e., the meshes from disk)
-    self.__load_brain_regions(brain_region_parameters, data_container, error_messages)
+    self.__load_brain_regions(default_brain_region_folder, brain_region_parameters, data_container, error_messages)
     # Create the neurons (note that the visual representation is not loaded but generated on the fly)
     brain.create_neurons(neuron_parameters)
     # Create the connections (note that the visual representation is not loaded but generated on the fly)
@@ -204,7 +204,7 @@ class ProjectIO:
     return connection
 
 
-  def __load_brain_regions(self, brain_region_parameters, data_container, error_messages):
+  def __load_brain_regions(self, default_brain_region_folder, brain_region_parameters, data_container, error_messages):
     vtk_io = VtkIO()
     brain_regions = list()
 
@@ -235,8 +235,15 @@ class ProjectIO:
         parameters.abs_file_name = os.path.join(project_folder, parameters.rel_file_name)
         vtk_poly_data = vtk_io.load(parameters.abs_file_name)
 
+      # Finally, try with the default brain region folder
+      if not vtk_poly_data:
+        file_name = os.path.split(parameters.rel_file_name)[1]
+        parameters.abs_file_name = os.path.join(default_brain_region_folder, file_name)
+        vtk_poly_data = vtk_io.load(parameters.abs_file_name)
+
       # Check for errors
       if not vtk_poly_data:
+        print("failed\n")
         error_messages.append("Couldn't load brain region '" + parameters.name + "'")
       elif not isinstance(vtk_poly_data, vtk.vtkPolyData):
         error_messages.append("Brain region '" + parameters.name + "' has to be a polygon mesh.")

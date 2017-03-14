@@ -123,7 +123,8 @@ class MainWindow(QtWidgets.QMainWindow):
       # Get the project folder and the project name
       self.__project_folder, project_name = os.path.split(project_file_name[0])
       # Open the project
-      error_messages = self.__project_io.open_project(project_file_name[0], self.__data_container, self.__brain, self.__viewer3d)
+      error_messages = self.__project_io.open_project(self.__load_files_folder, project_file_name[0],
+        self.__data_container, self.__brain, self.__viewer3d)
       # Update the window title
       self.setWindowTitle(project_name + "  -  BrainVisPy")
       if error_messages:
