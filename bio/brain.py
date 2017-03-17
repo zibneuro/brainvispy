@@ -1,6 +1,7 @@
 from generators.neurongenerator import NeuronGenerator
 from generators.neuralconnectiongenerator import NeuralConnectionGenerator
 from generators.randompoints import RandomPointsGenerator
+from generators.symmetricpoints import SymmetricPointsGenerator
 from core.datacontainer import DataContainer
 from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
@@ -67,7 +68,6 @@ class Brain:
     # Delete the existing neurons
     self.__data_container.delete_models(list(self.__idx_to_neuron.values()))
 
-    split_brain_regions = dict()
     brain_region_to_neurons = dict()
     neuro_gen = NeuronGenerator()
     new_neurons = list()
@@ -93,15 +93,7 @@ class Brain:
             missing_brain_regions.add(brain_region_name)
             continue
 
-          # Shall we split the brain region?
-          if np.brain_side:
-            brain_side = np.brain_side[0].lower()
-            if brain_side == "l" or brain_side == "r":
-              if brain_region_name not in split_brain_regions:
-                split_brain_regions[brain_region_name] = self.__split_brain_region(brain_region)
-              brain_region = split_brain_regions[brain_region_name][brain_side]
-
-          # Save the brain region for latter neuron generation
+          # Save the brain region and the corresponding neuron parameters for latter neuron generation
           if brain_region not in brain_region_to_neurons:
             brain_region_to_neurons[brain_region] = list()
           # Save the neuron parameters
@@ -116,17 +108,16 @@ class Brain:
     for brain_region in brain_region_to_neurons:
       # Get the neuron parameters
       neuron_parameters = brain_region_to_neurons[brain_region]
-      # Generate the neuron positions
-      rnd_pts_gen = RandomPointsGenerator(brain_region)
-      neuron_positions = rnd_pts_gen.generate_points_inside_mesh(len(neuron_parameters))
+      # This is the guy who generates the random neuron positions
+      pts_gen = SymmetricPointsGenerator(brain_region, axis=0)
 
-      for i in range(len(neuron_parameters)):
-        np = neuron_parameters[i]
-        neuron = neuro_gen.create_neuron(np.name, np.index, neuron_positions[i], np.threshold)
-        self.__add_neuron(neuron)
-        new_neurons.append(neuron)
+      for params in neuron_parameters:
+        neuron_position = pts_gen.generate_point_inside_mesh(params.brain_side)
+        neuron = neuro_gen.create_neuron(params.name, params.index, neuron_position, params.threshold)
+        if neuron:
+          self.__add_neuron(neuron)
+          new_neurons.append(neuron)
 
-    # Add the new neurons to the data container
     self.__data_container.add_data(new_neurons)
     
     # Inform the user about missing brain regions
@@ -138,16 +129,6 @@ class Brain:
 
     # everything is fine
     return []
-    
-
-  def __split_brain_region(self, brain_region):
-    cc = ConnectedComponents()
-    components = cc.extract_connected_components(brain_region)
-    if len(components) == 1:
-      return {"l": components[0], "r": components[0]}
-    # Sort the components according to their center of mass' projection along the x axis
-    sorted_meshes = cc.sort_meshes(0, components[0], components[1])
-    return {"l": sorted_meshes[1], "r": sorted_meshes[0]}
 
 
   def create_neural_connections(self, connection_parameters):
