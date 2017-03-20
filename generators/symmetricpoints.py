@@ -2,6 +2,7 @@ import vtk
 import math
 import random
 import numpy as np
+from generators.uniformpointcloud import UniformPointCloud
 
 class OrientedPoint:
   def __init__(self, p, n):
@@ -12,14 +13,13 @@ class OrientedPoint:
 class SymmetricPointsGenerator:
   def __init__(self, vtk_mesh, axis):
     if not isinstance(vtk_mesh, vtk.vtkPolyData):
-      # Maybe 'vtk_mesh' has a VtkPolyModel as a visual representation that has a vtkPolyData
       try:
         vtk_mesh = vtk_mesh.visual_representation.vtk_poly_data
       except AttributeError:
         raise
 
-    if not vtk_mesh.GetPolys():
-      raise ValueError("input argument 'vtk_mesh' has no triangles")
+    if not vtk_mesh.GetPoints() or not vtk_mesh.GetPolys():
+      raise ValueError("input argument 'vtk_mesh' has no points and/or triangles")
 
     self.__vtk_mesh = vtk_mesh
 
@@ -28,8 +28,12 @@ class SymmetricPointsGenerator:
     self.__bounding_box = b = vtk_mesh.GetBounds()
     self.__bounding_box_diag = math.sqrt((b[1]-b[0])**2 + (b[3]-b[2])**2 + (b[5]-b[4])**2)
 
-    # Populate the lists which contain the oriented mesh surface points
-    self.__build_point_lists(axis)
+    # Populate the lists which contain the point ids
+    self.__build_point_id_lists(axis)
+
+    self.__left_point_cloud = UniformPointCloud(self.__left_target)
+    self.__right_point_cloud = UniformPointCloud(self.__right_target)
+    self.__central_point_cloud = UniformPointCloud(self.__central_target)
 
     # This is the guy who does an efficient line-surface intersection
     self.__obb_tree = vtk.vtkOBBTree()
@@ -37,26 +41,32 @@ class SymmetricPointsGenerator:
     self.__obb_tree.BuildLocator()
 
 
-  def __build_point_lists(self, axis):
+  def __build_point_id_lists(self, axis):
     self.__left_points = list()
+    self.__left_target = np.array([0.0, 0.0, 0.0])
     self.__right_points = list()
+    self.__right_target = np.array([0.0, 0.0, 0.0])
+    self.__central_target = np.array([0.0, 0.0, 0.0])
 
-    self.__vtk_mesh.BuildCells()
-
-    # Compute the middle coordinate
     middle = 0.5*(self.__bounding_box[2*axis] + self.__bounding_box[2*axis + 1])
 
-    vtk_point_ids = vtk.vtkIdList()
+    for i in range(self.__vtk_mesh.GetNumberOfPoints()):
+      p = self.__vtk_mesh.GetPoint(i)
+      self.__central_target += p
+      if p[axis] > middle:
+        self.__left_points.append(i)
+        self.__left_target += p
+      else:
+        self.__right_points.append(i)
+        self.__right_target += p
 
-    for i in range(self.__vtk_mesh.GetNumberOfCells()):
-      self.__vtk_mesh.GetCellPoints(i, vtk_point_ids)
-      # Make sure we have a triangle
-      if vtk_point_ids.GetNumberOfIds() == 3:
-        p = self.__vtk_mesh.GetPoint(vtk_point_ids.GetId(0))
-        #p = np.array([p[0], p[1], p[2]])
-        self.__left_points.append(i) if p[axis] > middle else self.__right_points.append(i)
-      # Prepare for the next iteration
-      vtk_point_ids.Reset()
+    if self.__left_points:
+      self.__left_target /= len(self.__left_points)
+
+    if self.__right_points:
+      self.__right_target /= len(self.__right_points)
+
+    self.__central_target /= self.__vtk_mesh.GetNumberOfPoints()
 
     """
     vtk_points = self.__vtk_mesh.GetPoints()
@@ -91,8 +101,12 @@ class SymmetricPointsGenerator:
       # Which side?
       if side == 0 or side[0].lower() == "l":
         surface_points = self.__left_points
+        target_point = self.__left_target
+        point_cloud = self.__left_point_cloud
       else:
         surface_points = self.__right_points
+        target_point = self.__right_target
+        point_cloud = self.__right_point_cloud
     else:
       # Chose the side probabilistically
       probability_left = len(self.__left_points) / (len(self.__left_points) + len(self.__right_points))
@@ -100,38 +114,24 @@ class SymmetricPointsGenerator:
         surface_points = self.__left_points
       else:
         surface_points = self.__right_points
+      # The target point is the central one
+      target_point = self.__central_target
+      point_cloud = self.__central_point_cloud
 
-    # Randomly select a cell
-    random_id = surface_points[random.randint(0, len(surface_points) - 1)]
-    vtk_point_ids = vtk.vtkIdList()
-    self.__vtk_mesh.GetCellPoints(random_id, vtk_point_ids)
-    # Compute a point on the triangle and its normal
-    p, n = self.__compute_triangle_point_and_normal(vtk_point_ids)
-    
-    # Using the selected surface point, generate a point inside the mesh
-    return self.__generate_random_point_in_mesh(p, n)
+    candidate_points = list()
 
+    # Generate some candidate points from which we will select (the best) one
+    for i in range(100):
+      random_id = surface_points[random.randint(0, len(surface_points) - 1)]
+      p = self.__vtk_mesh.GetPoint(random_id)
+      p = np.array([p[0], p[1], p[2]])
+      candidate_points.append(self.__generate_random_point_in_mesh(p))
 
-  def __compute_triangle_point_and_normal(self, point_ids):
-    a = self.__vtk_mesh.GetPoint(point_ids.GetId(0))
-    a = np.array([a[0], a[1], a[2]]) # numpy array      
-    b = self.__vtk_mesh.GetPoint(point_ids.GetId(1))
-    b = np.array([b[0], b[1], b[2]]) # numpy array
-    c = self.__vtk_mesh.GetPoint(point_ids.GetId(2))
-    c = np.array([c[0], c[1], c[2]]) # numpy array
-    return (a + b + c)/3, self.__compute_triangle_normal(a, b, c)
+    return point_cloud.insert_point(candidate_points)
+    #return target_point
 
 
-  def __compute_triangle_normal(self, x, y, z):
-    n = np.cross(y - x, z - x)
-    return n / np.linalg.norm(n)
-
-
-  def __generate_random_point_in_mesh(self, surface_point, normal):
-    # Generate two points, a and b, for which we now for sure are outside the mesh
-    #a = surface_point + normal*self.__bounding_box_diag
-    #b = surface_point - normal*self.__bounding_box_diag
- 
+  def __generate_random_point_in_mesh(self, surface_point):
     # This is another possibility to generate a point inside the mesh
     a = np.array([surface_point[0], surface_point[1], self.__bounding_box[4] - 1])
     b = np.array([surface_point[0], surface_point[1], self.__bounding_box[5] + 1])
@@ -149,6 +149,4 @@ class SymmetricPointsGenerator:
     p = np.array([p[0], p[1], p[2]])
     q = intersection_points.GetPoint(1)
     q = np.array([q[0], q[1], q[2]])
-    t = random.uniform(0.4, 0.6)
-    
-    return p + t*(q - p)
+    return p + random.uniform(0.4, 0.6)*(q - p)

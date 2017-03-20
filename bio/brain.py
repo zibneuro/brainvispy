@@ -62,11 +62,11 @@ class Brain:
 
 
   def create_neurons(self, neuron_parameters):
-    if not neuron_parameters:
-      return []
-
     # Delete the existing neurons
     self.__data_container.delete_models(list(self.__idx_to_neuron.values()))
+
+    if not neuron_parameters:
+      return []
 
     brain_region_to_neurons = dict()
     neuro_gen = NeuronGenerator()
@@ -109,14 +109,13 @@ class Brain:
       # Get the neuron parameters
       neuron_parameters = brain_region_to_neurons[brain_region]
       # This is the guy who generates the random neuron positions
-      pts_gen = SymmetricPointsGenerator(brain_region, axis=0)
+      points_generator = SymmetricPointsGenerator(brain_region, axis=0)
 
       for params in neuron_parameters:
-        neuron_position = pts_gen.generate_point_inside_mesh(params.brain_side)
+        neuron_position = points_generator.generate_point_inside_mesh(params.brain_side)
         neuron = neuro_gen.create_neuron(params.name, params.index, neuron_position, params.threshold)
-        if neuron:
-          self.__add_neuron(neuron)
-          new_neurons.append(neuron)
+        self.__add_neuron(neuron)
+        new_neurons.append(neuron)
 
     self.__data_container.add_data(new_neurons)
     
@@ -132,11 +131,11 @@ class Brain:
 
 
   def create_neural_connections(self, connection_parameters):
-    if not connection_parameters:
-      return []
-
     # Delete existing neural connections
     self.__data_container.delete_models(list(self.__name_to_neural_connection.values()))
+
+    if not connection_parameters:
+      return []
 
     nc_gen = NeuralConnectionGenerator()
     new_neural_connections = list()
