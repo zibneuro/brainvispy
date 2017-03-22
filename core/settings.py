@@ -5,3 +5,4 @@ class Settings:
   neural_connection_cone_radius = 1.8
   # Each loop (connection from a neuron to itself) is represented by a circle. This is its radius:
   loop_radius = 6.0
+  inter_neuron_distance = 15

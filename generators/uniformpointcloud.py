@@ -1,5 +1,18 @@
 import vtk
 import numpy as np
+from core.settings import Settings
+
+class UPoint:
+  def __init__(self, p, dist_to_closest_point):
+    self.p = p
+    self.dist_to_closest_point = dist_to_closest_point
+    
+  def compute_energy(self):
+    diff = self.dist_to_closest_point - Settings.inter_neuron_distance
+    if diff >= 0:
+      return diff
+    return -5*diff
+
 
 class UniformPointCloud:
   def __init__(self, target_point):
@@ -13,39 +26,65 @@ class UniformPointCloud:
 
 
   def insert_point(self, point_candidates):
-    best_point = point_candidates[0]
-    best_fitness = self.__compute_point_fitness(best_point)
-    
-    for p in point_candidates[1:]:
-      fitness = self.__compute_point_fitness(p)
-      if fitness > best_fitness:
-        best_fitness = fitness
-        best_point = p
-
-    self.__points.GetPoints().InsertNextPoint(best_point)
+    if self.__points.GetNumberOfPoints() <= 0:
+      point = self.__select_point_closest_to_target(point_candidates)
+    else:
+      point = self.__select_best_point(point_candidates)
+      
+    self.__points.GetPoints().InsertNextPoint(point)
     self.__points.Modified()
     self.__point_locator.Update()
+
+    return point
+
+
+  def __select_point_closest_to_target(self, points):
+    closest_point = points[0]
+    min_dist = self.__compute_distance_to_target(closest_point)
+
+    for p in points[1:]:
+      dist = self.__compute_distance_to_target(p)
+      if dist < min_dist:
+        min_dist = dist
+        closest_point = p
+
+    return closest_point
+
+
+  def __select_best_point(self, points):
+    evaluated_points = list()
+    for p in points:
+      evaluated_points.append(UPoint(p, self.__compute_distance_to_closest_point(p)))
+
+    evaluated_points.sort(key = lambda point: point.compute_energy())
+    
+    min_dist_to_target = self.__compute_distance_to_target(evaluated_points[0].p)
+    best_point = evaluated_points[0].p
+
+    list_end = max(len(evaluated_points)//10, 1)
+
+    for evaluated_point in evaluated_points[1:list_end]:
+      dist_to_target = self.__compute_distance_to_target(evaluated_point.p)
+      if dist_to_target < min_dist_to_target:
+        min_dist_to_target = dist_to_target
+        best_point = evaluated_point.p
 
     return best_point
 
 
-  def __compute_point_fitness(self, p):
-    # The first component of the fitness is the negative of the distance to the target point
-    dist_to_target = np.linalg.norm(p - self.__target_point)
-    
+  def __compute_distance_to_target(self, p):
+    return np.linalg.norm(p - self.__target_point)
+
+
+  def __compute_distance_to_closest_point(self, p):
     # Make sure there are points in the point cloud
     if self.__points.GetNumberOfPoints() <= 0:
-      return -dist_to_target
+      return float("inf")
 
     # Find the point closest to 'p'
     ids = vtk.vtkIdList()
     self.__point_locator.FindClosestNPoints(1, p, ids)
     closest_point = self.__points.GetPoint(ids.GetId(0))
 
-    # The second component of the fitness is the distance between 'p' and the closest point
-    dist_to_closest_point = np.linalg.norm(p - closest_point)
-    
-    #return dist_to_closest_point - 1.2*dist_to_target
-    #return -dist_to_target
-    #return dist_to_closest_point
-    return -(abs(dist_to_closest_point - 15) + abs(dist_to_target - 15))
+    # Return the distance between 'p' and the closest point
+    return np.linalg.norm(p - closest_point)

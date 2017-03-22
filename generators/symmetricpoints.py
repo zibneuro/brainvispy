@@ -68,32 +68,6 @@ class SymmetricPointsGenerator:
 
     self.__central_target /= self.__vtk_mesh.GetNumberOfPoints()
 
-    """
-    vtk_points = self.__vtk_mesh.GetPoints()
-    vtk_trias = self.__vtk_mesh.GetPolys()
-    vtk_trias.InitTraversal()
-    vtk_vertex_ids = vtk.vtkIdList()
-
-    while vtk_trias.GetNextCell(vtk_vertex_ids):
-      # Make sure we get a triangle
-      if vtk_vertex_ids.GetNumberOfIds() == 3:
-        # Get the three triangle vertices
-        a = vtk_points.GetPoint(vtk_vertex_ids.GetId(0))
-        a = np.array([a[0], a[1], a[2]]) # numpy array      
-        b = vtk_points.GetPoint(vtk_vertex_ids.GetId(1))
-        b = np.array([b[0], b[1], b[2]]) # numpy array
-        c = vtk_points.GetPoint(vtk_vertex_ids.GetId(2))
-        c = np.array([c[0], c[1], c[2]]) # numpy array
-        p = (a + b + c)/3
-        n = self.__compute_triangle_normal(a, b, c)
-        if p[axis] > middle:
-          self.__left_points.append(OrientedPoint(p, n))
-        else:
-          self.__right_points.append(OrientedPoint(p, n))
-      # Prepare for the next iteration
-      vtk_vertex_ids.Reset()
-    """
-
 
   def generate_point_inside_mesh(self, side = None):
     # Does the user provide a side

@@ -1,6 +1,5 @@
 from generators.neurongenerator import NeuronGenerator
 from generators.neuralconnectiongenerator import NeuralConnectionGenerator
-from generators.randompoints import RandomPointsGenerator
 from generators.symmetricpoints import SymmetricPointsGenerator
 from core.datacontainer import DataContainer
 from bio.brainregion import BrainRegion
