@@ -1,3 +1,14 @@
+import csv
+import random
+
+
+class SymmetricNeuron:
+  def __init__(self, name, brain_region_name, threshold):
+    self.name = name
+    self.brain_region_name = brain_region_name
+    self.threshold = threshold
+
+
 class NeuronParameters:
   def __init__(self, name, index, brain_region_name, brain_side, threshold):
     self.name = name
@@ -17,15 +28,44 @@ class NeuralConnectionParameters:
 class ConnectivityMatrixIO:
   def load_matrix(self, connectivity_matrix_file_name, brain):
     # Load the neuron and neural connection parameters from file
-    neuron_params, conn_params, load_errors = self.__load_from_csv_file(connectivity_matrix_file_name)
+    neuron_params, conn_params, load_errors = self.__load_csv_file(connectivity_matrix_file_name)
     # Add them to the brain and the data container
     neuron_errors = brain.create_neurons(neuron_params)
     nc_errors = brain.create_neural_connections(conn_params)
-    # The current version returns no error messages
+    # Return all the error messages
     return load_errors + neuron_errors + nc_errors
 
 
-  def __load_from_csv_file(self, file_name):
+  def __load_csv_file(self, file_name):
+    # Open the file and read in the lines    
+    try:
+      f = open(file_name, "r")
+    except:
+      return (None, None, ["Could not open '" + file_name + "'"])
+    csv_reader = csv.reader(f)
+
+    names_set = set()
+    neuron_names = list()
+
+    # Get the neuron names
+    for row in csv_reader:
+      for cell in row:
+        if cell.strip():
+          names_set.add(cell)
+          neuron_names.append(cell)
+      break
+
+    if len(neuron_names) == len(names_set):
+      return self.__load_general_matrix(file_name)
+    elif len(neuron_names) == 2*len(names_set):
+      return self.__load_symmetric_matrix(neuron_names, csv_reader)
+    else:
+      return (None, None, ["invalid matrix format"])
+
+    return (None, None, [])
+
+
+  def __load_general_matrix(self, file_name):
     file_lines = list()
 
     # Open the file and read in the lines    
@@ -139,3 +179,88 @@ class ConnectivityMatrixIO:
       return None
 
     return NeuronParameters(neuron_name, neuron_idx, brain_region_name, brain_side, threshold)
+
+
+  def __load_symmetric_matrix(self, neuron_names, csv_reader):
+    neurons = list()
+    neural_connections = list()
+    index = 0
+
+    for row in csv_reader:
+      try:
+        neuron_name = row[0].strip()
+      except IndexError:
+        continue
+      else:
+        if not neuron_name:
+          continue
+
+      neuron = self.__extract_neuron(neuron_name, row[len(neuron_names)+1:])
+      if neuron:
+        neurons.append(neuron)
+        neural_connections.extend(self.__extract_neural_connections(neuron_names, row))
+
+      index += 1
+      if index >= len(neuron_names) // 2:
+        break
+
+    print(neuron_names)
+    for n in neurons:
+      print(n.name + " in " + n.brain_region_name + " @ " + str(n.threshold))
+    for c in neural_connections:
+      print(c.src_neuron_name + " -> " + c.tar_neuron_name + " @ " + str(c.weight))
+
+    #return (neurons, neural_connections, [])
+    return (None, None, [])
+
+
+  def __extract_neuron_names(self, row):
+    neuron_names = list()
+    for cell in row:
+      if cell.strip():
+        neuron_names.append(cell)
+    return neuron_names
+
+
+  def __extract_neuron(self, neuron_name, cells):
+    try:
+      brain_region = cells[0]
+    except IndexError:
+      return None
+
+    try:
+      threshold = float(cells[1])
+    except (IndexError, ValueError): # the index may be out of bounds and/or the conversion to float may fail
+      threshold = random.uniform(-1, 1)
+
+    return SymmetricNeuron(neuron_name, brain_region, threshold)
+
+
+  def __extract_neural_connections(self, target_neuron_names, row):
+    try:
+      src_neuron_name = row[0]
+    except IndexError:
+      return []
+
+    end = len(target_neuron_names) // 2
+    neural_connections = list()
+
+    # The first half of the table (the ipsilateral connections)
+    for cell, tar_neuron_name in zip(row[1:], target_neuron_names[0:end]):
+      try:
+        weight = float(cell)
+      except ValueError:
+        continue
+      neural_connections.append(NeuralConnectionParameters(src_neuron_name + "_L", tar_neuron_name + "_L", weight))
+      neural_connections.append(NeuralConnectionParameters(src_neuron_name + "_R", tar_neuron_name + "_R", weight))
+
+    # The second half of the table (the contralateral connections)
+    for cell, tar_neuron_name in zip(row[end+1:], target_neuron_names[end:2*end]):
+      try:
+        weight = float(cell)
+      except ValueError:
+        continue
+      neural_connections.append(NeuralConnectionParameters(src_neuron_name + "_L", tar_neuron_name + "_R", weight))
+      neural_connections.append(NeuralConnectionParameters(src_neuron_name + "_R", tar_neuron_name + "_L", weight))
+
+    return neural_connections

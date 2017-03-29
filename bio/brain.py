@@ -129,6 +129,11 @@ class Brain:
     return []
 
 
+  def __add_neuron(self, neuron):
+    self.__idx_to_neuron[neuron.index] = neuron
+    self.__name_to_neuron[neuron.name] = neuron
+
+
   def create_neural_connections(self, connection_parameters):
     # Delete existing neural connections
     self.__data_container.delete_models(list(self.__name_to_neural_connection.values()))
@@ -146,7 +151,7 @@ class Brain:
       if not src_neuron or not tar_neuron:
         continue
       # Create the name of the neural connection
-      nc_name = self.__compute_neural_connection_name(src_neuron.name, tar_neuron.name)
+      nc_name = src_neuron.name + " -> " + tar_neuron.name
       # Create a new neural connection and save it
       nc = nc_gen.create_neural_connection(nc_name, src_neuron.name, tar_neuron.name, src_neuron.p, tar_neuron.p, cp.weight)
       self.__name_to_neural_connection[nc_name] = nc
@@ -156,25 +161,3 @@ class Brain:
     self.__data_container.add_data(new_neural_connections)
     # No error messages
     return []
-
-
-  def __delete_existing_neural_connections(self, connection_parameters):
-    connections_to_delete = list()
-    # Collect the existing connections
-    for cp in connection_parameters:
-      connection_name = self.__compute_neural_connection_name(cp.src_neuron_name, cp.tar_neuron_name)
-      connection = self.__name_to_neural_connection.get(connection_name)
-      if connection:
-        connections_to_delete.append(connection)
-    # Delete the existing connections
-    if connections_to_delete:
-      self.__data_container.delete_models(connections_to_delete)
-
-
-  def __compute_neural_connection_name(self, src_neuron_name, tar_neuron_name):
-    return src_neuron_name + " -> " + tar_neuron_name
-
-
-  def __add_neuron(self, neuron):
-    self.__idx_to_neuron[neuron.index] = neuron
-    self.__name_to_neuron[neuron.name] = neuron
