@@ -31,7 +31,6 @@ class BrainRegionParameters:
 class NeuronParameters:
   def __init__(self):
     self.name = "neuron"
-    self.index = -1
     self.position = (0, 0, 0)
     self.threshold = 0.0
 
@@ -182,7 +181,6 @@ class ProjectIO:
     # Read all elements of 'xml_input'
     for element in xml_input:
       if   element.tag == "name": neuron_params.name = element.text
-      elif element.tag == "index": neuron_params.index = int(element.text)
       elif element.tag == "position":
         pos_string = element.text.split(" ")
         neuron_params.position = (float(pos_string[0]), float(pos_string[1]), float(pos_string[2]))
@@ -330,7 +328,6 @@ class ProjectIO:
 
   def __save_neuron(self, neuron, xml_element):
     ET.SubElement(xml_element, "name").text = neuron.name
-    ET.SubElement(xml_element, "index").text = str(neuron.index)
     p = neuron.position
     ET.SubElement(xml_element, "position").text = str(p[0]) + " " + str(p[1]) + " " + str(p[2])
     ET.SubElement(xml_element, "threshold").text = str(neuron.threshold)

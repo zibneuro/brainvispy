@@ -10,7 +10,6 @@ from geom.connectedcomponents import ConnectedComponents
 class Brain:
   def __init__(self, data_container):
     self.__name_to_brain_region = dict()
-    self.__idx_to_neuron = dict()
     self.__name_to_neuron = dict()
     self.__name_to_neural_connection = dict()
 
@@ -50,11 +49,6 @@ class Brain:
 
   def __delete_neuron(self, neuron):
     try:
-      del self.__idx_to_neuron[neuron.index]
-    except KeyError:
-      pass
-
-    try:
       del self.__name_to_neuron[neuron.name]
     except KeyError:
       pass
@@ -62,7 +56,7 @@ class Brain:
 
   def create_neurons(self, neuron_parameters):
     # Delete the existing neurons
-    self.__data_container.delete_models(list(self.__idx_to_neuron.values()))
+    self.__data_container.delete_models(list(self.__name_to_neuron.values()))
 
     if not neuron_parameters:
       return []
@@ -99,7 +93,7 @@ class Brain:
           brain_region_to_neurons[brain_region].append(np)
       else:
         # We got position -> create the neuron
-        neuron = neuro_gen.create_neuron(np.name, np.index, p, np.threshold)
+        neuron = neuro_gen.create_neuron(np.name, p, np.threshold)
         self.__add_neuron(neuron)
         new_neurons.append(neuron)
 
@@ -112,7 +106,7 @@ class Brain:
 
       for params in neuron_parameters:
         neuron_position = points_generator.generate_point_inside_mesh(params.brain_side)
-        neuron = neuro_gen.create_neuron(params.name, params.index, neuron_position, params.threshold)
+        neuron = neuro_gen.create_neuron(params.name, neuron_position, params.threshold)
         self.__add_neuron(neuron)
         new_neurons.append(neuron)
 
@@ -129,8 +123,11 @@ class Brain:
     return []
 
 
+  def create_neurons_symmetrically(self, neuron_parameters):
+    pass
+
+
   def __add_neuron(self, neuron):
-    self.__idx_to_neuron[neuron.index] = neuron
     self.__name_to_neuron[neuron.name] = neuron
 
 

@@ -42,9 +42,9 @@ class SymmetricPointsGenerator:
 
 
   def __build_point_id_lists(self, axis):
-    self.__left_points = list()
+    self.__left_point_ids = list()
     self.__left_target = np.array([0.0, 0.0, 0.0])
-    self.__right_points = list()
+    self.__right_point_ids = list()
     self.__right_target = np.array([0.0, 0.0, 0.0])
     self.__central_target = np.array([0.0, 0.0, 0.0])
 
@@ -54,17 +54,17 @@ class SymmetricPointsGenerator:
       p = self.__vtk_mesh.GetPoint(i)
       self.__central_target += p
       if p[axis] > middle:
-        self.__left_points.append(i)
+        self.__left_point_ids.append(i)
         self.__left_target += p
       else:
-        self.__right_points.append(i)
+        self.__right_point_ids.append(i)
         self.__right_target += p
 
-    if self.__left_points:
-      self.__left_target /= len(self.__left_points)
+    if self.__left_point_ids:
+      self.__left_target /= len(self.__left_point_ids)
 
-    if self.__right_points:
-      self.__right_target /= len(self.__right_points)
+    if self.__right_point_ids:
+      self.__right_target /= len(self.__right_point_ids)
 
     self.__central_target /= self.__vtk_mesh.GetNumberOfPoints()
 
@@ -72,22 +72,28 @@ class SymmetricPointsGenerator:
   def generate_point_inside_mesh(self, side = None):
     # Does the user provide a side
     if side:
+      print("side: '" + side[0].lower() + "'")
       # Which side?
-      if side == 0 or side[0].lower() == "l":
-        surface_points = self.__left_points
+      if side[0].lower() == "l": # 'l' for left
+        surface_points = self.__left_point_ids
         target_point = self.__left_target
         point_cloud = self.__left_point_cloud
-      else:
-        surface_points = self.__right_points
+      elif side[0].lower() == "r": # 'r' for right
+        surface_points = self.__right_point_ids
+        target_point = self.__right_target
+        point_cloud = self.__right_point_cloud
+      elif side[0].lower() == "m": # 'm' from mirror
+        print("mirror")
+        surface_points = self.__right_point_ids
         target_point = self.__right_target
         point_cloud = self.__right_point_cloud
     else:
       # Chose the side probabilistically
-      probability_left = len(self.__left_points) / (len(self.__left_points) + len(self.__right_points))
+      probability_left = len(self.__left_point_ids) / (len(self.__left_point_ids) + len(self.__right_point_ids))
       if random.random() < probability_left:
-        surface_points = self.__left_points
+        surface_points = self.__left_point_ids
       else:
-        surface_points = self.__right_points
+        surface_points = self.__right_point_ids
       # The target point is the central one
       target_point = self.__central_target
       point_cloud = self.__central_point_cloud

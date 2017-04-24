@@ -2,17 +2,9 @@ import csv
 import random
 
 
-class SymmetricNeuron:
-  def __init__(self, name, brain_region_name, threshold):
-    self.name = name
-    self.brain_region_name = brain_region_name
-    self.threshold = threshold
-
-
 class NeuronParameters:
-  def __init__(self, name, index, brain_region_name, brain_side, threshold):
+  def __init__(self, name, brain_region_name, brain_side, threshold):
     self.name = name
-    self.index = index
     self.brain_region_name = brain_region_name
     self.brain_side = brain_side
     self.threshold = threshold
@@ -50,7 +42,8 @@ class ConnectivityMatrixIO:
     # Get the neuron names
     for row in csv_reader:
       for cell in row:
-        if cell.strip():
+        cell = cell.strip()
+        if cell:
           names_set.add(cell)
           neuron_names.append(cell)
       break
@@ -92,18 +85,16 @@ class ConnectivityMatrixIO:
     # Populate the (column id, neuron name) dictionary
     col_id = 0
     for neuron_name in neuron_names.split(","):
-      if neuron_name == "":
+      if not neuron_name:
         continue
       col_id_to_neuron_name[col_id] = neuron_name
       col_id += 1
  
     # How many neurons are there
     num_neurons = len(col_id_to_neuron_name)
-    neuron_idx = -1
 
     # Now, loop over the other table lines and create the neurons and neural connections
     for file_line in file_lines[1:]:
-      neuron_idx += 1
       # The current line contains the cells separated by a ","
       cells = file_line.split(",")
 
@@ -114,7 +105,7 @@ class ConnectivityMatrixIO:
       neuron_name = cells[0]
 
       # Create a new neuron using the cells which contain the neuron parameters
-      neuron = self.__create_neuron(neuron_name, neuron_idx, cells[num_neurons+1:])
+      neuron = self.__create_neuron(neuron_name, cells[num_neurons+1:])
       if neuron: # save the neuron
         neurons.append(neuron)
       else:
@@ -157,28 +148,33 @@ class ConnectivityMatrixIO:
     return neural_connections
 
 
-  def __create_neuron(self, neuron_name, neuron_idx, cells):
-    if len(cells) < 3:
+  def __create_neuron(self, neuron_name, cells):
+    # Get the brain region name
+    try:
+      brain_region_name = cells[0]
+    except IndexError:
       return None
-
-    brain_region_name = cells[0]
-    # Make sure there is a brain region name
-    if brain_region_name == "":
-      return None
-
-    # Get the side of the brain (left or right) which contains the neuron
-    if cells[1] != "":
-      brain_side = cells[1]
     else:
-      brain_side = None
+      brain_region_name = brain_region_name.strip()
+      if not brain_region_name:
+        return None
 
     # Get the threshold for this neuron
     try:
-      threshold = float(cells[2])
-    except ValueError:
-      return None
+      threshold = float(cells[1])
+    except (ValueError, IndexError):
+      threshold = random.uniform(-1, 1)
 
-    return NeuronParameters(neuron_name, neuron_idx, brain_region_name, brain_side, threshold)
+    # Get the side of the brain (left or right) which contains the neuron
+    try:
+      brain_side = cells[2].strip()
+    except IndexError:
+      brain_side = None
+    else:
+      if not brain_side:
+        brain_side = None
+
+    return NeuronParameters(neuron_name, brain_region_name, brain_side, threshold)
 
 
   def __load_symmetric_matrix(self, neuron_names, csv_reader):
@@ -195,10 +191,11 @@ class ConnectivityMatrixIO:
         if not neuron_name:
           continue
 
-      neuron = self.__extract_neuron(neuron_name, row[len(neuron_names)+1:])
+      neuron = self.__create_neuron(neuron_name, row[len(neuron_names)+1:])
       if neuron:
+        neuron.brain_side = "mirror"
         neurons.append(neuron)
-        neural_connections.extend(self.__extract_neural_connections(neuron_names, row))
+        neural_connections.extend(self.__create_symmetric_neural_connections(neuron_names, row))
 
       index += 1
       if index >= len(neuron_names) // 2:
@@ -210,8 +207,8 @@ class ConnectivityMatrixIO:
     for c in neural_connections:
       print(c.src_neuron_name + " -> " + c.tar_neuron_name + " @ " + str(c.weight))
 
-    #return (neurons, neural_connections, [])
-    return (None, None, [])
+    return (neurons, neural_connections, [])
+    #return (None, None, [])
 
 
   def __extract_neuron_names(self, row):
@@ -222,21 +219,7 @@ class ConnectivityMatrixIO:
     return neuron_names
 
 
-  def __extract_neuron(self, neuron_name, cells):
-    try:
-      brain_region = cells[0]
-    except IndexError:
-      return None
-
-    try:
-      threshold = float(cells[1])
-    except (IndexError, ValueError): # the index may be out of bounds and/or the conversion to float may fail
-      threshold = random.uniform(-1, 1)
-
-    return SymmetricNeuron(neuron_name, brain_region, threshold)
-
-
-  def __extract_neural_connections(self, target_neuron_names, row):
+  def __create_symmetric_neural_connections(self, target_neuron_names, row):
     try:
       src_neuron_name = row[0]
     except IndexError:
