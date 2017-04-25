@@ -169,10 +169,7 @@ class ConnectivityMatrixIO:
     try:
       brain_side = cells[2].strip()
     except IndexError:
-      brain_side = None
-    else:
-      if not brain_side:
-        brain_side = None
+      brain_side = ""
 
     return NeuronParameters(neuron_name, brain_region_name, brain_side, threshold)
 

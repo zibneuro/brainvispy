@@ -105,10 +105,20 @@ class Brain:
       points_generator = SymmetricPointsGenerator(brain_region, axis=0)
 
       for params in neuron_parameters:
-        neuron_position = points_generator.generate_point_inside_mesh(params.brain_side)
-        neuron = neuro_gen.create_neuron(params.name, neuron_position, params.threshold)
-        self.__add_neuron(neuron)
-        new_neurons.append(neuron)
+        # Mirrored or "standard" neuron
+        if params.brain_side and params.brain_side[0].lower() == "m": # "m" for mirrored
+          p1, p2 = points_generator.generate_mirrored_points_inside_mesh()
+          n1 = neuro_gen.create_neuron(params.name + "_L", p1, params.threshold)
+          n2 = neuro_gen.create_neuron(params.name + "_R", p2, params.threshold)
+          self.__add_neuron(n1)
+          self.__add_neuron(n2)
+          new_neurons.append(n1)
+          new_neurons.append(n2)
+        else:
+          neuron_position = points_generator.generate_point_inside_mesh(params.brain_side)
+          neuron = neuro_gen.create_neuron(params.name, neuron_position, params.threshold)
+          self.__add_neuron(neuron)
+          new_neurons.append(neuron)
 
     self.__data_container.add_data(new_neurons)
     
@@ -121,10 +131,6 @@ class Brain:
 
     # everything is fine
     return []
-
-
-  def create_neurons_symmetrically(self, neuron_parameters):
-    pass
 
 
   def __add_neuron(self, neuron):

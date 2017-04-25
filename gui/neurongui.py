@@ -50,7 +50,7 @@ class NeuronGUI(QtWidgets.QGroupBox):
 
     # Update the GUI elements
     self.__name_value.setText(neurons[0].name)
-    self.__threshold_value.setText(str(neurons[0].threshold))
+    self.__threshold_value.setText(str(round(neurons[0].threshold, 3)))
 
     # Show this GUI element to the user
     self.show()
