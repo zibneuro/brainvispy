@@ -73,15 +73,12 @@ class SymmetricPointsGenerator:
     # Which side?
     if side == "l": # 'l' for left
       surface_point_ids = self.__left_point_ids
-      target_point = self.__left_target
       point_cloud = self.__left_point_cloud
     elif side == "r": # 'r' for right
       surface_point_ids = self.__right_point_ids
-      target_point = self.__right_target
       point_cloud = self.__right_point_cloud
     else: # make it central
       surface_point_ids = self.__all_point_ids
-      target_point = self.__central_target
       point_cloud = self.__central_point_cloud
 
     candidate_points = list()
@@ -93,33 +90,50 @@ class SymmetricPointsGenerator:
       p = np.array([p[0], p[1], p[2]])
       candidate_points.append(self.__generate_random_point_in_mesh(p))
 
-    return point_cloud.insert_point(candidate_points)
+    return point_cloud.insert_best_point(candidate_points)
 
 
   def generate_mirrored_points_inside_mesh(self):
+    # Compute the probability to select the left side
+    p_L = len(self.__left_point_ids) / (len(self.__left_point_ids) + len(self.__right_point_ids))
+    # Randomly select a side
+    if random.random() < p_L:
+      surface_point_ids = self.__left_point_ids
+      target_point = self.__left_target
+      opposite_target_point = self.__right_target
+      point_cloud = self.__left_point_cloud
+      opposite_point_cloud = self.__right_point_cloud
+      got_left = True
+    else:
+      surface_point_ids = self.__right_point_ids
+      target_point = self.__right_target
+      opposite_target_point = self.__left_target
+      point_cloud = self.__right_point_cloud
+      opposite_point_cloud = self.__left_point_cloud
+      got_left = False
+
     candidate_points = list()
+
     # Generate some candidate points from which we will select (the best) one
     for i in range(100):
-      random_id = self.__all_point_ids[random.randint(0, len(self.__all_point_ids) - 1)]
+      random_id = surface_point_ids[random.randint(0, len(surface_point_ids) - 1)]
       p = self.__vtk_mesh.GetPoint(random_id)
       p = np.array([p[0], p[1], p[2]])
       candidate_points.append(self.__generate_random_point_in_mesh(p))
 
-    p1 = self.__left_point_cloud.insert_point(candidate_points)
-    p2 = self.__right_point_cloud.insert_point(candidate_points)
-    return (p1, p2)
+    # Insert a point in the selected point cloud
+    p = point_cloud.insert_best_point(candidate_points)
 
-    # Compute the probability to select the left side
-    #p_L = len(self.__left_point_ids) / (len(self.__left_point_ids) + len(self.__right_point_ids))
-    # Randomly select a side
-    #if random.random() < p_L:
-      #surface_point_ids = self.__left_point_ids
-      #target_point = self.__left_target
-      #point_cloud = self.__left_point_cloud
-    #else:
-      #surface_point_ids = self.__right_point_ids
-      #target_point = self.__right_target
-      #point_cloud = self.__right_point_cloud
+    # Insert the mirrored version of 'p' in the other point cloud
+    diff = p - target_point
+    diff[0] = -diff[0];
+    p_m = opposite_target_point + diff
+    opposite_point_cloud.add_single_point(p_m)
+
+    if got_left:
+      return (p, p_m)
+    else:
+      return (p_m, p)
 
 
   def __generate_random_point_in_mesh(self, surface_point):

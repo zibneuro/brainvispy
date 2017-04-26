@@ -25,7 +25,13 @@ class UniformPointCloud:
     self.__point_locator.SetDataSet(self.__points)
 
 
-  def insert_point(self, point_candidates):
+  def add_single_point(self, p):
+    self.__points.GetPoints().InsertNextPoint(p)
+    self.__points.Modified()
+    self.__point_locator.Update()
+
+
+  def insert_best_point(self, point_candidates):
     if self.__points.GetNumberOfPoints() <= 0:
       point = self.__select_point_closest_to_target(point_candidates)
     else:
