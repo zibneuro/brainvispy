@@ -55,6 +55,12 @@ class Brain:
 
 
   def create_neurons(self, neuron_parameters, progress_bar = None):
+    try:
+      progress_bar.init(0, 2, "Generating the Neurons:")
+      progress_bar.set_progress(0)
+    except:
+      pass
+
     # Delete the existing neurons
     self.__data_container.delete_models(list(self.__name_to_neuron.values()))
 
@@ -97,13 +103,19 @@ class Brain:
         self.__add_neuron(neuron)
         new_neurons.append(neuron)
 
-    progress_bar.init(1, len(brain_region_to_neurons), "Generating the Neurons:")
-    counter = 1
+    try:
+      progress_bar.init(1, len(brain_region_to_neurons), "Generating the Neurons:")
+      counter = 1
+    except:
+      pass
 
     # Now generate the neurons inside the brain regions
     for brain_region in brain_region_to_neurons:
-      progress_bar.set_progress(counter)
-      counter += 1
+      try:
+        progress_bar.set_progress(counter)
+        counter += 1
+      except:
+        pass
 
       # Get the neuron parameters
       neuron_parameters = brain_region_to_neurons[brain_region]
@@ -126,7 +138,11 @@ class Brain:
           self.__add_neuron(neuron)
           new_neurons.append(neuron)
 
-    progress_bar.done()
+    try:
+      progress_bar.done()
+    except:
+      pass
+
     self.__data_container.add_data(new_neurons)
     
     # Inform the user about missing brain regions
