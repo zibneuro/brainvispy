@@ -221,7 +221,7 @@ class MainWindow(QtWidgets.QMainWindow):
       self.__connectivity_matrix_folder = os.path.split(conn_mat_file_name)[0]
       # Load the connectivity matrix
       conn_mat_io = ConnectivityMatrixIO()
-      error_messages = conn_mat_io.load_matrix(conn_mat_file_name, self.__brain)
+      error_messages = conn_mat_io.load_matrix(conn_mat_file_name, self.__brain, self.__progress_bar)
       if error_messages:
         self.__show_messages(error_messages, "Error(s) while creating the neural network:")
 

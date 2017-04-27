@@ -18,11 +18,11 @@ class NeuralConnectionParameters:
 
 
 class ConnectivityMatrixIO:
-  def load_matrix(self, connectivity_matrix_file_name, brain):
+  def load_matrix(self, connectivity_matrix_file_name, brain, progress_bar):
     # Load the neuron and neural connection parameters from file
     neuron_params, conn_params, load_errors = self.__load_csv_file(connectivity_matrix_file_name)
     # Add them to the brain and the data container
-    neuron_errors = brain.create_neurons(neuron_params)
+    neuron_errors = brain.create_neurons(neuron_params, progress_bar)
     nc_errors = brain.create_neural_connections(conn_params)
     # Return all the error messages
     return load_errors + neuron_errors + nc_errors
