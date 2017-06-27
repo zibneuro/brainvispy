@@ -1,4 +1,4 @@
-from core.modelview import Observable
+from core.observable import Observable
 
 class DataContainer(Observable):
   # These are the possible changes that can happen to an Observable

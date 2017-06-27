@@ -1,4 +1,5 @@
 class FileModel:
+  """This class is supposed to represent a model (e.g., a mesh) which has a file name."""
   def __init__(self, file_name):
     self.__file_name = file_name
 
