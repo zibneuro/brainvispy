@@ -59,3 +59,8 @@ We use OS X El Capitan (Version 10.11.6).
 * **Run BrainVisPy.**
   * Check out this repository or download the code. Open a command prompt and go to the directory containing **main.py**. Run `python3 main.py`
   * Alternatively, read [here](doc/single_executable_file.md) how to create a single executable file.
+
+# Understanding the Code
+
+Check [this] (doc/understanding_the_code.md) description.
+

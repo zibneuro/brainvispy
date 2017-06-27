@@ -1,4 +1,5 @@
 import vtk
+import math
 import numpy as np
 from core.settings import Settings
 
@@ -67,7 +68,9 @@ class UniformPointCloud:
     min_dist_to_target = self.__compute_distance_to_target(evaluated_points[0].p)
     best_point = evaluated_points[0].p
 
-    list_end = max(len(evaluated_points)//10, 1)
+    return best_point
+
+    list_end = max(len(evaluated_points)//20, 1)
 
     for evaluated_point in evaluated_points[1:list_end]:
       dist_to_target = self.__compute_distance_to_target(evaluated_point.p)
@@ -93,4 +96,7 @@ class UniformPointCloud:
     closest_point = self.__points.GetPoint(ids.GetId(0))
 
     # Return the distance between 'p' and the closest point
-    return np.linalg.norm(p - closest_point)
+    x = p[0] - closest_point[0]
+    y = p[1] - closest_point[1]
+    return math.sqrt(x*x + y*y)
+    #return np.linalg.norm(p - closest_point)

@@ -6,16 +6,19 @@ from vis.vtkpoly import VtkPolyModel
 from core.settings import Settings
 
 class VisNeuralConnection(VtkPolyModel):
-  def __init__(self, name, p1, p2, cylinder_radius, is_loop):
+  """This class handles the visual representation of a synaptic connection between two neurons or
+  between a neuron and itself (a loop). A connection between two neurons is represented by an arrow (a line
+  with a cone at the end) while a loop is represented by a circle. 'p1' is the starting and 'p2' the end point
+  of the connection. 'p2' is ignored in the case of a loop."""
+  def __init__(self, name, p1, p2, is_loop):
     # First, create the visual representation
     if is_loop:
       vtk_rep = self.__create_vtk_loop_rep(p1)
     else:
-      vtk_rep = self.__create_vtk_rep(p1, p2, cylinder_radius)
+      vtk_rep = self.__create_vtk_rep(p1, p2)
 
     # Init the rest
     VtkPolyModel.__init__(self, vtk_rep, name)
-    self.__cylinder_radius = cylinder_radius
     self.actor.GetProperty().SetLineWidth(2)
 
 
@@ -23,11 +26,6 @@ class VisNeuralConnection(VtkPolyModel):
     #rgb = vis.visutils.map_to_blue_red_rgb(neural_connection.weight)
     #self.set_color(rgb[0], rgb[1], rgb[2])
     self.set_color(0, 0, 0.1)
-
-
-  @property
-  def cylinder_radius(self):
-    return self.__cylinder_radius
 
 
   def __create_vtk_loop_rep(self, p):
@@ -43,7 +41,7 @@ class VisNeuralConnection(VtkPolyModel):
     return vtk_circle_src.GetOutput()
 
 
-  def __create_vtk_rep(self, p1, p2, cylinder_radius):
+  def __create_vtk_rep(self, p1, p2):
     cone = self.__create_cone(p1, p2)
     line = self.__create_connecting_line(p1, p2)
 
@@ -93,56 +91,3 @@ class VisNeuralConnection(VtkPolyModel):
     cone_source.Update()
 
     return cone_source.GetOutput()
-
-"""
-  def __create_vtk_rep(self, p1, p2, cylinder_radius):
-    # Create the arrow (a cone)
-    normalized_dir = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]]
-    length = vtk.vtkMath.Norm(normalized_dir)
-    cone_height = 0.1*length
-
-    normalized_dir[0] /= length
-    normalized_dir[1] /= length
-    normalized_dir[2] /= length
-
-    direction = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]]
-    direction[0] /= length
-    direction[1] /= length
-    direction[2] /= length
-    
-    length -= cone_height/2
-    direction[0] *= length
-    direction[1] *= length
-    direction[2] *= length
-    cone_end = (p1[0] + direction[0], p1[1] + direction[1], p1[2] + direction[2])
-    
-    cone_source = vtk.vtkConeSource()
-    cone_source.SetCenter(cone_end)
-    cone_source.SetResolution(24)
-    cone_source.SetHeight(cone_height)
-    cone_source.SetDirection(direction)
-    cone_source.SetRadius(2*cylinder_radius)
-    cone_source.Update()
-
-    length -= cone_height/2
-    normalized_dir[0] *= length
-    normalized_dir[1] *= length
-    normalized_dir[2] *= length
-    cone_end = (p1[0] + normalized_dir[0], p1[1] + normalized_dir[1], p1[2] + normalized_dir[2])
-
-    line_source = vtk.vtkLineSource()
-    line_source.SetPoint1(p1)
-    line_source.SetPoint2(cone_end)
-    tube_filter = vtk.vtkTubeFilter()
-    tube_filter.SetInputConnection(line_source.GetOutputPort())
-    tube_filter.SetRadius(cylinder_radius)
-    tube_filter.SetNumberOfSides(24)
-    tube_filter.Update()
-    
-    
-    append_filter = vtk.vtkAppendPolyData()
-    append_filter.AddInputData(tube_filter.GetOutput());
-    append_filter.AddInputData(cone_source.GetOutput());
-    append_filter.Update()
-    return append_filter.GetOutput()
-"""

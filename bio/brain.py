@@ -55,6 +55,11 @@ class Brain:
 
 
   def create_neurons(self, neuron_parameters, progress_bar = None):
+    """Create neurons according to the specifications in 'neuron_parameters'. Modifies the data container
+    by adding the new neurons to it. Thus, all observers of the data container get notified about the new
+    data. Returns a list with error messages that tell what went wrong or an empty list if everything is
+    fine. For example, an error message lists the names of the brain regions that are supposed to
+    contain neurons but are not loaded yet."""
     try:
       progress_bar.init(0, 2, "Generating the Neurons:")
       progress_bar.set_progress(0)
@@ -144,7 +149,7 @@ class Brain:
       pass
 
     self.__data_container.add_data(new_neurons)
-    
+
     # Inform the user about missing brain regions
     if missing_brain_regions:
       error_message = "Missing brain region(s):\n"
@@ -161,6 +166,10 @@ class Brain:
 
 
   def create_neural_connections(self, connection_parameters):
+    """Create neural connections according to the specifications in 'connection_parameters'. Modifies the
+    data container by adding the new connections to it. Thus, all observers of the data container get
+    notified about the new data. Returns a list with error messages that tell what went wrong or an empty
+    list if everything is fine. The current version always returns an empty list (no errors can occur)."""
     # Delete existing neural connections
     self.__data_container.delete_models(list(self.__name_to_neural_connection.values()))
 
