@@ -62,5 +62,5 @@ We use OS X El Capitan (Version 10.11.6).
 
 # Understanding the Code
 
-Check [this] (doc/understanding_the_code.md) description.
+Check [this](doc/understanding_the_code.md) description.
 
