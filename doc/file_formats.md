@@ -6,11 +6,13 @@ The project files are saved in ASCII XML format containing all project informati
 
 ## Connectivity matrices
 
-### Symmetric
-
-The following matrix generated four neurons A, B, C and D and places them randomly in the specified brain regions.
-
-![asymmetric connectivity matrix](asymmetric_connectivity_matrix.png "")
+The matrices are saved in a CSV format. There are two types of connectivity matrices: symmetric and asymmetric. In the following, both are explained using simple examples.
 
 ### Asymmetric
+
+### Symmetric
+
+Importing the following matrix will generate 4 neuron pairs: one for each A, B, C and D. Each neuron pair consists of two neurons which will be placed symmetrically in the specified brain region. The left 4x4 sub-matrix defines the ipsilateral connections (connecting neurons on the same side of the brain). In this example, the C neurons are connected to the D neurons on the same side of the brain by a connection with strength of -0.8. The second 4x4 sub-matrix defines the contralateral connections (connecting neurons on opposite brain sides). The column after the one containing the brain regions contains the threshold for each neuron (not used in the current software version).
+
+![asymmetric connectivity matrix](asymmetric_connectivity_matrix.png "")
 
