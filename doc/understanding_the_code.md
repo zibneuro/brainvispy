@@ -28,7 +28,7 @@ The main classes in this module are the [DataContainer](../core/datacontainer.py
 
 ### generators
 
-The [SymmetricPointsGenerator](../generators/symmetricpoints.py) is the one that generates random points inside the meshes. It can either generate single points or point pairs consisting of points mirrored along the x, y or z axis. This class is used by the [Brain](../bio/brain.py) class to embed the neurons in the brain regions. The [UniformPointCloud](../generators/uniformpointcloud.py) is used by the [SymmetricPointsGenerator](../generators/symmetricpoints.py) to create the points according to a distribution with no two points being too close to each other (similar to blue noise).
+The [SymmetricPointsGenerator](../generators/symmetricpoints.py) is the one that generates random points inside the meshes. It can either generate single points or point pairs consisting of points mirrored along the x, y or z axis. This class is used by the [Brain](../bio/brain.py) class to embed the neurons in the brain regions. The [UniformPointCloud](../generators/uniformpointcloud.py) is used by the [SymmetricPointsGenerator](../generators/symmetricpoints.py) to create the points according to a random distribution in which no two points being too close to each other (similar to blue noise).
 
 ### gui
 
