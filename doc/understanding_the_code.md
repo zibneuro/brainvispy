@@ -14,7 +14,7 @@ In the following, we briefly discuss the most important modules and classes of t
 
 ### IO
 
-The [ProjectIO](../IO/project.py) is responsible for loading brain regions (meshes in OBJ or PLY format - better use PLY) as well as for opening/saving project files. All meshes are added to the data container which notifies its observers about the new data items. The neurons and neural connections are created by the [Brain](../bio/brain.py) object which adds them to the data container which, again, notifies its observer about the new data. The project files are saved in ASCII XML format containing all project information and links to the mesh files associated with the project.
+The [ProjectIO](../IO/project.py) is responsible for loading brain regions (meshes in OBJ or PLY format - better use PLY) as well as for opening/saving project files. All meshes are added to the data container which notifies its observers about the new data items. The neurons and neural connections are created by the [Brain](../bio/brain.py) object which adds them to the data container which, again, notifies its observers about the new data. The project files are saved in ASCII XML format containing all project information and links to the mesh files associated with the project.
 
 The [ConnectivityMatrixIO](../IO/conmat.py) is responsible for parsing connectivity matrices which define the synaptic connections between neurons as well as their strength. Note that importing the same connectivity matrix multiple times leads to different neuron positions since they are generated randomly.
 
@@ -24,7 +24,7 @@ The [Brain](../bio/brain.py) class creates the neurons and neural connections an
 
 ### core
 
-The main classes in this module are the [DataContainer](../core/datacontainer.py) (explained above) and the [Controller](../core/controller.py). The [Controller](../core/controller.py) manages user input from the 3D viewer and modifies the data container accordingly which, in turn, notifies its observers about the changes.
+The main classes in this module are the [DataContainer](../core/datacontainer.py) (explained above) and the [Controller](../core/controller.py). The [Controller](../core/controller.py) manages user input from the 3D viewer [VtkWidget](../gui/vtkwidget.py) and modifies the data container accordingly which, in turn, notifies its observers about the changes.
 
 ### generators
 
