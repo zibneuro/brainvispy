@@ -2,7 +2,9 @@
 
 ## Main strategy
 
-The software is roughly based on the observer software design pattern. There is one main object of type [DataContainer](../core/datacontainer.py) that stores all the data, which is loaded in the program. The data items, we call them models, are the brain regions (represented by meshes), the neurons (represented by spheres) and the synaptic connections between the neurons (represented by arrows). Other classes (e.g., GUI elements) that operate on the models register themselves as observer of the data container and get notified when it is modified. For example, if a new mesh is loaded, all observers get notified that new data has arrived.
+The software is roughly based on the observer software design pattern. There is one main object of type [DataContainer](../core/datacontainer.py) that stores all the data, which is loaded in the program. The data items, we call them models, are the brain regions (represented by meshes), the neurons (represented by spheres) and the synaptic connections between the neurons (represented by arrows). Other classes (e.g., GUI elements) that operate on the models register themselves as observer of the data container and get notified when it is modified. For example, if a new mesh is loaded, all observers get notified that new data has arrived. The following diagram provides an illustration of the main classes and how they interact.
+
+![class diagram](diagram/diagram.png "")
 
 ## Where to start reading the code?
 
@@ -16,7 +18,7 @@ In the following, we briefly discuss the most important modules and classes of t
 
 The [ProjectIO](../IO/project.py) is responsible for loading brain regions (meshes in OBJ or PLY format - better use PLY) as well as for opening/saving project files. All meshes are added to the data container which notifies its observers about the new data items. The information defining the neurons and neural connections is parsed by this class and passed to the [Brain](../bio/brain.py) class which creates the objects and adds them to the data container. The project files are saved in ASCII XML format containing all project information and links to the mesh files associated with the project.
 
-The [ConnectivityMatrixIO](../IO/conmat.py) is responsible for loading connectivity matrices from CSV files which define the neurons and the synaptic connections between neurons. Note that importing the same connectivity matrix multiple times leads to different neuron positions since they are generated randomly.
+The [ConnectivityMatrixIO](../IO/conmat.py) is responsible for loading connectivity matrices (from CSV files) which define the neurons and the synaptic connections between neurons. Note that importing the same connectivity matrix multiple times leads to different neuron positions since they are generated randomly.
 
 The file formats used in this project are described [here](./file_formats.md).
 
