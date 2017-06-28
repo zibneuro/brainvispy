@@ -38,5 +38,5 @@ Furthermore, this module contains an appropriate GUI class that displays the pro
 
 ### vis
 
-[VtkPolyModel](../vis/vtkpoly.py) and [VtkVolumeModel](../vis/vtkvol.py) are wrappers for the VTK-based visualization and representation of polygonal meshes and volumetric data sets (the latter are currently not used). Similar to the **gui** module, this module contains an appropriate class that renders [BrainRegion](../bio/brainregion.py), [Neuron](../bio/neuron.py) and [NeuralConnection](../bio/neuralconnection.py) in the 3D viewer.
+[VtkPolyModel](../vis/vtkpoly.py) and [VtkVolumeModel](../vis/vtkvol.py) are wrappers for the VTK-based visualization and representation of polygonal meshes and volumetric data sets (the latter are currently not used). Furthermore, this module contains an appropriate class that renders [BrainRegion](../bio/brainregion.py), [Neuron](../bio/neuron.py) and [NeuralConnection](../bio/neuralconnection.py) in the 3D viewer.
 
