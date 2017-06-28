@@ -20,9 +20,7 @@ The [ConnectivityMatrixIO](../IO/conmat.py) is responsible for parsing connectiv
 
 ### bio
 
-The [Brain](../bio/brain.py) class creates the neurons and neural connections and adds them to the data container.
-
-The [BrainRegion](../bio/brainregion.py), [Neuron](../bio/neuron.py) and [NeuralConnection](../bio/neuralconnection.py) store information specific to the corresponding entity and a reference to an appropriate visual representation which is rendered in the 3D viewer.
+The [Brain](../bio/brain.py) class creates the neurons and neural connections and adds them to the data container. The [BrainRegion](../bio/brainregion.py), [Neuron](../bio/neuron.py) and [NeuralConnection](../bio/neuralconnection.py) store information specific to the corresponding entity and a reference to an appropriate visual representation (see **vis** module) which is rendered in the 3D viewer [VtkWidget](../gui/vtkwidget.py).
 
 ### core
 
@@ -34,7 +32,7 @@ The [SymmetricPointsGenerator](../generators/symmetricpoints.py) is the one that
 
 ### gui
 
-The [MainWindow](../gui/mainwin.py) consists of three parts: the [data panel](../gui/datapanel.py) on the left (consisting of the search field and the list with the names of the loaded brain regions), the [3D viewer](../gui/vtkwidget.py) in the middle (showing the 3D content) and the [properties panel](../gui/propspanel.py) on the right (that displays properties of the selected models, like color, transparency, ...).
+The [MainWindow](../gui/mainwin.py) consists of three parts: the [data panel](../gui/datapanel.py) on the left (consisting of the search field and the list with the names of the loaded brain regions), the 3D viewer [VtkWidget](../gui/vtkwidget.py) in the middle (showing the 3D content) and the [properties panel](../gui/propspanel.py) on the right (that displays properties of the selected models, like color, transparency, ...).
 
 Furthermore, this module contains an appropriate GUI class that displays the properties of [BrainRegion](../bio/brainregion.py), [Neuron](../bio/neuron.py) and [NeuralConnection](../bio/neuralconnection.py).
 
