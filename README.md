@@ -1,6 +1,6 @@
 BrainVisPy is written in **Python3** and uses **PyQt5**,  **python-qt5-gl**, **numpy** and **VTK**.
 
-# Install and Run
+# Install and run
 
 In the following, we describe how to install and run BrainVisPy on Windows, Linux and OS X.
 
@@ -60,7 +60,11 @@ We use OS X El Capitan (Version 10.11.6).
   * Check out this repository or download the code. Open a command prompt and go to the directory containing **main.py**. Run `python3 main.py`
   * Alternatively, read [here](doc/single_executable_file.md) how to create a single executable file.
 
-# Understanding the Code
+# Understanding the code
 
-Check [this](doc/understanding_the_code.md) description.
+Check [this](doc/understanding_the_code.md).
+
+# File formats
+
+Check [this](doc/file_formats.md).
 
