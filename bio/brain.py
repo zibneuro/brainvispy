@@ -1,11 +1,11 @@
-from generators.neurongenerator import NeuronGenerator
-from generators.neuralconnectiongenerator import NeuralConnectionGenerator
 from generators.symmetricpoints import SymmetricPointsGenerator
+from core.settings import Settings
 from core.datacontainer import DataContainer
 from bio.brainregion import BrainRegion
 from bio.neuron import Neuron
 from bio.neuralconnection import NeuralConnection
-from geom.connectedcomponents import ConnectedComponents
+from vis.visneuralconnection import VisNeuralConnection
+from vis.visneuron import VisNeuron
 
 class Brain:
   def __init__(self, data_container):
@@ -73,14 +73,12 @@ class Brain:
       return []
 
     brain_region_to_neurons = dict()
-    neuro_gen = NeuronGenerator()
     new_neurons = list()
 
     missing_brain_regions = set()
 
     for np in neuron_parameters:
-      # Create a new neuron
-      try: # to get its position
+      try: # to get the neuron's position
         p = np.position
       except AttributeError:
         # No position is provided
@@ -90,7 +88,7 @@ class Brain:
           # Neither position nor brain region => cannot create the neuron
           continue
         else:
-          # Make sure we have the desired brain region
+          # Make sure the desired brain region exists
           try:
             brain_region = self.__name_to_brain_region[brain_region_name]
           except KeyError:
@@ -104,7 +102,7 @@ class Brain:
           brain_region_to_neurons[brain_region].append(np)
       else:
         # We got position -> create the neuron
-        neuron = neuro_gen.create_neuron(np.name, p, np.threshold)
+        neuron = self.__create_neuron(np.name, p, np.threshold)
         self.__add_neuron(neuron)
         new_neurons.append(neuron)
 
@@ -131,15 +129,15 @@ class Brain:
         # Mirrored or "standard" neuron
         if params.brain_side and params.brain_side[0].lower() == "m": # "m" for mirrored
           p1, p2 = points_generator.generate_mirrored_points_inside_mesh()
-          n1 = neuro_gen.create_neuron(params.name + "_L", p1, params.threshold)
-          n2 = neuro_gen.create_neuron(params.name + "_R", p2, params.threshold)
+          n1 = self.__create_neuron(params.name + "_L", p1, params.threshold)
+          n2 = self.__create_neuron(params.name + "_R", p2, params.threshold)
           self.__add_neuron(n1)
           self.__add_neuron(n2)
           new_neurons.append(n1)
           new_neurons.append(n2)
         else:
           neuron_position = points_generator.generate_point_inside_mesh(params.brain_side)
-          neuron = neuro_gen.create_neuron(params.name, neuron_position, params.threshold)
+          neuron = self.__create_neuron(params.name, neuron_position, params.threshold)
           self.__add_neuron(neuron)
           new_neurons.append(neuron)
 
@@ -161,6 +159,11 @@ class Brain:
     return []
 
 
+  def __create_neuron(self, name, p, threshold):
+    vis_neuron = VisNeuron(name, p, Settings.neuron_sphere_radius)
+    return Neuron(name, p[0], p[1], p[2], threshold, vis_neuron)
+
+
   def __add_neuron(self, neuron):
     self.__name_to_neuron[neuron.name] = neuron
 
@@ -176,7 +179,6 @@ class Brain:
     if not connection_parameters:
       return []
 
-    nc_gen = NeuralConnectionGenerator()
     new_neural_connections = list()
 
     for cp in connection_parameters:
@@ -188,7 +190,7 @@ class Brain:
       # Create the name of the neural connection
       nc_name = src_neuron.name + " -> " + tar_neuron.name
       # Create a new neural connection and save it
-      nc = nc_gen.create_neural_connection(nc_name, src_neuron.name, tar_neuron.name, src_neuron.p, tar_neuron.p, cp.weight)
+      nc = self.__create_neural_connection(nc_name, src_neuron.name, tar_neuron.name, src_neuron.p, tar_neuron.p, cp.weight)
       self.__name_to_neural_connection[nc_name] = nc
       new_neural_connections.append(nc)
 
@@ -196,3 +198,8 @@ class Brain:
     self.__data_container.add_data(new_neural_connections)
     # No error messages
     return []
+
+
+  def __create_neural_connection(self, name, src_neuron_name, tar_neuron_name, src_pos, tar_pos, weight):
+    vis_rep = VisNeuralConnection(name, src_pos, tar_pos, src_neuron_name == tar_neuron_name)
+    return NeuralConnection(name, src_neuron_name, tar_neuron_name, weight, vis_rep)

@@ -12,6 +12,8 @@ class OrientedPoint:
 
 class SymmetricPointsGenerator:
   def __init__(self, vtk_mesh, axis):
+    """Initialize this object with the mesh in which the points are supposed to be generated. 'axis' should
+    be 0, 1 or 2 depending on whether you want to mirror the generated point along the x, y or z axis."""
     if not isinstance(vtk_mesh, vtk.vtkPolyData):
       try:
         vtk_mesh = vtk_mesh.visual_representation.vtk_poly_data
