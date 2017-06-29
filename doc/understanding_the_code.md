@@ -4,7 +4,7 @@
 
 The software is roughly based on the observer software design pattern. There is one main object of type [DataContainer](../core/datacontainer.py) that stores all the data, which is loaded in the program. The data items, we call them models, are the brain regions (represented by meshes), the neurons (represented by spheres) and the synaptic connections between the neurons (represented by arrows). Other classes (e.g., GUI elements) that operate on the models register themselves as observer of the data container and get notified when it is modified. For example, if a new mesh is loaded, all observers get notified that new data has arrived. The following diagram provides an illustration of the main classes and how they interact.
 
-<img src="diagram/diagram.png" width="400"/>
+<img src="diagram/diagram.png" width="600"/>
 
 ## Where to start reading the code?
 
