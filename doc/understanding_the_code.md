@@ -6,10 +6,6 @@ The software is roughly based on the observer software design pattern. There is 
 
 <img src="diagram/diagram.png" width="600"/>
 
-## Where to start reading the code?
-
-Start with [main.py](../main.py) and move on to [mainwin.py](../gui/mainwin.py).
-
 ## Module and class description
 
 In the following, we briefly discuss the most important modules and classes of the project.
@@ -43,3 +39,8 @@ Furthermore, this module contains specialized GUI classes that display the prope
 ### vis
 
 [VtkPolyModel](../vis/vtkpoly.py) and [VtkVolumeModel](../vis/vtkvol.py) are wrappers for the VTK-based visualization and representation of polygonal and volumetric data sets (the latter are currently not used). Furthermore, this module contains specialized classes to display [BrainRegion](../bio/brainregion.py), [Neuron](../bio/neuron.py) and [NeuralConnection](../bio/neuralconnection.py) in the 3D viewer.
+
+## Where to start reading the code?
+
+Start with [main.py](../main.py) and move on to [mainwin.py](../gui/mainwin.py).
+
