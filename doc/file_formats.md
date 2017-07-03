@@ -10,7 +10,7 @@ The matrices are saved in a CSV format. There are two types of connectivity matr
 
 ### Asymmetric
 
-Importing the matrix below will generate 4 neurons A, B, C and D. The first row and first column contain the neuron names. Enter a number in the 4x4 submatrix in order to connect the neuron at the corresponding row to the neuron at the corresponding column. Note that the connections are directed. The forelast column defines the brain regions the neurons should be placed in. The last column defines whether the neuron should be placed in the left (L), middle (C) or right (R) part of the brain region.
+Importing the matrix below will generate 4 neurons A, B, C and D. The first row and first column contain the neuron names. Enter a number in the 4x4 submatrix in order to connect the neuron at the corresponding row to the neuron at the corresponding column. Note that the connections are directed. The forelast column defines the brain regions the neurons should be placed in. The last column defines whether the neuron should be placed in the left (L), central (C) or right (R) part of the brain region.
 
 <img src="asymmetric_connectivity_matrix.png" width="400"/>
 <img src="asymmetric_connectivity_matrix_import.png" width="400"/>
